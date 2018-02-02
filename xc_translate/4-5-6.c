@@ -505,6 +505,32 @@ void statement(){
         }
         *b=(int)(text+1);       //TODO: ???
     }
+
+    //while语句
+    else if(token==While){
+        // statement            assembly
+        // -----------------------------
+        // a:                   a:
+        // while (<cond>)       <cond>
+        //                      JZ b
+        //     <statement>      <statement>
+        //                      JMP a
+        // b:                   b:
+        match(While);
+        a=text+1;
+        
+        match('(');
+        expression(Assign);
+        match(')');
+
+        *++text=JZ;
+        b=++text;
+        
+        statement();
+        *++text=JMP;
+        *++text=(int)a;
+        *b=(int)(text+1);
+    }
 }
 
 //function_parameter
