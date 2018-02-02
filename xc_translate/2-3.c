@@ -114,9 +114,10 @@ enum {
     Mod,            // %
     Inc,            // ++
     Dec,            // --
-    Lb,             // [
-        
+    Brak            // [
+    
     //TODO: 下方的符号可不用常量标识，直接用本身
+    /*
     Rb,             // ]
     Lp,             // (
     Rp,             // )
@@ -126,6 +127,7 @@ enum {
     Rbr,            // }
     Comma,          // ,
     Colon           // :
+    */
 };
 
 //标识符域
@@ -144,6 +146,12 @@ enum {
     IdSize          //一个标识符类型的存储长度
 };
 
+//变量、函数类型
+enum { CHAR, INT, PTR };
+
+//main函数
+int* idmain;
+
 //获取下一个标记
 void next(){
     char *last_pos;
@@ -157,7 +165,7 @@ void next(){
 
         //跳过宏定义
         else if(token=='#'){
-            while(*src!=0 && *src!='\n') ++scr;
+            while(*src!=0 && *src!='\n') ++src;
         }
 
         //标识符与符号表
@@ -202,7 +210,7 @@ void next(){
                 //十六进制
                 if(*src=='x' || *src=='X'){
                     token=*++src;
-                    while((token>='0' && token<='9') || token>='a' && token<='f') || (token>='A' && token<='F')){
+                    while((token>='0' && token<='9') || (token>='a' && token<='f') || (token>='A' && token<='F')){
                         token_val=token_val*16+(token&15)+(token>='A'?9:0);
                         token=*++src;
                     }
@@ -219,10 +227,168 @@ void next(){
             token=Num;
             return;
         }
+        
+        //字符串
+        //形如"abc"，则last_pos指向第一个字符，并且将abc存入data
+        //形如"\a"，则跳过\，将a存入data
+        //形如'\aaaa'，则只取a，作为Num
+        //若为'\n'，则取 \n 作为Num
+        else if(token=='"' || token=='\''){
+            last_pos=data;
+            while(*src!=0 && *src!=token){
+                token_val=*src++;
+                if(token_val=='\\'){
+                    token_val=*src++;
+                    if(token_val=='n') token_val='\n';
+                }
+                if(token=='"') *data++=token_val;
+            }
 
-        //TODO: 解析字符串
+            src++;
+            if(token=='"') token_val=(int)last_pos;
+            else token=Num;
+            return;
+        }
+
+        //注释 或 /
+        else if(token=='/'){
+            if(*src=='/'){
+                while(*src!=0 && *src!='\n') ++src;
+            }
+            else{
+
+                //除号
+                token=Div;
+                return;
+            }
+        }
+
+        //== 或 =
+        else if(token=='='){
+            if(*src=='='){
+                ++src;
+                token=Eq;
+            }
+            else token=Assign;
+            return;
+        }
+
+        //++ 或 +
+        else if(token=='+'){
+            if(*src=='+'){
+                ++src;
+                token=Inc;
+            }
+            else token=Add;
+            return;
+        }
+
+        //-- 或 -
+        else if(token=='-'){
+            if(*src=='-'){
+                ++src;
+                token=Dec;
+            }
+            else token=Sub;
+            return;
+        }
+
+        //!= 或 !
+        else if(token=='!'){
+            if(*src=='='){
+                ++src;
+                token=Ne;
+            }
+            return;
+        }
+
+        //<= 或 << 或 <
+        else if(token=='<'){
+            if(*src=='='){
+                ++src;
+                token=Le;
+            }
+            else if(*src=='<'){
+                ++src;
+                token=Shl;
+            }
+            else token=Lt;
+            return;
+        }
+
+        //>= 或 >> 或 >
+        else if(token=='>'){
+            if(*src=='='){
+                ++src;
+                token=Ge;
+            }
+            else if(*src=='>'){
+                ++src;
+                token=Shr;
+            }
+            else token=Gt;
+            return;
+        }
+
+        //|| 或 |
+        else if(token=='|'){
+            if(*src=='|'){
+                ++src;
+                token=Lor;
+            }
+            else token=Or;
+            return;
+        }
+
+        //&& 或 &
+        else if(token=='&'){
+            if(*src=='&'){
+                ++src;
+                token=Lan;
+            }
+            else token=Add;
+            return;
+        }
+
+        //^
+        else if(token=='^'){
+            token=Xor;
+            return;
+        }
+
+        //%
+        else if(token=='%'){
+            token=Mod;
+            return;
+        }
+
+        //*
+        else if(token=='*'){
+            token=Mul;
+            return;
+        }
+
+        //[
+        else if(token=='['){
+            token=Brak;
+            return;
+        }
+        
+        //?
+        else if(token=='?'){
+            token=Cond;
+            return;
+        }
+
+        //~ ; { } ( ) ] , :
+        else if(token=='~' || token==';' || token=='{' || token=='}' 
+        || token=='(' || token==')' || token==']' || token==',' || token==':') {
+            return;
+        }
+
+        //空字符则直接跳过，不返回
+        //else { ; }
     }
-    return;
 }
 
 /*
@@ -342,28 +508,14 @@ int main(int argc, char** argv){
     --argc;
     ++argv;
 
-    poolsize=256*1024;          //任意数值
-    line=1;                     //当前为源程序第1行
-
     //打开argv所指的文件
     if((fd=open(*argv, 0))<0){
         printf("could not open(%s)\n", *argv);
         return -1;
     }
 
-    //分配内存用于存放源代码
-    if(!(src=old_src=malloc(poolsize))){
-        printf("could not malloc(%d) for source area\n", poolsize);
-    }
-
-    //读取源文件代码
-    if((i=read(fd, src, poolsize-1))<=0){
-        printf("read() returned %d\n", i);
-        return -1;
-    }
-
-    src[i]='\0';        //追加EOF字符
-    close(fd);          //关闭文件
+    poolsize=256*1024;          //任意数值
+    line=1;                     //当前为源程序第1行
 
     //为虚拟机分配内存
     if(!(text=old_text=malloc(poolsize))){
@@ -386,27 +538,47 @@ int main(int argc, char** argv){
     memset(data, 0, poolsize);
     memset(stack, 0, poolsize);
 
+    //添加内置类型
+    src="char else enum if int return sizeof while"
+        "open read close printf malloc memset memcmp exit void main";
+    i=Char;
+    while(i<=While){
+        next();
+        current_id[Token]=i++;
+    }
+
+    i=OPEN;
+    while(i<=EXIT){
+        next();
+        current_id[Class]=Sys;
+        current_id[Type]=INT;
+        current_id[Value]=i++;
+    }
+
+    next(); current_id[Token]=Char; //void 类型
+    next(); idmain=current_id;      //keep track of main
+
+    //分配内存用于存放源代码
+    if(!(src=old_src=malloc(poolsize))){
+        printf("could not malloc(%d) for source area\n", poolsize);
+    }
+
+    //读取源文件代码
+    if((i=read(fd, src, poolsize-1))<=0){
+        printf("read() returned %d\n", i);
+        return -1;
+    }
+    src[i]=0;       //添加EOF
+    close(fd);
+
     //因stack为void*, 先将其转化为int，再加上poolsize
     //stack便指向分配的内存的高地址处，再转化为int*赋值给bp和sp
     bp=sp=(int*)((int)stack+poolsize);
     ax=0;
 
-    //测试
-    i=0;
-    text[i++]=IMM;
-    text[i++]=10;
-    text[i++]=PUSH;
-    text[i++]=IMM;
-    text[i++]=20;
-    text[i++]=ADD;
-    text[i++]=PUSH;
-    text[i++]=EXIT;
-    pc=text;
-
     program();          //进行解析
 
-    printf("runing vm......\n");
     eval();             //执行程序
-    printf("vm exit.\n");
+    
     return 0;           //退出程序
 }
