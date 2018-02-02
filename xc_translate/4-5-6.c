@@ -459,7 +459,7 @@ void next(){
 
 //解析表达式
 void expression(int level){
-    //do nothing
+    //TODO: 实现在最下方
 }
 
 //解析语句
@@ -530,6 +530,41 @@ void statement(){
         *++text=JMP;
         *++text=(int)a;
         *b=(int)(text+1);
+    }
+
+    //{ statement }
+    else if(token=='{'){
+        // { <statement> ... }
+        match('{');
+        while(token!='}'){
+            statement();
+        }
+        match('}');
+    }
+
+    //return语句
+    else if(token==Return){
+        //return [expression];
+        match(Return);
+        if(token!=';'){
+            expression(Assign);
+        }
+        match(';');
+
+        //结束函数调用
+        *++text=LEV;
+    }
+
+    //空语句
+    else if(token==';'){
+        match(';');
+    }
+
+    //表达式
+    else{
+        // a=b;型 或函数调用
+        expression(Assign);
+        match(';');
     }
 }
 
@@ -960,4 +995,144 @@ int main(int argc, char** argv){
     eval();             //执行程序
     
     return 0;           //退出程序
+}
+
+//expression: 复制到上方
+void expression(){
+    // expressions have various format.
+    // but majorly can be divided into two parts: unit and operator
+    // for example `(char) *a[10] = (int *) func(b > 0 ? 10 : 20);
+    // `a[10]` is an unit while `*` is an operator.
+    // `func(...)` in total is an unit.
+    // so we should first parse those unit and unary operators
+    // and then the binary ones
+    //
+    // also the expression can be in the following types:
+    //
+    // 1. unit_unary ::= unit | unit unary_op | unary_op unit
+    // 2. expr ::= unit_unary (bin_op unit_unary ...)
+
+    // unit_unary()
+    int* id;
+    int tmp;
+    int *addr;
+
+    {
+        if(!token){
+            printf("%d: unexpected token EOF of expression\n", line);
+            exit(-1);
+        }
+
+        //立即数
+        if(token==Num){
+            match(Num);
+
+            *++text=IMM;
+            *++text=token_val;
+            expr_type=INT;
+        }
+
+        //连续的字符串
+        //TODO: 没有看懂，为何while循环这么写?data=??? 什么鬼？
+        else if(token=='"'){
+            // 连续的string，如 "abc" "abc"
+            *++text=IMM;
+            *++text=token_val;
+            match('"');
+
+            //加载剩余的string
+            while(token=='"'){
+                match('"');
+            }
+
+            // append the end of string character '\0',
+            // all the data are default to 0,
+            // so just move data one position forward.
+            data=(char*)(((int)data+sizeof(int)) & (-sizeof(int)));
+            expr_type=PTR;
+        }
+
+        //sizeof
+        else if(token==Sizeof){
+            // sizeof is actually an unary operator
+            // now only `sizeof(int)`, `sizeof(char)` and `sizeof(*...)` are
+            // supported.
+            match(Sizeof);
+            match('(');
+            expr_type=INT;
+
+            if(token==Int){
+                match(Int);
+            }
+            else if(token==Char){
+                match(Char);
+                expr_type=CHAR;
+            }
+
+            while(token==Mul){
+                match(Mul);
+                expr_type=expr_type+PTR;
+            }
+
+            match(')');
+            
+            *++text=IMM;
+            *++text=(expr_type==CHAR)?sizeof(char): sizeof(int);
+
+            expr_type=INT;
+        }
+        
+        //标识符
+        else if(token==Id){
+            // there are several type when occurs to Id
+            // but this is unit, so it can only be
+            // 1. function call
+            // 2. Enum variable
+            // 3. global/local variable
+            match(Id);
+            id=currrent_id;
+            if(token=='('){
+                //函数调用
+                match('(');
+
+                //计算参数，并将参数入栈
+                tmp=0;      //参数数量
+                while(token!=')'){
+                    expression(Assign);
+                    *++text=PUSH;
+                    ++tmp;
+                    if(token==','){
+                        match(',');
+                    }
+                }
+                match(')');
+                
+                //系统函数
+                if(id[Class]=Sys){
+                    *++text=id[Value];
+                }
+
+                //函数调用
+                else if(id[Class]==Func){
+                    *++text=CALL;
+                    *++text=id[Value];
+                }
+                else{
+                    printf("%d: bad function call\n", line);
+                    exit(-1);
+                }
+
+                // clean the stack for arguments
+                if(tmp>0){
+                    *++text=ADJ;
+                    *++text=tmp;
+                }
+                expr_type=id[Type];
+            }
+
+            else if(id[Class]==Num){
+                //TODO: 
+            }
+        }
+    }
 }
