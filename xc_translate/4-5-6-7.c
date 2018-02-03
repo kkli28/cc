@@ -998,7 +998,8 @@ int main(int argc, char** argv){
 }
 
 //expression: 复制到上方
-void expression(){
+//TODO: expression(level) 中level的取值规则是什么?
+void expression(int level){
     // expressions have various format.
     // but majorly can be divided into two parts: unit and operator
     // for example `(char) *a[10] = (int *) func(b > 0 ? 10 : 20);
@@ -1076,13 +1077,15 @@ void expression(){
 
             match(')');
             
+            //sizeof(char)是char型(8位)
+            //sizeof(int) 或 sizeof(指针类型) 是int型(32位)
             *++text=IMM;
             *++text=(expr_type==CHAR)?sizeof(char): sizeof(int);
 
             expr_type=INT;
         }
         
-        //标识符
+        //标识符 或 函数调用
         else if(token==Id){
             // there are several type when occurs to Id
             // but this is unit, so it can only be
@@ -1122,7 +1125,7 @@ void expression(){
                     exit(-1);
                 }
 
-                // clean the stack for arguments
+                //清理入栈参数，直接修改栈指针
                 if(tmp>0){
                     *++text=ADJ;
                     *++text=tmp;
@@ -1130,9 +1133,336 @@ void expression(){
                 expr_type=id[Type];
             }
 
+            //Enum变量，直接识别为立即数
             else if(id[Class]==Num){
-                //TODO: 
+                *++text=IMM;
+                *++text=id[Value];
+                expr_type=INT;
             }
+
+            //变量
+            else{
+                //局部变量
+                //采用与bp指针相对位置的形式
+                if(id[Class]==Loc){
+                    *++text=LEA;
+                    *++text=index_of_bp-id[Value];
+                }
+                //全局变量
+                //用IMM加载变量地址
+                else if(id[Class]==Glo){
+                    *++text=IMM;
+                    *++text=id[Value];
+                }
+                else{
+                    printf("%d: undefined variable\n", line);
+                    exit(-1);
+                }
+
+                //默认行为: 加载ax中存放的值的地址
+                expr_type=id[Type];
+                *++text=(expr_type==Char)?LC: LI;
+            }
+        }
+
+        //转换操作符
+        else if(token=='('){
+            match('(');
+            if(token==Int || token==Char){
+                tmp=(token==Char)?CHAR:INT; //转换类型
+                match(token);
+                //转换为指针类型
+                while(token==Mul){
+                    match(Mul);
+                    tmp=tmp+PTR;
+                }
+                match(')');
+                expression(Inc); //cast has precedence(相同优先级优先) as Inc(++)
+                expr_type=tmp;
+            }
+            //普通括号
+            else{
+                expression(Assign);
+                match(')');
+            }
+        }
+
+        //解引用，如*a
+        else if(token==Mul){
+            match(Mul);
+            expression(Inc);  //解引用和Inc优先级相同
+            if(expr_type>=PTR){
+                expr_type=expr_type-PTR;
+            }
+            else{
+                printf("%d: bad dereference\n", line);
+                exit(-1);
+            }
+
+            *++text=(expr_type==CHAR)?LC: LI;
+        }
+
+        //取地址 &
+        else if(token==And){
+            match(And);
+            expression(Inc);
+            if(*text==LC || *text==LI){
+                --text;
+            }
+            else{
+                printf("%d: bad address of\n", line);
+                exit(-1);
+            }
+
+            expr_type=expr_type+PTR;
+        }
+
+        //非 !
+        else if(token=='!'){
+            match('!');
+            expression(Inc);
+
+            // <expr>==0
+            *++text=PUSH;
+            *++text=IMM;
+            *++text=0;
+            *++text=EQ;
+            expr_type=INT;
+        }
+
+        //取反 ~
+        else if(token=='~'){
+            match('~');
+            expression(Inc);
+
+            // ~a == a ^ -1
+            *++text=PUSH;
+            *++text=IMM;
+            *++text=-1;
+            *++text=XOR;
+            expr_type=INT;
+        }
+        
+        //+ 正号，并非加号
+        else if(token==And){
+            //+var, do nothing
+            match(Add);
+            expression(Inc);
+            expr_type=INT;
+        }
+
+        //- 负号，并非减号
+        else if(token==Sub){
+            match(Sub);
+            if(token==Num){
+                //TODO: a-1 == a+(-1) ?
+                *++text=IMM;
+                *++text=-token_val;
+                match(Num);
+            }
+            else{
+                //TODO: a-b == a+ (-1)*b ?
+                *++text=IMM;
+                *++text=-1;
+                *++text=PUSH;
+                expression(Inc);
+                *++text=MUL;
+            }
+            expr_type=INT;
+        }
+
+        //前置 ++ 或 --
+        //TODO: 没看懂
+        else if(token==Inc || token==Dec){
+            tmp=token;
+            match(token);
+            expression(Inc);
+            if(*text==LC){
+                *text=PUSH;     //备份地址
+                *++text=LC;
+            }
+            else if(*text==LI){
+                *text=PUSH;
+                *++text=LI;
+            }
+            else{
+                printf("%d: bad lvalue of pre-increment\n", line);
+                exit(-1);
+            }
+            *++text=PUSH;
+            *++text=IMM;
+
+            *++text=(expr_type>PTR)?sizeof(int):sizeof(char);
+            *++text=(tmp==Inc)?ADD: SUB;
+            *++text=(expr_type==CHAR)?SC: SI;
+        }
+        else{
+            printf("%d: bad expression\n", line);
+            exit(-1);
+        }
+    }
+
+    //二元操作符 和 后缀操作符
+    {
+        //当前token优先级大于之前表达式的优先级
+        while(token>=level){
+            tmp=expr_type;
+
+            //赋值表达式
+            //TODO: 没看懂
+            if(token==Assign){
+                match(Assign);
+                if(*text==LC||*text==LI){
+                    *text=PUSH; //保存左值的指针
+                }
+                else{
+                    printf("%d: bad lvalue in assignment\n", line);
+                    exit(-1);
+                }
+                expression(Assign);
+                expr_type=tmp;
+                *++text=(expr_type==CHAR)? SC: SI;
+            }
+
+            //expr ? a: b;
+            //类似于小型if语句，所以生成代码和if类似
+            else if(token==Cond){
+                match(Cond);
+                *++text=JZ;
+                addr=++text;
+                expression(Assign);
+                if(token==':'){
+                    match(':');
+                }
+                else{
+                    printf("%d: missing colon in conditional\n", line);
+                    exit(-1);
+                }
+                *addr=(int)(text+3);
+                *++text=JMP;
+                addr=++text;
+                expression(Cond);
+                *addr=(int)(text+1);
+            }
+            
+            // ||
+            /*
+                <expr1> || <expr2> 对应汇编代码如下: 
+                
+                <expr1>
+                JNZ b
+                <expr2>
+                b:
+            */
+            else if(token==Lor){
+                match(Lor);
+                *++text=JNZ;
+                addr=++text;
+                expression(Lan);
+                *addr=(int)(text+1);
+                expr_type=INT;
+            }
+
+            // && 
+            /*
+                <expr1> && <expr2> 对应汇编代码如下:
+
+                <expr1>
+                JZ b
+                <expr2>
+                b:
+            */
+            else if(token==Lan){
+                match(Lan);
+                *++text=JZ;
+                addr=++text;
+                expression(Or);
+                *addr=(int)(text+1);
+                expr_type=INT;
+            }
+            
+            // |
+            else if(token==Or){
+                match(Or);
+                *++text=PUSH;
+                expression(Xor);
+                *++text=OR;
+                expr_type=INT;
+            }
+
+            // ^ 
+            else if(token==Xor){
+                match(Xor);
+                *++text=PUSH;
+                expression(And);
+                *++text=XOR;
+                expr_type=INT;
+            }
+
+            // & 
+            else if(token==And){
+                match(And);
+                *++text=PUSH;
+                expression(Eq);
+                *++text=AND;
+                expr_type=INT;
+            }
+
+            // ==
+            else if(token==Eq){
+                match(Eq);
+                *++text=PUSH;
+                expression(Ne);
+                *++text=EQ;
+                expr_type=INT;
+            }
+
+            // !=
+            else if(token==Ne){
+                match(Ne);
+                *++text=PUSH;
+                expression(Lt);
+                *++text=NE;
+                expr_type=INT;
+            }
+
+            // <
+            else if(token==Lt){
+                match(Lt);
+                *++text=PUSH;
+                expression(Shl);
+                *++text=LT;
+                expr_type=INT;
+            }
+
+            // >
+            else if(token==Gt){
+                match(Gt);
+                *++text=PUSH;
+                expression(Shl);
+                *++text=GT;
+                expr_type=INT;
+            }
+
+            // <=
+            else if(token==Le){
+                match(Le);
+                *++text=PUSH;
+                expression(Shl);
+                *++text=LE;
+                expr_type=INT;
+            }
+
+            // >=
+            else if(token==Ge){
+                match(Ge);
+                *++text=PUSH;
+                expression(Shl);
+                *++text=GE;
+                expr_type=INT;
+            }
+
+            //TODO: token == Shl
         }
     }
 }
