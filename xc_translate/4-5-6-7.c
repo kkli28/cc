@@ -458,546 +458,6 @@ void next(){
 }
 
 //解析表达式
-void expression(int level){
-    //TODO: 实现在最下方
-}
-
-//解析语句
-void statement(){
-    //8种语句
-    //1. if (...) <statement> [else <statement>]
-    //2. while (...) <statement>
-    //3. { <statement> }
-    //4. return expression ';'
-    //5. <empty statement>;
-    //6. expression ';'
-
-    int *a, *b;         //用于分支控制
-
-    //if语句
-    if(token==IF){
-        // statement            assembly
-        // -----------------------------
-        //1. if (...)               <cond>
-        //2.                        JZ a
-        //3.      <statement>       <statement>
-        //4. else                   JMP b
-        //5.                        a:
-        //6.      <statement>       <statement>
-        //7.                        b:
-
-        match(If);
-        match('(');
-        expression(Assign);     //解析条件
-        match(')');
-
-        //if语句的代码生成
-        *++text=JZ;
-        b=++text;
-
-        statement();            //解析statement
-        if(token==Else){
-            match(Else);
-            *b=(int)(text+3);   //TODO: ???
-            *++text=JMP;
-            b=++text;
-            statement();
-        }
-        *b=(int)(text+1);       //TODO: ???
-    }
-
-    //while语句
-    else if(token==While){
-        // statement            assembly
-        // -----------------------------
-        // a:                   a:
-        // while (<cond>)       <cond>
-        //                      JZ b
-        //     <statement>      <statement>
-        //                      JMP a
-        // b:                   b:
-        match(While);
-        a=text+1;
-        
-        match('(');
-        expression(Assign);
-        match(')');
-
-        *++text=JZ;
-        b=++text;
-        
-        statement();
-        *++text=JMP;
-        *++text=(int)a;
-        *b=(int)(text+1);
-    }
-
-    //{ statement }
-    else if(token=='{'){
-        // { <statement> ... }
-        match('{');
-        while(token!='}'){
-            statement();
-        }
-        match('}');
-    }
-
-    //return语句
-    else if(token==Return){
-        //return [expression];
-        match(Return);
-        if(token!=';'){
-            expression(Assign);
-        }
-        match(';');
-
-        //结束函数调用
-        *++text=LEV;
-    }
-
-    //空语句
-    else if(token==';'){
-        match(';');
-    }
-
-    //表达式
-    else{
-        // a=b;型 或函数调用
-        expression(Assign);
-        match(';');
-    }
-}
-
-//function_parameter
-void function_parameter(){
-    //parameter_decl := type {'*'} id {',' type {'*'} id}
-    int type;
-    int params;         //参数的位置（第几个参数）
-    params=0;
-
-    type=INT;
-    while(token!=')'){
-        if(token==Int) {
-            match(Int);
-        }
-        else if(token==Char){
-            type=CHAR;
-            match(Char);
-        }
-
-        //指针类型
-        while(token==Mul){
-            match(Mul);
-            type=type+PTR;
-        }
-
-        //参数名
-        if(token!=Id){
-            printf("%d: bad parameter declaration\n", line);
-            exit(-1);
-        }
-
-        //重复定义
-        if(current_id[Class]==Loc){
-            printf("%d: duplicate parameter declaration\n", line);
-        }
-
-        match(Id);
-
-        //装载局部变量（函数参数）
-        current_id[BClass]=current_id[Class];
-        current_id[Class]=Loc;
-        current_id[BType]=current_id[Type];
-        current_id[Type]=type;
-        current_id[BValue]=current_id[Value];
-        current_id[Value]=params++;
-        
-        if(token==',') {
-            match(',');
-        }
-    }
-
-    index_of_bp=params+1;
-}
-
-//function_body
-void function_body(){
-    // {
-    // 1. local declarations
-    // 2. statements
-    // }
-    int pos_local;      //局部变量在栈上的位置
-    int type;
-    pos_local=index_of_bp;
-
-    //局部变量声明
-    while(token==Int || token==Char){
-        basetype=(token==Int)?INT: CHAR;
-        match(token);
-        while(token!=';'){
-            type=basetype;
-            while(token==Mul){
-                match(Mul);
-                type=type+PTR;
-            }
-
-            //没有匹配到标识符
-            if(token!=Id){
-                printf("%d: bad locdal declaration\n", line);
-                exit(-1);
-            }
-            
-            //局部变量重复定义
-            if(current_id[Class]==Loc){
-                printf("%d: duplicate local declaration\n");
-                exit(-1);
-            }
-
-            match(Id);
-
-            //装载局部变量
-            current_id[BClass]=current_id[Class];
-            current_id[Class]=Loc;
-            current_id[BType]=current_id[Type];
-            current_id[Type]=type;
-            current_id[BValue]=current_id[Value];
-            current_id[Value]=++pos_local;      //当前参数的索引
-
-            if(token==',') {
-                match(',');
-            }
-        }
-
-        //在栈上为局部变量预留空间
-        *++text=ENT;
-        *++text=pos_local-index_of_bp;
-
-        //语句
-        while(token!='}') {
-            statement();
-        }
-
-        //离开函数
-        *++text=LEV;
-    }
-}
-
-//enum声明
-void enum_declaration(){
-    //parse enum [id] { a=1, b=2, ...}
-    int i;
-    i=0;
-    while(token!='}'){
-        if(token!=Id){
-            printf("%d: bad enum idenifier %d\n", line, token);
-            exit(-1);
-        }
-        next();
-        if(token==Assign){
-            // like {a=1}
-            next();
-            if(token!=Num){
-                printf("%d: bad enum initializer\n", line);
-                exit(-1);
-            }
-            i=token_val;
-            next();
-        }
-
-        current_id[Class]=Num;
-        current_id[Type]=INT;
-        current_id[Value]=i++;
-
-        if(token==',') {
-            next();
-        }
-    }
-}
-
-//函数声明
-void function_declaration(){
-    //type func_name (...) {...}
-    match('(');
-    function_parameter();
-    match(')');
-    match('{');
-    function_body();
-    //match('}');
-
-    // 恢复被局部变量隐藏的全局变量
-    current_id=symbols;
-    while(current_id[Token]){
-        if(current_id[Class]==Loc){
-            current_id[Class]=current_id[BClass];
-            current_id[Type]=current_id[BType];
-            current_id[Value]=current_id[BValue];
-        }
-        current_id=current_id+IdSize;
-    }
-}
-
-//全局声明
-void global_declaration(){
-    /*
-    global_declaration := enum_decl | variable_decl | function_decl
-
-    enum_decl := 'enum' [id] '{' id ['=' 'num'] {',' id ['=' 'num']} '}'
-
-    variable_decl := type {'*'} id { ',' {'*'} id} ';'
-
-    function_decl := type {'*'} id '(' parameter_decl ')' '{' body_decl '}'
-    */
-
-    int type;       //变量类型
-
-    //TODO: i没有使用，可否删除?
-    int i;          //tmp
-
-    //Enum定义
-    if(token==Enum){
-        // enum [id] {a=1, b=2, ...}
-        match(Enum);
-        if(token!='{'){
-            match(Id);
-        }
-        if(token=='{'){
-            // 分析赋值部分
-            match('{');
-            enum_declaration();
-            match('}');
-        }
-
-        match(';');
-        return;
-    }
-
-    // 分析类型信息
-    baseType=INT;
-    if(token==Int) {
-        match(Int);
-    }
-    else if(token==Char){
-        match(Char);
-        basetype=CHAR;
-    }
-
-    //分析以逗号分离的变量定义
-    while(token!=';' && token!='}'){
-        type=basetype;
-
-        //指针
-        while(token==Mul){
-            match(Mul);
-            type=type+PTR;
-        }
-
-        //类型定义错误: 没有匹配到标识符
-        if(token!=Id){
-            printf("%d: bad global declaration\n", line);
-            exit(-1);
-        }
-
-        //重定义
-        if(current_id[Class]){
-            printf("%d: duplicate global declaration\n", line);
-            exit(-1);
-        }
-
-        match(Id);
-
-        //回填Type
-        current_id[Type]=type;
-
-        //函数定义
-        if(token=='('){
-
-            //回填Class、Value
-            current_id[Class]=Fun;              //函数类型
-            current_id[Value]=(int)(text+1);    //函数的内存地址
-            function_declaration();
-        }
-
-        //类型定义
-        else{
-            current_id[Class]=Glo;              //全局变量
-            current_id[Value]=(int)data;        //变量的内存地址
-            data=data+sizeof(int);
-        }
-
-        //下一个变量定义
-        if(token ==',') {
-            match(',');
-        }
-    }
-    next();
-}
-
-//语法分析入口，分析整个C语言程序
-void program(){
-    next();
-    while(token>0) {
-        global_declaration();
-    }
-}
-
-//虚拟机的入口
-int eval(){
-    int op, *tmp;
-
-    
-    while(1){
-
-        //取一条指令
-        op=*pc++;
-
-        //等效于MOVE指令
-        /*
-        为何在SI/SC指令中，地址存放在栈中，而LI/LC指令中，地址存放在ax中？
-        因为默认计算结果放在ax中，而地址通常需要通过计算获得，故执行LI/LC时
-        直接从ax取会更高效。PUSH指令只能将ax的值放到栈上，而不能以值作为参数。
-        */
-        if(op==IMM)     { ax=*pc++; }               //取立即数
-        else if(op==LC) { ax=*((char*)ax); }        //取char
-        else if(op==LI) { ax=*((int*)ax); }         //取int
-        else if(op==SC) { *((char*)*sp++)=ax; }     //存储char
-        else if(op==SI) { *((int*)*sp++)=ax; }      //存储int
-
-        //PUSH/JUMP类
-        else if(op==PUSH)   { *--sp=ax; }                   //ax中的值入栈
-        else if(op==JMP)    { pc=(int*)*pc; }               //跳转
-        else if(op==JZ)     { pc=ax?pc+1: (int*)*pc; }      //ax中为0则跳转
-        else if(op==JNZ)    { pc=ax?(int*)*pc : pc+1; }     //ax中为非0则跳转
-
-        //子程序调用
-        else if(op==CALL)   { *--sp=(int)(pc+1); pc=(int*)*pc; }        //子程序调用
-        else if(op==ENT)    { *--sp=(int)bp; bp=sp; sp=sp-*pc++; }      //pc中的值？
-        else if(op==ADJ)    { sp=sp+*pc++; }                            //清除函数调用时压入栈中的数据
-        else if(op==LEV)    { sp=bp; bp=(int*)*sp++;pc=(int*)*sp++; }   //恢复bp/sp/pc，退出函数调用
-        else if(op==LEA)    { ax=(int)(bp+*pc++); }                     //获取第一个参数的地址
-
-        //运算符指令
-        //每个运算符都是二元的，第一个参数放在栈顶，第二个参数放在ax中
-        else if(op==OR)     { ax=*sp++ | ax;    }
-        else if(op==XOR)    { ax=*sp++ ^ ax;    }
-        else if(op==AND)    { ax=*sp++ & ax;    }
-        else if(op==EQ)     { ax=*sp++ == ax;   }
-        else if(op==NE)     { ax=*sp++ != ax;   }
-        else if(op==LT)     { ax=*sp++ < ax;    }
-        else if(op==LE)     { ax=*sp++ <= ax;   }
-        else if(op==GT)     { ax=*sp++ > ax;    }
-        else if(op==GE)     { ax=*sp++ >= ax;   }
-        else if(op==SHL)    { ax=*sp++ << ax;   }
-        else if(op==SHR)    { ax=*sp++ >> ax;   }
-        else if(op==ADD)    { ax=*sp++ + ax;    }
-        else if(op==SUB)    { ax=*sp++ - ax;    }
-        else if(op==MUL)    { ax=*sp++ * ax;    }
-        else if(op==DIV)    { ax=*sp++ / ax;    }
-        else if(op==MOD)    { ax=*sp++ % ax;    }
-
-        //内置函数
-        else if(op==EXIT)   { printf("exit(%d)\n", *sp); return *sp; }    //退出
-        else if(op==OPEN)   { ax=open((char*)sp[1], sp[0]); }           //打开文件
-        else if(op==CLOS)   { ax=close(*sp); }                          //关闭文件
-        else if(op==READ)   { ax=read(sp[2], (char*)sp[1], *sp); }      //读取文件
-        else if(op==PRTF)   {                                           //输出
-            tmp=sp+pc[1];
-            ax=printf((char*)tmp[-1], tmp[-2], tmp[-3], tmp[-4], tmp[-5], tmp[-6]);
-        }
-        else if(op==MALC)   { ax=(int)malloc(*sp); }                            //申请内存
-        else if(op==MSET)   { ax=(int)memset((char*)sp[2], sp[1], *sp); }       //设置内存中的值
-        else if(op==MCMP)   { ax=memcmp((char*)sp[2], (char*)sp[1], *sp); }     //内存值比较
-        else {
-            printf("unknown instruction : %d", op);
-            return -1;
-        }
-    }
-    return 0;
-}
-
-//main
-int main(int argc, char** argv){
-    int i, fd;
-
-    //跳过程序名本身
-    --argc;
-    ++argv;
-
-    //打开argv所指的文件
-    if((fd=open(*argv, 0))<0){
-        printf("could not open(%s)\n", *argv);
-        return -1;
-    }
-
-    poolsize=256*1024;          //任意数值
-    line=1;                     //当前为源程序第1行
-
-    //为虚拟机分配内存
-    if(!(text=old_text=malloc(poolsize))){
-        printf("could not malloc(%d) for text area\n", poolsize);
-        return -1;
-    }
-
-    if(!(data=malloc(poolsize))){
-        printf("could not malloc(%d) for data area\n", poolsize);
-        return -1;
-    }
-
-    if(!(stack=malloc(poolsize))){
-        printf("could not malloc(%d) for stack area\n", poolsize);
-        return -1;
-    }
-
-    //初始化内存
-    memset(text, 0, poolsize);
-    memset(data, 0, poolsize);
-    memset(stack, 0, poolsize);
-
-    //添加内置类型
-    src="char else enum if int return sizeof while"
-        "open read close printf malloc memset memcmp exit void main";
-    i=Char;
-    while(i<=While){
-        next();
-        current_id[Token]=i++;
-    }
-
-    i=OPEN;
-    while(i<=EXIT){
-        next();
-        current_id[Class]=Sys;
-        current_id[Type]=INT;
-        current_id[Value]=i++;
-    }
-
-    next(); current_id[Token]=Char; //void 类型
-    next(); idmain=current_id;      //keep track of main
-
-    //分配内存用于存放源代码
-    if(!(src=old_src=malloc(poolsize))){
-        printf("could not malloc(%d) for source area\n", poolsize);
-    }
-
-    //读取源文件代码
-    if((i=read(fd, src, poolsize-1))<=0){
-        printf("read() returned %d\n", i);
-        return -1;
-    }
-    src[i]=0;       //添加EOF
-    close(fd);
-
-    //因stack为void*, 先将其转化为int，再加上poolsize
-    //stack便指向分配的内存的高地址处，再转化为int*赋值给bp和sp
-    bp=sp=(int*)((int)stack+poolsize);
-    ax=0;
-
-    program();          //进行解析
-
-    eval();             //执行程序
-    
-    return 0;           //退出程序
-}
-
-//expression: 复制到上方
 //TODO: expression(level) 中level的取值规则是什么?
 /*
 貌似是，如 a+b*c，先匹配a，然后进入expression(Mul)，意为
@@ -1596,7 +1056,597 @@ void expression(int level){
                 *++text=(expr_type>PTR)?sizeof(int): sizeof(char);
                 *++text=(token==Inc)?ADD: SUB;
                 *++text=(expr_type==CHAR)?SC: SI;
+                *++text=PUSH;
+                *++text=IMM;
+                *++text=(expr_type>PTR)?sizeof(int): sizeof(char);
+                *++text=(token==Inc)?SUB: ADD;
+                match(token);
+            }
+
+            //数组取值
+            else if(token==Brak){
+                match(Brak);
+                *++text=PUSH;
+                expression(Assign);
+                match(']');
+                
+                //int* 型
+                if(tmp>PTR){
+                    *++text=PUSH;
+                    *++text=IMM;
+                    *++text=sizeof(int);
+                    *++text=MUL;
+                }
+                else if(tmp<PTR){
+                    printf("%d: pointer type expected\n", line);
+                    exit(-1);
+                }
+                expr_type=tmp-PTR;
+                *++text=ADD;
+                *++text=(expr_type==CHAR)?LC: LI;
+            }
+            else{
+                printf("%d: compiler error, token = %d\n", line, token);
+                exit(-1);
             }
         }
     }
 }
+
+//解析语句
+void statement(){
+    //8种语句
+    //1. if (...) <statement> [else <statement>]
+    //2. while (...) <statement>
+    //3. { <statement> }
+    //4. return expression ';'
+    //5. <empty statement>;
+    //6. expression ';'
+
+    int *a, *b;         //用于分支控制
+
+    //if语句
+    if(token==IF){
+        // statement            assembly
+        // -----------------------------
+        //1. if (...)               <cond>
+        //2.                        JZ a
+        //3.      <statement>       <statement>
+        //4. else                   JMP b
+        //5.                        a:
+        //6.      <statement>       <statement>
+        //7.                        b:
+
+        match(If);
+        match('(');
+        expression(Assign);     //解析条件
+        match(')');
+
+        //if语句的代码生成
+        *++text=JZ;
+        b=++text;
+
+        statement();            //解析statement
+        if(token==Else){
+            match(Else);
+            *b=(int)(text+3);   //TODO: ???
+            *++text=JMP;
+            b=++text;
+            statement();
+        }
+        *b=(int)(text+1);       //TODO: ???
+    }
+
+    //while语句
+    else if(token==While){
+        // statement            assembly
+        // -----------------------------
+        // a:                   a:
+        // while (<cond>)       <cond>
+        //                      JZ b
+        //     <statement>      <statement>
+        //                      JMP a
+        // b:                   b:
+        match(While);
+        a=text+1;
+        
+        match('(');
+        expression(Assign);
+        match(')');
+
+        *++text=JZ;
+        b=++text;
+        
+        statement();
+        *++text=JMP;
+        *++text=(int)a;
+        *b=(int)(text+1);
+    }
+
+    //{ statement }
+    else if(token=='{'){
+        // { <statement> ... }
+        match('{');
+        while(token!='}'){
+            statement();
+        }
+        match('}');
+    }
+
+    //return语句
+    else if(token==Return){
+        //return [expression];
+        match(Return);
+        if(token!=';'){
+            expression(Assign);
+        }
+        match(';');
+
+        //结束函数调用
+        *++text=LEV;
+    }
+
+    //空语句
+    else if(token==';'){
+        match(';');
+    }
+
+    //表达式
+    else{
+        // a=b;型 或函数调用
+        expression(Assign);
+        match(';');
+    }
+}
+
+//function_parameter
+void function_parameter(){
+    //parameter_decl := type {'*'} id {',' type {'*'} id}
+    int type;
+    int params;         //参数的位置（第几个参数）
+    params=0;
+
+    type=INT;
+    while(token!=')'){
+        if(token==Int) {
+            match(Int);
+        }
+        else if(token==Char){
+            type=CHAR;
+            match(Char);
+        }
+
+        //指针类型
+        while(token==Mul){
+            match(Mul);
+            type=type+PTR;
+        }
+
+        //参数名
+        if(token!=Id){
+            printf("%d: bad parameter declaration\n", line);
+            exit(-1);
+        }
+
+        //重复定义
+        if(current_id[Class]==Loc){
+            printf("%d: duplicate parameter declaration\n", line);
+        }
+
+        match(Id);
+
+        //装载局部变量（函数参数）
+        current_id[BClass]=current_id[Class];
+        current_id[Class]=Loc;
+        current_id[BType]=current_id[Type];
+        current_id[Type]=type;
+        current_id[BValue]=current_id[Value];
+        current_id[Value]=params++;
+        
+        if(token==',') {
+            match(',');
+        }
+    }
+
+    index_of_bp=params+1;
+}
+
+//function_body
+void function_body(){
+    // {
+    // 1. local declarations
+    // 2. statements
+    // }
+    int pos_local;      //局部变量在栈上的位置
+    int type;
+    pos_local=index_of_bp;
+
+    //局部变量声明
+    while(token==Int || token==Char){
+        basetype=(token==Int)?INT: CHAR;
+        match(token);
+        while(token!=';'){
+            type=basetype;
+            while(token==Mul){
+                match(Mul);
+                type=type+PTR;
+            }
+
+            //没有匹配到标识符
+            if(token!=Id){
+                printf("%d: bad locdal declaration\n", line);
+                exit(-1);
+            }
+            
+            //局部变量重复定义
+            if(current_id[Class]==Loc){
+                printf("%d: duplicate local declaration\n");
+                exit(-1);
+            }
+
+            match(Id);
+
+            //装载局部变量
+            current_id[BClass]=current_id[Class];
+            current_id[Class]=Loc;
+            current_id[BType]=current_id[Type];
+            current_id[Type]=type;
+            current_id[BValue]=current_id[Value];
+            current_id[Value]=++pos_local;      //当前参数的索引
+
+            if(token==',') {
+                match(',');
+            }
+        }
+
+        //在栈上为局部变量预留空间
+        *++text=ENT;
+        *++text=pos_local-index_of_bp;
+
+        //语句
+        while(token!='}') {
+            statement();
+        }
+
+        //离开函数
+        *++text=LEV;
+    }
+}
+
+//enum声明
+void enum_declaration(){
+    //parse enum [id] { a=1, b=2, ...}
+    int i;
+    i=0;
+    while(token!='}'){
+        if(token!=Id){
+            printf("%d: bad enum idenifier %d\n", line, token);
+            exit(-1);
+        }
+        next();
+        if(token==Assign){
+            // like {a=1}
+            next();
+            if(token!=Num){
+                printf("%d: bad enum initializer\n", line);
+                exit(-1);
+            }
+            i=token_val;
+            next();
+        }
+
+        current_id[Class]=Num;
+        current_id[Type]=INT;
+        current_id[Value]=i++;
+
+        if(token==',') {
+            next();
+        }
+    }
+}
+
+//函数声明
+void function_declaration(){
+    //type func_name (...) {...}
+    match('(');
+    function_parameter();
+    match(')');
+    match('{');
+    function_body();
+    //match('}');
+
+    // 恢复被局部变量隐藏的全局变量
+    current_id=symbols;
+    while(current_id[Token]){
+        if(current_id[Class]==Loc){
+            current_id[Class]=current_id[BClass];
+            current_id[Type]=current_id[BType];
+            current_id[Value]=current_id[BValue];
+        }
+        current_id=current_id+IdSize;
+    }
+}
+
+//全局声明
+void global_declaration(){
+    /*
+    global_declaration := enum_decl | variable_decl | function_decl
+
+    enum_decl := 'enum' [id] '{' id ['=' 'num'] {',' id ['=' 'num']} '}'
+
+    variable_decl := type {'*'} id { ',' {'*'} id} ';'
+
+    function_decl := type {'*'} id '(' parameter_decl ')' '{' body_decl '}'
+    */
+
+    int type;       //变量类型
+
+    //TODO: i没有使用，可否删除?
+    int i;          //tmp
+
+    //Enum定义
+    if(token==Enum){
+        // enum [id] {a=1, b=2, ...}
+        match(Enum);
+        if(token!='{'){
+            match(Id);
+        }
+        if(token=='{'){
+            // 分析赋值部分
+            match('{');
+            enum_declaration();
+            match('}');
+        }
+
+        match(';');
+        return;
+    }
+
+    // 分析类型信息
+    baseType=INT;
+    if(token==Int) {
+        match(Int);
+    }
+    else if(token==Char){
+        match(Char);
+        basetype=CHAR;
+    }
+
+    //分析以逗号分离的变量定义
+    while(token!=';' && token!='}'){
+        type=basetype;
+
+        //指针
+        while(token==Mul){
+            match(Mul);
+            type=type+PTR;
+        }
+
+        //类型定义错误: 没有匹配到标识符
+        if(token!=Id){
+            printf("%d: bad global declaration\n", line);
+            exit(-1);
+        }
+
+        //重定义
+        if(current_id[Class]){
+            printf("%d: duplicate global declaration\n", line);
+            exit(-1);
+        }
+
+        match(Id);
+
+        //回填Type
+        current_id[Type]=type;
+
+        //函数定义
+        if(token=='('){
+
+            //回填Class、Value
+            current_id[Class]=Fun;              //函数类型
+            current_id[Value]=(int)(text+1);    //函数的内存地址
+            function_declaration();
+        }
+
+        //类型定义
+        else{
+            current_id[Class]=Glo;              //全局变量
+            current_id[Value]=(int)data;        //变量的内存地址
+            data=data+sizeof(int);
+        }
+
+        //下一个变量定义
+        if(token ==',') {
+            match(',');
+        }
+    }
+    next();
+}
+
+//语法分析入口，分析整个C语言程序
+void program(){
+    next();
+    while(token>0) {
+        global_declaration();
+    }
+}
+
+//虚拟机的入口
+int eval(){
+    int op, *tmp;
+
+    
+    while(1){
+
+        //取一条指令
+        op=*pc++;
+
+        //等效于MOVE指令
+        /*
+        为何在SI/SC指令中，地址存放在栈中，而LI/LC指令中，地址存放在ax中？
+        因为默认计算结果放在ax中，而地址通常需要通过计算获得，故执行LI/LC时
+        直接从ax取会更高效。PUSH指令只能将ax的值放到栈上，而不能以值作为参数。
+        */
+        if(op==IMM)     { ax=*pc++; }               //取立即数
+        else if(op==LC) { ax=*((char*)ax); }        //取char
+        else if(op==LI) { ax=*((int*)ax); }         //取int
+        else if(op==SC) { *((char*)*sp++)=ax; }     //存储char
+        else if(op==SI) { *((int*)*sp++)=ax; }      //存储int
+
+        //PUSH/JUMP类
+        else if(op==PUSH)   { *--sp=ax; }                   //ax中的值入栈
+        else if(op==JMP)    { pc=(int*)*pc; }               //跳转
+        else if(op==JZ)     { pc=ax?pc+1: (int*)*pc; }      //ax中为0则跳转
+        else if(op==JNZ)    { pc=ax?(int*)*pc : pc+1; }     //ax中为非0则跳转
+
+        //子程序调用
+        else if(op==CALL)   { *--sp=(int)(pc+1); pc=(int*)*pc; }        //子程序调用
+        else if(op==ENT)    { *--sp=(int)bp; bp=sp; sp=sp-*pc++; }      //pc中的值？
+        else if(op==ADJ)    { sp=sp+*pc++; }                            //清除函数调用时压入栈中的数据
+        else if(op==LEV)    { sp=bp; bp=(int*)*sp++;pc=(int*)*sp++; }   //恢复bp/sp/pc，退出函数调用
+        else if(op==LEA)    { ax=(int)(bp+*pc++); }                     //获取第一个参数的地址
+
+        //运算符指令
+        //每个运算符都是二元的，第一个参数放在栈顶，第二个参数放在ax中
+        else if(op==OR)     { ax=*sp++ | ax;    }
+        else if(op==XOR)    { ax=*sp++ ^ ax;    }
+        else if(op==AND)    { ax=*sp++ & ax;    }
+        else if(op==EQ)     { ax=*sp++ == ax;   }
+        else if(op==NE)     { ax=*sp++ != ax;   }
+        else if(op==LT)     { ax=*sp++ < ax;    }
+        else if(op==LE)     { ax=*sp++ <= ax;   }
+        else if(op==GT)     { ax=*sp++ > ax;    }
+        else if(op==GE)     { ax=*sp++ >= ax;   }
+        else if(op==SHL)    { ax=*sp++ << ax;   }
+        else if(op==SHR)    { ax=*sp++ >> ax;   }
+        else if(op==ADD)    { ax=*sp++ + ax;    }
+        else if(op==SUB)    { ax=*sp++ - ax;    }
+        else if(op==MUL)    { ax=*sp++ * ax;    }
+        else if(op==DIV)    { ax=*sp++ / ax;    }
+        else if(op==MOD)    { ax=*sp++ % ax;    }
+
+        //内置函数
+        else if(op==EXIT)   { printf("exit(%d)\n", *sp); return *sp; }    //退出
+        else if(op==OPEN)   { ax=open((char*)sp[1], sp[0]); }           //打开文件
+        else if(op==CLOS)   { ax=close(*sp); }                          //关闭文件
+        else if(op==READ)   { ax=read(sp[2], (char*)sp[1], *sp); }      //读取文件
+        else if(op==PRTF)   {                                           //输出
+            tmp=sp+pc[1];
+            ax=printf((char*)tmp[-1], tmp[-2], tmp[-3], tmp[-4], tmp[-5], tmp[-6]);
+        }
+        else if(op==MALC)   { ax=(int)malloc(*sp); }                            //申请内存
+        else if(op==MSET)   { ax=(int)memset((char*)sp[2], sp[1], *sp); }       //设置内存中的值
+        else if(op==MCMP)   { ax=memcmp((char*)sp[2], (char*)sp[1], *sp); }     //内存值比较
+        else {
+            printf("unknown instruction : %d", op);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+//main
+int main(int argc, char** argv){
+    int i, fd;
+    int* tmp;
+
+    //跳过程序名本身
+    --argc;
+    ++argv;
+
+    //打开argv所指的文件
+    if((fd=open(*argv, 0))<0){
+        printf("could not open(%s)\n", *argv);
+        return -1;
+    }
+
+    poolsize=256*1024;          //任意数值
+    line=1;                     //当前为源程序第1行
+
+    //为虚拟机分配内存
+    if(!(text=old_text=malloc(poolsize))){
+        printf("could not malloc(%d) for text area\n", poolsize);
+        return -1;
+    }
+
+    if(!(data=malloc(poolsize))){
+        printf("could not malloc(%d) for data area\n", poolsize);
+        return -1;
+    }
+
+    if(!(stack=malloc(poolsize))){
+        printf("could not malloc(%d) for stack area\n", poolsize);
+        return -1;
+    }
+
+    //初始化内存
+    memset(text, 0, poolsize);
+    memset(data, 0, poolsize);
+    memset(stack, 0, poolsize);
+
+    old_text=text;
+
+    //添加内置类型
+    src="char else enum if int return sizeof while"
+        "open read close printf malloc memset memcmp exit void main";
+    i=Char;
+    while(i<=While){
+        next();
+        current_id[Token]=i++;
+    }
+
+    i=OPEN;
+    while(i<=EXIT){
+        next();
+        current_id[Class]=Sys;
+        current_id[Type]=INT;
+        current_id[Value]=i++;
+    }
+
+    next(); current_id[Token]=Char; //void 类型
+    next(); idmain=current_id;      //keep track of main
+
+    //分配内存用于存放源代码
+    if(!(src=old_src=malloc(poolsize))){
+        printf("could not malloc(%d) for source area\n", poolsize);
+        return -1;
+    }
+
+    //读取源文件代码
+    if((i=read(fd, src, poolsize-1))<=0){
+        printf("read() returned %d\n", i);
+        return -1;
+    }
+    src[i]=0;       //添加EOF
+    close(fd);
+
+    program();          //进行解析
+
+    if(!(pc=(int*)idmain[Value])){
+        printf("main() not defined\n");
+        return -1;
+    }
+
+    //dump_text();
+    if(assembly){
+        //only for compile
+        return 0;
+    }
+
+    //因stack为void*, 先将其转化为int，再加上poolsize
+    //stack便指向分配的内存的高地址处，再转化为int*赋值给bp和sp
+    bp=sp=(int*)((int)stack+poolsize);
+    *--sp=EXIT;
+    *--sp=PUSH; tmp=sp;
+    *--sp=argc;
+    *--sp=(int)argv;
+    *--sp=(int)tmp;
+    
+    ax=0;
+
+    eval();             //执行程序
+    
+    return 0;           //退出程序
+}
+
+//expression: 复制到上方
