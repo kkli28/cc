@@ -999,6 +999,11 @@ int main(int argc, char** argv){
 
 //expression: 复制到上方
 //TODO: expression(level) 中level的取值规则是什么?
+/*
+貌似是，如 a+b*c，先匹配a，然后进入expression(Mul)，意为
+若要抢走+后的元素，需要至少Mul优先级。
+若为a+b+c，则因后一个+的level<Mul，因此先计算a+b，然后再计算+c。
+*/
 void expression(int level){
     // expressions have various format.
     // but majorly can be divided into two parts: unit and operator
@@ -1244,7 +1249,7 @@ void expression(int level){
         }
         
         //+ 正号，并非加号
-        else if(token==And){
+        else if(token==Add){
             //+var, do nothing
             match(Add);
             expression(Inc);
@@ -1462,7 +1467,136 @@ void expression(int level){
                 expr_type=INT;
             }
 
-            //TODO: token == Shl
+            // <<
+            else if(token==Shl){
+                match(Shl);
+                *++text=PUSH;
+                expression(Add);
+                *++text=SHL;
+                expr_type=INT;
+            }
+
+            // >>
+            else if(token==Shr){
+                match(Shr);
+                *++text=PUSH;
+                expression(Add);
+                *++text=SHR;
+                expr_type=INT;
+            }
+
+            // +，加号
+            else if(token==Add){
+                match(Add);
+                *++text=PUSH;
+                expression(Mul);
+
+                expr_type=tmp;      //结果为被加数类型
+
+                //int* 加上一个数值，需要将数值乘以4
+                /*
+                如: *a+2，则先match(Add)，然后expression(Mul)会写入指令
+                IMM
+                2
+                然后由于a为int指针类型，故先让2*4，指令为
+                IMM
+                4
+                MUL
+                然后再相加，既a+8
+                */
+                if(expr_type>PTR){
+                    *++text=PUSH;
+                    *++text=IMM;
+                    *++text=sizeof(int);
+                    *++text=MUL;
+                }
+                //char* 或 普通变量/常量 加上一个数值，可直接加
+                *++text=ADD;
+            }
+
+            //-，减号
+            else if(token==Sub){
+                match(Sub);
+                *++text=PUSH;
+                expression(Mul);
+
+                //int* 与 int* 相减
+                if(tmp>PTR && tmp==expr_type){
+                    *++text=SUB;        //先直接减
+                    *++text=PUSH;
+                    *++text=IMM;
+                    *++text=sizeof(int);
+                    *++text=DIV;        //再除以4
+                    expr_type=INT;
+                }
+
+                //int* 减去一个数值
+                else if(tmp>PTR){
+                    *++text=PUSH;
+                    *++text=IMM;
+                    *++text=sizeof(int);
+                    *++text=MUL;
+                    *++text=SUB;
+                    expr_type=tmp;      //结果为指针类型
+                }
+
+                //普通数值间相减，如a-b
+                //char*与char*相减，如c1-c2，(c1/c2均为char*型)
+                //char*与数值 相减，如c1-1，(c1为char*型)
+                else{
+                    *++text=SUB;
+                    expr_type=tmp;
+                }
+            }
+
+            //*，乘号
+            else if(token==Mul){
+                match(Mul);
+                *++text=PUSH;
+                expression(Inc);
+                *++text=MUL;
+                expr_type=tmp;
+            }
+
+            // /，除号
+            else if(token==Div){
+                match(Div);
+                *++text=PUSH;
+                expression(Inc);
+                *++text=DIV;
+                expr_type=tmp;
+            }
+
+            // %，模
+            else if(token==Mod){
+                match(Mod);
+                *++text=PUSH;
+                expression(Inc);
+                *++text=MOD;
+                expr_type=tmp;
+            }
+
+            //后置++或--
+            else if(token==Inc || token==Dec){
+                if(*text==LI){
+                    *text=PUSH;
+                    *++text=LI;
+                }
+                else if(*text==LC){
+                    *text=PUSH;
+                    *++text=LC;
+                }
+                else{
+                    printf("%d: bad value in increment\n", line);
+                    exit(-1);
+                }
+
+                *++text=PUSH;
+                *++text=IMM;
+                *++text=(expr_type>PTR)?sizeof(int): sizeof(char);
+                *++text=(token==Inc)?ADD: SUB;
+                *++text=(expr_type==CHAR)?SC: SI;
+            }
         }
     }
 }
