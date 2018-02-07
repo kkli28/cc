@@ -111,13 +111,14 @@ int token_val;          //当前token的值
 int line;               //line number
 
 //the type of declaration, make it global for convenience
-//TODO: int basetype;
+int basetype;
+int expr_type;
 
 //function frame
 //TODO: 0: arg1...
 
 //index of bp pointer on stack
-//TODO: int index_of_bp;
+int index_of_bp;
 
 //获取下一个Token
 //若获取成功，则return。若遇到空白符则继续获取，直到成功获取Token。
@@ -189,7 +190,7 @@ void next(){
                         token=current_id[Token];
                         return;
                 }
-
+                
                 //没有找到同名的，继续找下一个
                 current_id=current_id+IdSize;
             }
@@ -284,6 +285,7 @@ void next(){
             if(token=='"'){
                 token_val=(int)last_pos;
             }
+            
             //字符则返回Num
             else {
                 token=Num;
@@ -442,7 +444,15 @@ void next(){
 }
 
 //function: match
-//TODO: void match(int tk)...
+void match(int tk){
+    if(token==tk){
+        next();
+    }
+    else{
+        printf("%d: expected token: %d\n", line, tk);
+        exit(-1);
+    }
+}
 
 //expression
 void expression(int level){
@@ -453,29 +463,284 @@ void expression(int level){
 //TODO: void statement()...
 
 //function: enum_declaration
-//TODO: void enum_declaration()...
+void enum_declaration(){
+    //解析enum中的列表: enum [id] { a=1, b=2, ...... }
+    //位置:                        | <-- here --> |
+    int i;  //enum内变量的值，从0开始
+    i=0;
+    while(token!='}'){
+        if(token!=Id){
+            printf("%d: bad enum identifier %d\n", line, token);
+            exit(-1);
+        }
+        next();
+
+        //a=2型，即enum内变量有赋值行为
+        if(token==Assign){
+            next();
+            if(token!=Num){
+                printf("%d: bad enum initializer\n", line);
+                exit(-1);
+            }
+            i=token_val;    //获取当前enum变量的值
+            next();
+        }
+
+        current_id[Class]=Num;
+        current_id[Type]=INT;
+        current_id[Value]=i++; //若有值，则i被改变。若无值，则i从0开始
+
+        //后面还有变量定义
+        if(token==','){
+            next();
+        }
+    }
+}
 
 //function: function_parameter
-//TODO: void function_parameter()...
+void function_parameter(){
+    //type func_name ( type arg1, type arg2, ... ) {...}
+    //位置:            | <-- here ------------> |
+
+    int type;       //TODO: 啥?
+    int params;     //TODO: 啥?
+    params=0;
+
+    while(token!=')'){
+        type=INT;
+        if(token==Int){
+            match(Int);
+        }
+        else if(token==Char){
+            match(Char);
+            type=CHAR;
+        }
+
+        //指针类型
+        while(token==Mul){
+            match(Mul);
+            type=type+PTR;
+        }
+
+        //参数名
+        if(token!=Id){
+            printf("%d: bad parameter declaration\n", line);
+            exit(-1);
+        }
+
+        //如果为局部变量，则表示已存在同名局部变量
+        if(current_id[Class]==Loc){
+            printf("%d: duplicate parameter declaration\n", line);
+            exit(-1);
+        }
+
+        match(Id);
+        //存放局部变量
+        //Value中存放的是参数的位置
+        current_id[BClass]=current_id[Class]; current_id[Class]=Loc;
+        current_id[BType]=current_id[Type]; current_id[Type]=type;
+        current_id[BValue]=current_id[Value]; current_id[Value]=params++;
+
+        //还有参数待解析
+        if(token==','){
+            match(',');
+        }
+    }
+    index_of_bp=params+1;  //info.md中new_bp的位置
+}
 
 //function: function_body
-//TODO: void function_body()...
+void function_body(){
+    //type func_name ( type arg1, type arg2, ... ) { ... }
+    //位置:                                         |<-->|
+
+    int pos_local;  //局部变量在栈上的位置
+    int type;
+    pos_local=index_of_bp;
+
+    //局部变量定义
+    while(token==Int || token==Char){
+        basetype=(token==Int)?INT:CHAR;
+        match(token);
+
+        while(token!=';'){
+            type=basetype;
+            //指针类型
+            while(token==Mul){
+                match(Mul);
+                type=type+PTR;
+            }
+            //没有找到变量名
+            if(token!=Id){
+                printf("%d: bad local declaration\n", line);
+                exit(-1);
+            }
+            //变量重复定义
+            if(current_id[Class]==Loc){
+                printf("%d: duplicate local declaration\n", line);
+                exit(-1);
+            }
+            match(Id);
+            
+            //存放局部变量
+            //Value存放变量相对于new_bp的位置
+            current_id[BClass]=current_id[Class];
+            current_id[Class]=Loc;
+            current_id[BType]=current_id[Type];
+            current_id[Type]=type;
+            current_id[BValue]=current_id[Value];
+            current_id[Value]=++pos_local;
+
+            //还有变量定义，如int a, b;
+            if(token==','){
+                match(',');
+            }
+        }
+        match(';');
+    }
+
+    //为局部变量预留空间
+    //ENT的作用: bp入栈，bp指向sp，sp预留空间用于存放局部变量
+    //ENT的实现: *--sp=(int)bp; bp=sp; sp=sp-*pc++;
+    //sp下移的位置由*pc指出，即下方的*++text=pos_local-index_of_bp;
+    *++text=ENT;
+    *++text=pos_local-index_of_bp;  //存放局部变量个数
+
+    //statements
+    while(token!='}'){
+        statement();
+    }
+
+    //函数退出
+    //LEV功能: 从bp中恢复sp，bp出栈，pc出栈
+    //LEV实现: sp=bp; bp=(int*)*sp++; pc=(int*)*sp++;
+    *++text=LEV;
+}
 
 //function: function_declaration
-//TODO: void function_declaration()...
+void function_declaration(){
+    //type func_name ( type arg1, type arg2, ... ) {...}
+    //位置:          | <-- here ---------------------> |
+    
+    match('(');
+    function_parameter();
+    match(')');
+    match('{');
+    function_body();
+    //需要在 global_declaration中匹配，用于退出当前函数定义
+    //match('}')
+    
+    //将被局部变量隐藏的全局变量复原
+    current_id=symbols;
+    while(current_id[Token]){
+        //若当前变量是局部变量，则其对应的全局变量信息存放在Bxxx中
+        if(current_id[Class]==Loc){
+            current_id[Type]=current_id[BType];
+            current_id[Class]=current_id[BClass];
+            current_id[Value]=current_id[BValue];
+        }
+
+        //步进 IdSize，current_id指向下一个标识符信息首部
+        current_id=current_id+IdSize;
+    }
+}
 
 //function: global_declaration
-//TODO: void global_declaration()...
+void global_declaration(){
+    int type;   //变量的实际类型
+    int i;      //TODO: 未知
+
+    basetype=INT;
+
+    //解析enum
+    if(token==Enum){
+        //enum [id] {a=10, b=20, ... }
+        match(Enum);
+        if(token!='{'){
+            match(Id);
+        }
+        if(token=='{'){
+            match('{');
+            enum_declaration();
+            match('}');
+        }
+        match(';');
+        return;
+    }
+
+    //解析类型信息
+    if(token==Int){
+        match(Int);
+    }
+    else if(token==Char){
+        match(Char);
+        basetype=Char;
+    }
+    //两者都不是，默认为int型
+
+    //遇到 ';' 或 '}' 则解析完一次全局定义
+    //int a; int* b; 是两次全局定义，分别在两次global_declaration中解析
+    while(token!=';' && token!='}'){
+        type=basetype;
+
+        //多级指针
+        while(token==Mul){
+            match(Mul);
+            type=type+PTR;
+        }
+
+        //没有匹配到Id，如int 3;
+        if(token!=Id){
+            printf("%d: bad glocal declaration\n", line);
+            exit(-1);
+        }
+
+        //变量重复定义
+        if(current_id[Class]){
+            printf("%d: duplicate global declaration\n", line);
+            exit(-1);
+        }
+
+        match(Id);
+
+        //next()中current_id指向当前标识符信息首部
+        //next()中只填了Name/Hash/Token，现在Type回填
+        current_id[Type]=type;
+        
+        //函数定义
+        if(token=='('){
+            current_id[Class]=Fun;
+            current_id[Value]=(int)(text+1);
+            function_declaration(); //解析函数的参数列表和函数体
+        }
+
+        //普通变量定义
+        else{
+            current_id[Class]=Glo;
+            //data预留4个空间给当前变量存放值
+            //因为是变量声明，所以该地址还没有填入任何值
+            current_id[Value]=(int)data;
+            data=data+sizeof(int);
+        }
+
+        //int a, b, c;中的逗号，后续还是变量定义
+        if(token==','){
+            match(',');
+        }
+    }
+
+    //使用完token后，还需要调用next，给其他地方使用
+    next();
+}
 
 //program
 void program(){
-    /*
     next();
+
+    //多次全局定义
     while(token>0){
-        printf("token is: %c\n", token);
-        next();
+        global_declaration();
     }
-    */
 }
 
 //虚拟机

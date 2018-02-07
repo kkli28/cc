@@ -214,3 +214,75 @@ Inc  Dec  Brak(左方括号[)
 
 对于内置关键字，在程序开始时先将他们添加到符号表。在解析时遇到时，
 因为符号表已有相关项目，则直接返回其Token域即可。
+
+> 4. 递归下降(没啥可讲的)
+
+> 5. 变量定义
+
+EBNF定义：
+```
+program = {global_declaration} +
+
+global_declaration = 
+    enum_declaration
+    | variable_declaration
+    | function_definition
+
+enum_declaration =
+    'enum' [id] '{' id ['=' num] {',' id ['=' num]} + '}' ';'
+
+variable_declaration =
+    type {'*'}+ id {',' {'*'}+ id }+ ';'
+
+function_definition =
+    type {'*'}+ id '(' parameter_declaration ')'
+    '{' body_definition '}'
+
+parameter_declaration = {type {'*'}+ id}+
+
+body_definition = {variable_declaration}+ {statement}+
+
+statement =
+    if_statement | while_statement
+    | '{' statement '}' | 'return' expression ';'
+    | expression ';' | ';'
+
+if_statement =
+    'if' '(' expression ')' statement
+    ['else' statement]
+
+while_statement =
+    'while' '(' expression ')' statement
+```
+
+> 6. 函数定义
+
+当函数被调用时栈的状态:
+```
+//函数定义
+//int demo(int arg1, int arg2){
+//    int local1;
+//    int local2;
+//    ...    
+//}
+
+//栈的状态
+|   ......   |  high address
++------------+
+|  arg1      |  new_bp + 3
++------------+
+|  arg2      |  new_bp + 2
++------------+
+|  ret addr  |  new_bp + 1
++------------+
+|  old_bp    |  new_bp
++------------+
+|  local1    |  new_bp - 1
++------------+
+|  local2    |  new_bp - 2
++------------+
+|   ......   |  low address
+```
+
+在函数内使用参数和局部变量是通过 `new_bp` 指针与对应位移进行的。
+
