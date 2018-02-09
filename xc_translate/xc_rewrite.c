@@ -458,9 +458,9 @@ void match(int tk){
 
 //expression
 void expression(int level){
-    int *id;    //TODO: current_id的指针
-    int tmp;    //TODO: 函数调用时参数的个数
-    int *addr;  //TODO: ?
+    int *id;    //current_id的指针
+    int tmp;    //函数调用时参数的个数、表达式类型
+    int *addr;  //跳转地址
 
     //一元运算符
     {
@@ -526,7 +526,6 @@ void expression(int level){
         }
 
         //取变量的值和函数调用都是以Id标记开始
-        //HERE
         else if(token==Id){
             match(Id);
             id=current_id;
@@ -560,23 +559,263 @@ void expression(int level){
                     exit(-1);
                 }
 
-                //函数调用结束，需要返回
+                //函数调用结束，若有参数，需要将其出栈
                 if(tmp>0){
-                    *++text=ADJ; //ADJ <num> 将参数出栈
+                    *++text=ADJ; 
                     *++text=tmp;
                 }
                 expr_type=id[Type];  //表达式类型为函数返回类型
             }
 
+            //enum变量
             else if(id[Class]==Num){
-
+                *++text=IMM;
+                *++text=id[Value];
+                expr_type=INT;
             }
+
+            //变量
+            else{
+                //局部变量，其符号表Value域存放的是其相对于
+                //new_bp的位置
+                if(id[Class]==Loc){
+                    *++text=LEA;
+                    *++text=index_of_bp-id[Value];
+                }
+                //全局变量，直接从其地址加载值
+                else if(id[Class]==Glo){
+                    *++text=IMM;
+                    *++text=id[Value];
+                }
+                else{
+                    printf("%d: undefined variable\n", line);
+                    exit(-1);
+                }
+
+                expr_type=id[Type];
+                *++text=(expr_type==CHAR)?LC: LI;
+            }
+        }
+
+        //强制转换 或 括号运算
+        else if(token=='('){
+            match('(');
+            //强制转换
+            if(token==Int || token==Char){
+                tmp=(token==Char)? CHAR: INT; //转换后的类型
+                match(token);
+                while(token==Mul){
+                    match(Mul);
+                    tmp=tmp+PTR;
+                }
+                match(')');
+
+                //强制转换运算符和++运算符有相同的优先级
+                expression(Inc);
+                expr_type=tmp;
+            }
+
+            //括号运算
+            else{
+                expression(Assign);
+                match(')');
+            }
+        }
+
+        //解引用 *
+        else if(token==Mul){
+            match(Mul);
+            //解引用运算符和++有相同的优先级
+            expression(Inc);
+
+            if(expr_type>=PTR){
+                expr_type=expr_type-PTR;
+            }
+            else{
+                printf("%d: bad dereference\n", line);
+                exit(-1);
+            }
+
+            //若是多次解引用，如****a，则每次都解一次引用
+            //每次都LC或LI，最终将多次解引用，从而得到正确的结果
+            *++text=(expr_type==CHAR)? LC: LI;
+        }
+
+        //取地址 &
+        else if(token==And){
+            match(And);
+            expression(Inc);
+            
+            //对变量int a; 取地址，即&a，当进入expression(Inc)中时，
+            //会生成指令：
+            //IMM <addr>
+            //LI
+            //取地址则只需将其LI指令去掉即可
+            if(*text==LC || *text==LI){
+                --text;
+            }
+            else {
+                printf("%d: bad address of\n", line);
+                exit(-1);
+            }
+
+            expr_type=expr_type+PTR;  //类型时前一次类型的指针类型
+        }
+
+        //非 !
+        else if(token=='!'){
+            match('!');
+            expression(Inc);
+            
+            //!expr 即 expr == 0
+            *++text=PUSH;
+            *++text=IMM;
+            *++text=0;
+            *++text=EQ;
+
+            expr_type=INT;
+        }
+
+        //按位取反 ~
+        else if(token=='~'){
+            match('~');
+            expression(Inc);
+
+            //~expr 即 expr XOR -1
+            *++text=PUSH;
+            *++text=IMM;
+            *++text=-1;
+            *++text=XOR;
+
+            expr_type=INT;
+        }
+
+        //+expr 即 expr
+        else if(token==Add){
+            match(Add);
+            expression(Inc);
+            expr_type=INT;
+        }
+
+        //-expr 即 expr*(-1)
+        else if(token==Sub){
+            match(Sub);
+
+            //-1型，则match(token)后，token_val为1
+            //则直接取-token_val即可
+            if(token==Num){
+                *++text=Imm;
+                *++text=-tokan_val;
+                match(Mum);
+            }
+
+            //-a型，则需要a*(-1)
+            else{
+                //将-1进栈
+                *++text=IMM;
+                *++text=-1;
+                *++text=PUSH;
+
+                //将a计算后放入ax中
+                expression(Inc);
+
+                //ax中的值乘以-1，即-a
+                *++text=MUL;
+            }
+            expr_type=INT;
+        }
+
+        //前置++/--
+        else if(token==Inc||token==Dec){
+            tmp=token;
+            match(token);
+            expression(Inc);
+
+            //变量的地址将用到两次，第一次取变量值，第二次将
+            //递增后的值写回
+            //因此步骤为：
+            //1. 将变量的地址入栈，并将其值取出放到ax中
+            //2. 变量中的值+1，并将该值写回变量地址
+
+            //1
+            if(*text==LC){
+                *text=PUSH;
+                *++text=LC;
+            }
+            else if(*text==LI) {
+                *text=PUSH;
+                *++text=LI;
+            }
+            else {
+                printf("%d: bad lvalue of pre-increment\n", line);
+                exit(-1);
+            }
+
+            //2
+            *++text=PUSH;
+            *++text=IMM;
+
+            //普通变量+1
+            //TODO: ?当时char*型呢？还是+4?
+            *++text=(expr_type>PTR)?sizeof(int): sizeof(char);
+            *++text=(tmp==Inc)?ADD: SUB;
+            *++text=(expr_type==CHAR)?SC: SI;
+        }
+        else{
+            printf("%d: bad expression\n", line);
+            exit(-1);
         }
     }
 
     //二元运算符
     {
+        while(token>=level){
+            tmp=expr_type;
 
+            //赋值
+            if(token==Assign){
+                match(Assign);
+                if(*text==LC || *text==LI){
+                    *text=PUSH;  //保存左值的指针
+                }
+                else{
+                    printf("%d: bad lvalue in assignment\n", line);
+                    exit(-1);
+                }
+                expression(Assign);
+                *++text=(expr_type==CHAR)? SC: SI;
+            }
+
+            //三元操作 expr?a: b，类似小型if语句
+            else if(token==Cond){
+                match(Cond);
+                *++text=JZ;
+                addr=++text;
+                expression(Assign);
+                if(token==':'){
+                    match(':');
+                }
+                else{
+                    printf("%d: missing colon in conditional\n", line);
+                    exit(-1);
+                }
+                *addr=(int)(text+3);
+                *++text=JMP;
+                addr=++text;
+                expression(Cond);  //第二个表达式优先级高于Assign
+                *addr=(int)(text+1);
+            }
+
+            //逻辑或
+            else if(token==Lor){
+                match(Lor);
+                *++text=JNZ;
+                addr=++text;
+                expression(Lan);    //当前表达式需要至少&&才能抢走操作数
+                *addr=(int)(text+1);
+                expr_type=INT;
+            }
+        }
     }
 }
 
