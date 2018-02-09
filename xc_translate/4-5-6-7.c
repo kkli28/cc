@@ -290,7 +290,7 @@ void next(){
                 }
             }
 
-            src++;
+            ++src;
             if(token=='"') {
                 token_val=(int)last_pos;
             }

@@ -261,6 +261,8 @@ void next(){
         }
 
         //遇到 " 或 '，则可能是字符(串)
+        //若是字符串，则token为 "，token_val为其首地址
+        //若是单个字符，则token为Num，token_val为其十进制值
         else if(token=='"' || token=='\''){
             //仅支持 '\n'，若是字符串，则将其放入data中
             last_pos=data;
@@ -456,11 +458,240 @@ void match(int tk){
 
 //expression
 void expression(int level){
-    //do nothing
+    int *id;    //TODO: current_id的指针
+    int tmp;    //TODO: 函数调用时参数的个数
+    int *addr;  //TODO: ?
+
+    //一元运算符
+    {
+        if(!token){
+            printf("%d: unexpected token EOF of expression\n", line);
+            exit(-1);
+        }
+
+        //立即数
+        if(token==Num){
+            match(Num);
+
+            //生成: IMM val
+            *++text=IMM;
+            *++text=token_val;
+            expr_type=INT;      //记录表达式类型
+        }
+
+        //字符串
+        else if(token=='"'){
+            //生成: IMM token_val
+            *++text=IMM;
+            *++text=token_val;
+            match('"');
+
+            //载入后续的字符串，因为多个字符串都在data中连续存放，
+            //因此不需要再 IMM token_val 了。详见info.md
+            while(token=='"'){
+                match('"');
+            }
+
+            //(int)data+sizeof(int)即在字符串末尾添加 '\0'
+            //因data初始化为0，因此只需后移一个int位置即可
+            //& (-sizeof(int)) 为字节对其到int
+            data=(char*)(((int)data+sizeof(int)) & (-sizeof(int)));
+            expr_type=PTR;  //字符串为指针类型
+        }
+
+        //sizeof
+        //仅有: sizeof(int), sizeof(char), sizeof(PTR)
+        else if(token==Sizeof){
+            match(Sizeof);
+            match('(');
+            expr_type=INT;
+            if(token==Int){
+                match(Int);
+            }
+            else{
+                match(Char);
+                expr_type=CHAR;
+            }
+            while(token==Mul){
+                match(Mul);
+                expr_type=expr_type=PTR;
+            }
+            match(')');
+            
+            //生成: IMM val
+            //若为sizeof(char)则val为1，否则为4
+            *++text=IMM;
+            *++text=(expr_type==CHAR)? sizeof(char): sizeof(int);
+            expr_type=INT;  //表达式的值，为INT
+        }
+
+        //取变量的值和函数调用都是以Id标记开始
+        //HERE
+        else if(token==Id){
+            match(Id);
+            id=current_id;
+
+            //函数调用
+            if(token=='('){
+                match('(');
+                tmp=0;
+                while(token!=')'){
+                    expression(Assign); //参数是一个表达式
+                    *++text=PUSH;  //参数顺序进栈
+                    ++tmp;
+                    if(token==','){
+                        match(',');
+                    }
+                }
+                match(')');
+
+                //系统内置函数
+                if(id[Class]==Sys){
+                    *++text=id[Value];  //函数名就是指令
+                }
+                //自定义的函数
+                else if(id[Class]==Fun){
+                    *++text=CALL;
+                    *++text=id[Value]; //CALL <addr>
+                }
+                //并非函数
+                else{
+                    printf("%d: bad function call\n", line);
+                    exit(-1);
+                }
+
+                //函数调用结束，需要返回
+                if(tmp>0){
+                    *++text=ADJ; //ADJ <num> 将参数出栈
+                    *++text=tmp;
+                }
+                expr_type=id[Type];  //表达式类型为函数返回类型
+            }
+
+            else if(id[Class]==Num){
+
+            }
+        }
+    }
+
+    //二元运算符
+    {
+
+    }
 }
 
 //function: statement
-//TODO: void statement()...
+void statement(){
+    int *a, *b;  //跳转点a和b
+
+    //if语句
+    if(token==If){
+        //code                  assembly
+        //if (...)              <cond>
+        //                      JZ a
+        //  <true-statement>    <true-statement>
+        //                      JMP b
+        //else
+        //                      a:
+        //  <false-statement>   <false-statement>
+        //b:                    b:
+        match(If);
+        match('(');
+        
+        //表达式level为Assign
+        //生成: <cond>
+        expression(Assign);
+        match(')');
+
+        //生成: JZ  //JZ a
+        *++text=JZ;
+        b=++text;   //用于存放 JZ a 中操作数a的位置
+
+        //生成: <true-statement>
+        statement();
+        if(token==Else){
+            match(Else);
+
+            //填入a的位置
+            //text为<true-statement>最后一条指令
+            //text+1和text+2为给JMP b预留空间
+            //text+1为JMP，text+2为JMP b中的b
+            *b=(int)(text+3);
+
+            //生成: JMP  //JMP b
+            *++text=JMP;
+            b=++text;  //用于存放JMP b中操作数b的位置
+
+            //生成: <false-statement>
+            statement();
+        }
+        *b=(int)(text+1);  //放入b的位置
+    }
+
+    //while语句
+    else if(token==While){
+        //code              assembly
+        //a:                a:
+        //while (<cond>)    <cond>
+        //                  JZ b
+        //  <statement>     <statement>
+        //                  JMP a
+        //b:                b:
+
+        match(While);
+        a=text+1;           //记录a的位置
+        match('(');
+        expression(Assign);
+        match(')');
+
+        //生成: JZ  //JZ b
+        *++text=JZ;
+        b=++text;           //用于存放JZ b中操作数b的位置
+
+        //生成: <statement>
+        statement();
+
+        //生成: JMP  //JMP a
+        *++text=JMP;
+        *++text=(int)a;     //放入a的位置
+        *b=(int)(text+1);   //放入b的位置
+    }
+
+    //块语句 {statement}
+    else if(token=='{'){
+        match('{');
+
+        //{} 中可能包含多个statement
+        while(token!='}'){
+            statement();
+        }
+        match('}');
+    }
+
+    //return语句
+    else if(token==Return){
+        match(Return);
+        if(token!=';'){
+            expression(Assign); //表达式level为Assign
+        }
+        match(';');
+
+        //return意味着将要退出函数，用LEV来表示
+        //生成: LEV
+        *++text=LEV;
+    }
+
+    //空语句
+    else if(token==';'){
+        match(';');
+    }
+
+    //expression; ，如a=b;或函数调用func();
+    else{
+        expression(Assign);
+        match(';');
+    }
+}
 
 //function: enum_declaration
 void enum_declaration(){
