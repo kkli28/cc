@@ -806,7 +806,7 @@ void expression(int level){
                 *addr=(int)(text+1);
             }
 
-            //逻辑或
+            //逻辑或 ||
             else if(token==Lor){
                 match(Lor);
                 *++text=JNZ;
@@ -815,6 +815,118 @@ void expression(int level){
                 *addr=(int)(text+1);
                 expr_type=INT;
             }
+
+            //逻辑与 &&
+            else if(token==Lan){
+                match(Lan);
+                *++text=JZ;
+                addr=++text;
+                expression(Or);
+                *addr=(int)(text+1);
+                expr_type=INT;
+            }
+
+            //按位或 |
+            else if(token==Or){
+                match(Or);
+                *++text=PUSH;
+                expression(Xor);
+                *++text=OR;
+                expr_type=INT;
+            }
+
+            //按位与 &
+            else if(token==And){
+                match(And);
+                *++text=PUSH;
+                expression(Eq);
+                *++text=AND;
+                expr_type=INT;
+            }
+
+            //按位异或 ^
+            else if(token==Xor){
+                match(Xor);
+                *++text=PUSH;
+                expression(And);
+                *++text=XOR;
+                expr_type=INT;
+            }
+
+            //等于 ==
+            else if(token==Eq){
+                match(Eq);
+                *++text=PUSH;
+                expression(Ne);
+                *++text=EQ;
+                expr_type=INT;
+            }
+
+            //不等于 !=
+            else if(token==Ne){
+                match(Ne);
+                *++text=PUSH;
+                expression(Lt);
+                *++text=NE;
+                expr_type=INT;
+            }
+
+            //小于 <
+            else if(token==Lt){
+                match(Lt);
+                *++text=PUSH;
+                expression(Shl);
+                *++text=LT;
+                expr_type=INT;
+            }
+
+            //大于 >
+            else if(token==Gt){
+                match(Gt);
+                *++text=PUSH;
+                expression(Shl);
+                *++text=GT;
+                expr_type=INT;
+            }
+
+            //小于等于 <=
+            else if(token==Le){
+                match(Le);
+                *++text=PUSH;
+                expression(Shl);
+                *++text=LE;
+                expr_type=INT;
+            }
+
+            //大于等于 >=
+            else if(token==Ge){
+                match(Ge);
+                *++text=PUSH;
+                expression(Shl);
+                *++text=GE;
+                expr_type=INT;
+            }
+            
+            //左移 <<
+            else if(token==Shl){
+                match(Shl);
+                *++text=PUSH;
+                expression(Add);
+                *++text=SHL;
+                expr_type=INT;
+            }
+
+            //右移 >>
+            else if(token==Shr){
+                match(Shr);
+                *++text=PUSH;
+                expression(Add);
+                *++text=SHR;
+                expr_type=INT;
+            }
+
+            //加 +
+            //HERE: 
         }
     }
 }
