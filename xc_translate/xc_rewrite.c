@@ -88,7 +88,7 @@ enum { CHAR, INT, PTR };
 int *idmain;    //main函数
 
 //types of declaration
-//TODO:  enum {Global...}
+enum { Global, Local };
 
 int *text,      //text segment
     *stack,     //stack
@@ -96,7 +96,7 @@ int *text,      //text segment
 char* data;     //data segment
 
 //idmain
-//TODO: int *idmain;
+int *idmain;
 
 char *src, *old_src;    //pointer to source code string;
 int poolsize;           //default size of text/data/stack
@@ -113,9 +113,6 @@ int line;               //line number
 //the type of declaration, make it global for convenience
 int basetype;
 int expr_type;
-
-//function frame
-//TODO: 0: arg1...
 
 //index of bp pointer on stack
 int index_of_bp;
@@ -184,7 +181,7 @@ void next(){
                 //hash不等，则不可能同名。可快速剔除不符合的从而提高比较性能
                 //hash相等，有可能同名，需要再比较名字
                 if(current_id[Hash]==hash && 
-                    !memcmp((*char*)current_id[Name], last_pos, src-last_pos)){
+                    !memcmp((char*)current_id[Name], last_pos, src-last_pos)){
                         //找到同名的，意味着当前语句是使用该标识符
                         //如已有int a; 之后a=3;
                         token=current_id[Token];
@@ -704,9 +701,9 @@ void expression(int level){
             //-1型，则match(token)后，token_val为1
             //则直接取-token_val即可
             if(token==Num){
-                *++text=Imm;
-                *++text=-tokan_val;
-                match(Mum);
+                *++text=IMM;
+                *++text=-token_val;
+                match(Num);
             }
 
             //-a型，则需要a*(-1)
@@ -755,8 +752,7 @@ void expression(int level){
             *++text=PUSH;
             *++text=IMM;
 
-            //普通变量+1
-            //TODO: ?当时char*型呢？还是+4?
+            //普通变量或char*则+1，int*或多级指针+4
             *++text=(expr_type>PTR)?sizeof(int): sizeof(char);
             *++text=(tmp==Inc)?ADD: SUB;
             *++text=(expr_type==CHAR)?SC: SI;
@@ -1010,8 +1006,63 @@ void expression(int level){
             else if(token==Inc || token==Dec){
                 //需要将新值写入，并在ax中留下旧值
                 if(*text==LI){
-                    
+                    *text=PUSH;
+                    *++text=LI;
                 }
+                else if(*text=LC){
+                    *text=PUSH;
+                    *++text=LC;
+                }
+                else {
+                    printf("%d: bad value int increment\n", line);
+                    exit(-1);
+                }
+
+                *++text=PUSH;
+                *++text=IMM;
+                //指针++则+4(除char*)，否则+1，然后保存到变量内存那种
+                *++text=(expr_type>PTR)? sizeof(int): sizeof(char);
+                *++text=(token==Inc)? ADD: SUB;
+                *++text=(expr_type==CHAR)? SC: SI;
+
+                //现在ax中的值为变量新值，将其--即可还原旧值，用于后续使用
+                *++text=PUSH;
+                *++text=IMM;
+                *++text=(expr_type>PTR)? sizeof(int): sizeof(char);
+                *++text=(token==Inc)? SUB: ADD;
+                match(token);
+            }
+
+            //方括号 [
+            else if(token==Brak){
+                match(Brak);
+                *++text=PUSH;
+                expression(Assign);
+                match(']');
+
+                //指针类型，但非char*型，需要将方括号中的值乘以4
+                if(tmp>PTR){
+                    *++text=PUSH;
+                    *++text=IMM;
+                    *++text=sizeof(int);
+                    *++text=MUL;
+                }
+
+                //只有指针类型才能够使用方括号
+                else if(tmp<PTR){
+                    printf("%d: pointer type expected\n", line);
+                    exit(-1);
+                }
+
+                expr_type=tmp-PTR;
+                *++text=ADD;
+                *++text=(expr_type==CHAR)? LC: LI;
+            }
+
+            //非法token
+            else {
+                printf("%d: compiler error, token=%d\n", line, token);
+                exit(-1);
             }
         }
     }
@@ -1170,8 +1221,8 @@ void function_parameter(){
     //type func_name ( type arg1, type arg2, ... ) {...}
     //位置:            | <-- here ------------> |
 
-    int type;       //TODO: 啥?
-    int params;     //TODO: 啥?
+    int type;       //参数类型
+    int params;     //参数个数
     params=0;
 
     while(token!=')'){
@@ -1316,7 +1367,7 @@ void function_declaration(){
 //function: global_declaration
 void global_declaration(){
     int type;   //变量的实际类型
-    int i;      //TODO: 未知
+    //int i;      //TODO: 未知
 
     basetype=INT;
 
@@ -1498,8 +1549,7 @@ int eval(){
 int main(int argc, char** argv){
     int index;      //index for readed char or keywords in enum {Char...}
     int fd;         //file description
-    debug=1;
-    assembly=0;
+    int *tmp;
 
     //int *tmp;
 
@@ -1507,7 +1557,22 @@ int main(int argc, char** argv){
     ++argc;
 
     //parse arguments
-    //TODO: 1287 - 1300
+    if(argc>0 && **argv=='-' && (*argv)[1]=='s'){
+        assembly=1;
+        --argc;
+        ++argv;
+    }
+
+    if(argc>0 && **argv=='-' && (*argv)[1]=='d'){
+        debug=1;
+        --argc;
+        ++argv;
+    }
+
+    if(argc<1){
+        printf("usage: xc [-s] [-d] file...\n");
+        return -1;
+    }
 
     if((fd=open(*argv, 0))<0){
         printf("could not open(%s)\n", *argv);
@@ -1519,7 +1584,6 @@ int main(int argc, char** argv){
     line=1;
 
     //allocate memory
-    //TODO: 1310 - 1333
     if(!(text=malloc(poolsize))){
         printf("could not malloc(%d) for text area\n", poolsize);
         return -1;
@@ -1532,23 +1596,24 @@ int main(int argc, char** argv){
         printf("could not malloc(%d) for stack area\n", poolsize);
         return -1;
     }
-    //malloc symbols's memory
-    //TODO: if(!(symbols...
+    if(!(symbols=malloc(poolsize))){
+        printf("could not malloc(%d) for symbol table\n", poolsize);
+        return -1;
+    }
 
     //init memory
     memset(text, 0, poolsize);
     memset(data, 0, poolsize);
     memset(stack, 0, poolsize);
+    memset(symbols, 0, poolsize);
     old_text=text;
 
-    //init symbols's memory
-    //TODO: memset(symbols, 0, poolsize);
-    
+    //向符号表中添加关键字
     src="char else enum if int return sizeof while open read "
         "close printf malloc memset memcmp exit void main";
-    //向符号表中添加关键字
+        
     index=Char;
-    while(i<=While){
+    while(index<=While){
         next();
         current_id[Token]=index++;
     }
@@ -1560,8 +1625,8 @@ int main(int argc, char** argv){
         current_id[Type]=INT;
         current_id[Value]=index++;
     }
-    next(); current_id[Token]=Char; //TODO: void类型?
-    next(); idmain=current_id;      //TODO: main?
+    next(); current_id[Token]=Char; //void类型看作是CHAR类型
+    next(); idmain=current_id;      //idmain保存main函数入口地址
 
     //malloc for source area
     if(!(src=old_src=malloc(poolsize))){
@@ -1581,26 +1646,23 @@ int main(int argc, char** argv){
     program();      //analisis
 
     //main() not defined
-    //TODO: 1371 - 1376
+    if(!(pc=(int*)idmain[Value])){
+        printf("main() not defined\n");
+        return -1;
+    }
 
     //dump_text
-    //TODO: 1377 - 1380
+    if(assembly){
+        return 0;
+    }
 
     //setup stack
-    //TODO: 1382 - 1388
     sp=(int*)((int)stack+poolsize);
-
-    //TODO: TEST
-    index=0;
-    text[index++]=IMM;
-    text[index++]=10;
-    text[index++]=PUSH;
-    text[index++]=IMM;
-    text[index++]=20;
-    text[index++]=ADD;
-    text[index++]=PUSH;
-    text[index++]=EXIT;
-    pc=text;
-
+    *--sp=EXIT;
+    *--sp=PUSH; tmp=sp;
+    *--sp=argc;
+    *--sp=(int)argv;
+    *--sp=(int)tmp;
+    
     return eval();  //execute
 }
