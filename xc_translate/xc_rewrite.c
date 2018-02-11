@@ -926,7 +926,93 @@ void expression(int level){
             }
 
             //加 +
+            else if(token==Add){
+                match(Add);
+                *++text=PUSH;
+                expression(Mul);
+
+                expr_type=tmp;
+
+                //非char型指针，需要加数乘以4
+                if(expr_type>PTR){
+                    *++text=PUSH;
+                    *++text=IMM;
+                    *++text=sizeof(int);
+                    *++text=MUL;
+                }
+                *++text=ADD;
+            }
+
+            //减 -
+            else if(token==Sub){
+                match(Sub);
+                *++text=PUSH;
+                expression(Mul);
+
+                //指针间的减法
+                //结果需要除以4
+                if(tmp>PTR && tmp==expr_type){
+                    *++text=SUB;
+                    *++text=PUSH;
+                    *++text=IMM;
+                    *++text=sizeof(int);
+                    *++text=DIV;
+                    expr_type=INT; //计算后的类型为INT类型
+                }
+
+                //指针减去数值，即指针移动
+                //需要将该数值乘以4，再与指针相加减
+                else if(tmp>PTR){
+                    *++text=PUSH;
+                    *++text=IMM;
+                    *++text=sizeof(int);
+                    *++text=MUL;
+                    *++text=SUB;
+                    expr_type=tmp;  //计算后的类型为指针类型
+                }
+
+                //普通的数值相减
+                else{
+                    *++text=SUB;
+                    expr_type=tmp;
+                }
+            }
+
+            //乘 *
+            else if(token==Mul){
+                match(Mul);
+                *++text=PUSH;
+                expression(Inc);
+                *++text=Mul;
+                expr_type=tmp;
+            }
+
+            //除 /
+            else if(token==Div){
+                match(Div);
+                *++text=PUSH;
+                expression(Inc);
+                *++text=DIV;
+                expr_type=tmp;
+            }
+
+            //模 %
+            else if(token==Mod){
+                match(Mod);
+                *++text=PUSH;
+                expression(Inc);
+                *++text=MOD;
+                expr_type=tmp;
+            }
+
+            //后置 ++/--
             //HERE: 
+            else if(token==Inc || token==Dec){
+                //需要将新值写入，并在ax中留下旧值
+                if(*text==LI){
+                    
+                }
+            }
         }
     }
 }
