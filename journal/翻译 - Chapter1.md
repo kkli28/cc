@@ -1,8 +1,6 @@
-# 《Parsing Techniques》,2nd
+# Chapter1. Introduction
 
 ---
-
-## Chapter1. Introduction
 
 ```
 Parsing is the process of structuring a linear representation in accordance with a given grammar. This definition has been kept abstract on purpose to allow as wide an program, a knitting pattern, a sequence of geological strata, a piece of music, actions some way restrict the next element. For some of the examples the grammar is well known, for some it is an object of research, and for some our notion of a grammar is only just beginning to take shape.
@@ -60,4 +58,50 @@ This is the vein in which this book is written: parsing for anybody who has pars
 这就是本书所写的脉络：对所有想要测试他们各自感兴趣的对象的文法描述的人进行解析：编译器的作者、语言学家、数据库接口作者、地质学家或音乐学者等。我们需要一个良好的可视化能力，一些编程经验以及意愿和耐心去遵循一些非平凡的例子，没有比看袋鼠跳跃更能了解袋鼠的方式了。我们学习主流的技术，但是也不回避一些奇怪的技术，它们看起来似乎只具有理论上的有趣，但是它们经常提供新的见解，读者可能会在某些地方用得上。
 ```
 
-//TODO: 1.2 The Approach Used
+> 1.2 The Approach Used (使用的方法)
+
+```
+This book addresses the reader at least three different levels. The interested noncomputer scientist can read the book as “the story of grammars and parsing”; he or she can skip the detailed explanations of the algorithms: each algorithm is first explained in general terms. The computer scientist will find much technical detail on a wide array of algorithms. To the expert we offer a systematic bibliography of over 1700 entries. The printed book holds only those entries referenced in the book itself; the full list is available on the web site of this book. All entries in the printed book and about two-thirds of the entries in the web site list come with an annotation; this annotation, or summary, is unrelated to the abstract in the referred article, but rather provides a short explanation of the contents and enough material for the reader to decide if the referred article is worth reading.
+
+本书至少在三个不同的层次上对读者进行了说明。感兴趣的非计算机科学家可以把这本书看作“文法和解析的故事”。他或她可以跳过算法的详细解释：每种算法首先用一般术语解释。计算机科学家将在各种算法中找到许多技术细节。对于专家，我们提供了超过1700项的系统参考书目。印刷书籍只包含书本身引用的条目，完整列表可以在本书的网站上找到。印刷书籍中的所有条目和网站列表中约三分之二的条目都附带注释，这个注释或摘要与被引用文章中的摘要无关，而是提供了内容的简短说明，并提供了足够的材料供读者决定是否值得阅读。
+```
+
+```
+No ready-to-run algorithms are given, except for the general context-free parser of Section 17.3. The formulation of a parsing algorithm with sufficient precision to enable a programmer to implement and run it without problems requires a considerable support mechanism that would be out of place in this book and in our experience does little to increase one’s understanding of the process involved. The popular methods are given in algorithmic form in most books on compiler construction. The less widely used methods are almost always described in detail in the original publication, for which see Chapter 18.
+
+除了第17.3节的一般上下文无关语法分析器之外，没有提供任何现成的算法。具有足够精确性的解析算法的制定使得程序员能够毫无问题地实现和运行它，但是这需要相当大的支持机制，这在本书中时不合适的，而且根据我们的经验，这对增加一个人对所涉及的过程的理解几乎没有任何作用。在编译器构造的大多数书籍中，流行的方式都以算法的形式给出，原始出版物中几乎总是详细描述使用较少的方法，有关这些方法请参见第18章。
+```
+
+> 1.3 Outline of the Contents (大纲内容)
+
+```
+Since parsing is concerned with sentences and grammars and since grammars are themselves fairly complicated objects, ample attention is paid to them in Chapter 2. Chapter 3 discusses the principles behind parsing and gives a classification of parsing methods. In summary, parsing methods can be classified as top-down or bottom-up and as directional or non-directional; the directional methods can be further distinguished into deterministic and non-deterministic ones. This situation dictates the contents of the next few chapters.
+
+由于语法分析涉及到句子和语法，而语法本身就是相当复杂的对象，所以在第二章中给予了充分的关注。第3章讨论了解析背后的原理，并给出了解析方法的分类。总之，解析方法可以分为自上而下或自下而上，并可分为定向和非定向的。定向方法可以进一步区分为确定性的和非确定性的。这种情况决定了接下来几章的内容。
+```
+
+```
+In Chapter 4 we treat non-directional methods, including Unger and CYK. Chapter 5 forms an intermezzo with the treatment of finite-state automata, which are needed in the subsequent chapters. Chapters 6 through 10 are concerned with directional methods, as follows. Chapter 6 covers non-deterministic directional top-down parsers (recursive descent, Definite Clause Grammars), Chapter 7 non-deterministic directional bottom-up parsers (Earley). Deterministic methods are treated in Chapters 8 (top-down: LL in various forms) and 9 (bottom-up: LR methods). Chapter 10 covers non-canonical parsers, parsers that determine the nodes of a parse tree in a not strictly top-down or bottom-up order (for example left-corner). Non-deterministic versions of the above deterministic methods (for example the GLR parser) are described in Chapter 11.
+
+在第4章中，我们讨论了非定向方法，包括Unger和CYK。第5章是对有限状态自动机的处理，这是后续章节所需要的。第6章到第10章涉及定向方法，如下所示。第6章讨论了非确定性定向自顶向下解析器（递归下降、确定子句文法），第7章介绍非确定性定向自下而上解析器(Earley)。确定性方法在第8章（自上而下：各种形式的LL）和第9章（自下而上：LR方法）中进行处理。第10章介绍了非规范解析器，这些解析器以非严格的自上而下或自下而上的顺序来确定解析树的节点。上述确定性方法（例如GLR解析器）的非确定性版本在第11章中描述。
+```
+
+```
+The next four chapters are concerned with material that does not fit the above framework. Chapter 12 shows a number of recent techniques, both deterministic and non-deterministic, for parsing substrings of complete sentences in a language. Another recent development, in which parsing is viewed as intersecting a context-free grammar with a finite-state automaton is covered in Chapter 13. A few of the numerous parallel parsing algorithms are explained in Chapter 14, and a few of the numerous proposals for non-Chomsky language formalisms are explained in Chapter 15, with their parsers. That completes the parsing methods per se.
+
+接下来的四章是关于不符合上述框架的材料。第12章展示了一些最近用于解析语言中完整句子的子串的确定性和非确定性技术。第13章介绍了另一个最近的发展，其中解析被看作是将上下文无关文法与有限状态自动机相交的例子。在第14章中介绍了许多并行解析算法，并在第15章中介绍了非Chomskey语言形式的许多提议，这就完成了解析方法本身。
+```
+
+```
+Error handling for a selected number of methods is treated in Chapter 16, and Chapter 17 discusses practical parser writing and use.
+
+在第16章中介绍了对一些选定数量的方法的错误处理，第17章讨论了实际解析器的编写和使用。
+```
+
+> 1.4 The Annotated Bibliography (带注释的数目)
+
+```
+The annotated bibliography is presented in Chapter 18 both in the printed book and, in a much larger version, on the web site of this book. It is an easily accessible and essential supplement of the main body of the book. Rather than listing all publications in author-alphabetic order, the bibliography is divided into a number of named sections, each concerned with a particular aspect of parsing; there are 25 of them in the printed book and 30 in the web bibliography. Within the sections, the publications are listed chronologically. An author index at the end of the book replaces the usual alphabetic list of publications. A numerical reference placed in brackets is used in the text to refer to a publication. For example, the annotated reference to Earley’s publication of the Earley parser is indicated in the text by [14] and can be found on page 578, in the entry marked 14.
+
+注释书目在第18章中出现在印刷书籍和本书的网站上，它是本书主体的一个易读和必要的补充。参考数目不是按照作者-字母顺序列出所有，而是分成若干命名部分，每个部分都与解析的一个特定方面有关。印刷书籍中有25个，为网络参考书目中有30个。在这些部分中，出版物按照时间顺序排列。书末的作者索引取代了通常按字母顺序排列的出版物列表。括号内的数字引用指代出版物。例如在Earley的Earley解析器出版物中的注释引用在[14]文本中指出，并可以在第578页标记为14的条目中找到。
+```
