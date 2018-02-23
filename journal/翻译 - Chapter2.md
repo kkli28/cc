@@ -87,8 +87,109 @@ The computer scientist essentially subscribes to the same view, often with the a
 ```
 The above definition of a language as a possibly infinite set of sequences of symbols and of a grammar as a finite recipe to generate these sentences immediately gives rise to two embarrassing questions:
     1. How can finite recipes generate enough infinite sets of sentences?
-    2. If a sentence is just a sequence and has no structure and if the meaning of a
-sentence derives, among other things, from its structure, how can we assess the meaning of a sentence? These questions have long and complicated answers, but they do have answers. We shall first pay some attention to the first question and then devote the main body of this book to the second.
+    2. If a sentence is just a sequence and has no structure and if the meaning of a sentence derives, among other things, from its structure, how can we assess the meaning of a sentence?
+These questions have long and complicated answers, but they do have answers. We shall first pay some attention to the first question and then devote the main body of this book to the second.
 
+上述语言的定义可以产生无限的符号序列，而语法则是产生这些句子的有限方法，这就产生了两个尴尬的问题：
+1. 有限的规则如何产生无限的句子？
+2. 如果一个句子只是一个序列而没有结构，并且一个句子的含义是从其句子中衍生的，那么我们该如何获知这个句子的意思？
+这些问题有很长且很复杂的答案。我们首先关注第一个问题，然后把这本书的主体放在第二个问题上。
+```
+
+> 2.1.3.1 Infinite Sets from Finite Descriptions (用有限描述无限)
 
 ```
+In fact there is nothing wrong with getting a single infinite set from a single finite description: “the set of all positive integers” is a very finite-size description of a definitely infinite-size set. Still, there is something disquieting about the idea, so we shall rephrase our question: “Can all languages be described by finite descriptions?” As the lead-up already suggests, the answer is “No”, but the proof is far from trivial. It is, however, very interesting and famous, and it would be a shame not to present at least an outline of it here.
+
+事实上，从单个有限描述中获得无限集合没有问题：“所有正整数的集合”时一个非常有限大小的无限大集合描述。然而，这个想法有些令人不安，因此我们将重新修改我们的问题：“是否所有的语言都可用有限的描述来描述？”，正如上面所说的，答案时否定的，但是证明并非无意义。它出非常有趣并且非常有名，在这里提出一个大纲是必要的。
+```
+
+> 2.1.3.2 Descriptions can be Enumerated
+
+```
+The proof is based on two observations and a trick. The first observation is that descriptions can be listed and given a number. This is done as follows. First, take all descriptions of size one, that is, those of only one letter long, and sort them alphabetically. This is the beginning of our list. Depending on what, exactly, we accept as a description, there may be zero descriptions of size one, or 27 (all letters + space), or 95 (all printable ASCII characters) or something similar; this is immaterial to the discussion which follows.
+
+证明是基于两个观察和一个技巧。第一个观察是可以列出说明并给出一个数字，如下所示。首先是度为1的所有描述，即只有一个字母长，并按照字母顺序对他们进行排序。这是我们列表的开始。确切地说，根据我们接受的描述，对于第一个描述，可能有0个，或27个（所有字母和空格），或95个（所有可打印ASCII字符）或类似的东西。这与下面的讨论无关。
+```
+
+```
+Second, we take all descriptions of size two, sort them alphabetically to give the second chunk on the list, and so on for lengths 3, 4 and further. This assigns a position on the list to each and every description. Our description “the set of all positive integers”, for example, is of size 32, not counting the quotation marks. To find its position on the list, we have to calculate how many descriptions there are with less than 32 characters, say L. We then have to generate all descriptions of size 32, sort them and determine the position of our description in it, say P, and add the two numbers L and P. This will, of course, give a huge number1 but it does ensure that the description is on the list, in a well-defined position; see Figure 2.1.
+
+然后，我们对大小为2的所有描述按字母顺序排列，以给出俩表中的第二个块。以此类推长度为3或4，以及更长的单词。这为列表中的每个描述分配了一个位置。例如描述“the set of all positive integers”，它的大小时32，不包括引号。为了找到他们的位置，我们需要计算有多少描述少于32个字符，命名为L。然后我们必须生成关于长度为32的描述，并对其排序，命名为P，并添加L和P。这将给出一个巨大的数字，但它确保描述都在列表的一个明确地位置上。（插入图2.1）
+```
+
+```
+Two things should be pointed out here. The first is that just listing all descriptions alphabetically, without reference to their lengths, would not do: there are already infinitely many descriptions starting with an “a” and no description starting with a higher letter could get a number on the list. The second is that there is no need to actually do all this. It is just a thought experiment that allows us to examine and draw conclusions about the behavior of a system in a situation which we cannot possibly examine physically.
+
+这里应该指出两点。首先是只按照字母顺序列出所有描述，而不考虑它们的长度，通常不这样做：已经有无限多的以“a”开始的描述，并且没有以较高字母开头的描述可以在列表上得到一个数字。第二个时没有必要这么做。这只是一个思想试验，它让我们能够对一个系统的行为进行研究，而我们不能进行实际的研究。
+```
+
+```
+Also, there will be many nonsensical descriptions on the list; it will turn out that this is immaterial to the argument. The important thing is that all meaningful descriptions are on the list, and the above argument ensures that.
+
+此外，名单上还有许多无意义的描述。事实证明，这对论据并不重要。重要的是，所有有意义的描述都在列表中，且上述论点确保了这一点。
+```
+
+> 2.1.3.3 Languages are Infinite Bit-Strings (语言时无限长的字符串)
+
+```
+We know that words (sentences) in a language are composed of a finite set of symbols; this set is called quite reasonably the “alphabet”. We will assume that the symbols in the alphabet are ordered. Then the words in the language can be ordered too. We shall indicate the alphabet by Σ.
+
+我们知道语言中的单词（句子）是由一组有限的符号组成的，这个集合被称为“字母表”。我们假设字母表中的符号时有序的。然后语言中的单词也可以排序，我们用Σ来表示字母表。
+```
+
+```
+Now the simplest language that uses alphabet Σ is that which consists of all words that can be made by combining letters from the alphabet. For the alphabet Σ ={a, b} we get the language { , a, b, aa, ab, ba, bb, aaa, . . . }. We shall call this language Σ∗, for reasons to be explained later; for the moment it is just a name.
+
+最简单的语言是将字母表中的字母组成的所有单词进行结合。对于字母表 Σ ={a, b}，我们可以得到语言{ , a, b, aa, ab, ba, bb, aaa, . . . }。我们称这个语言为Σ*。这将在后面解释原因，暂时它只是一个名字。
+```
+
+```
+The set notation Σ∗ above started with “ { , a,”, a remarkable construction; the first word in the language is the empty word, the word consisting of zero as and zero bs. There is no reason to exclude it, but, if written down, it may easily be overlooked, so we shall write it as ε (epsilon), regardless of the alphabet. So, Σ∗ = { ε, a, b, aa, ab, ba, bb, aaa, . . . }. In some natural languages, forms of the present tense of the verb “to be” are empty words, giving rise to sentences of the form “I student”, meaning “I am a student.” Russian and Hebrew are examples of this.
+
+Σ*始于“{, a”，语言中的第一个单词是一个空单词，由0个a和0个b组成。并没有理由去掉它，但是如果写下来，它很容易被忽视，所以我们将它写成ε，而不管字母表（字母表中没有该字符）。所以 Σ∗ = { ε, a, b, aa, ab, ba, bb, aaa, . . . }。在一些自然语言中，动词“to be”的现在时形式是空的次，形成了“I student”，意思是“I am a student”。俄语和希伯来语就是这样的例子。
+```
+
+```
+Since the symbols in the alphabet Σ are ordered, we can list the words in the language Σ∗, using the same technique as in the previous section: First, all words of size zero, sorted; then all words of size one, sorted; and so on. This is actually the order already used in our set notation for Σ∗.
+
+由于字母表Σ中符号是有序的，因此我们可以使用于前一节中相同的技术列出语言Σ*中的单词：首先排序所有大小为0的单词，然后为所有大小为1的单词排序，等等。这实际上是Σ*中已使用的顺序。
+```
+
+```
+The language Σ∗ has the interesting property that all languages using alphabet Σ are subsets of it. That means that, given another possibly less trivial language over Σ, called L, we can go through the list of words in Σ∗ and put ticks on all words that are in L. This will cover all words in L, since Σ∗ contains any possible word over Σ.
+
+语言Σ∗具有一个有趣的属性，就是所有使用字母表Σ的语言都是它的子集。这意味着，给定另一个比Σ更小的语言，称为L，我们可以遍历Σ∗中的单词列表，并将所有在L中出现的单词取出来，这将覆盖L中的所有单词，因为Σ∗包含Σ中的任何可能单词。
+```
+
+```
+Suppose our language L is “the set of all words that contain more as than bs”. L is the set {a, aa, aab, aba, baa, . . . }. The beginning of our list, with ticks, will look as follows:
+   ε
+✔ a
+   b
+✔ aa
+   ab
+   ba
+   bb
+✔ aaa
+✔ aab
+✔ aba
+   abb
+✔ baa
+   bab
+   bba
+   bbb
+✔ aaaa
+... ...
+
+假设我们的语言L时“包含b以外的所有单词的集合”。L时集合{a, aa, aab, aba, baa, . . . }。在列表开头加上记号，看起来如下图所示：（✔ aaaa...图片）
+```
+
+```
+Given the alphabet with its ordering, the list of blanks and ticks alone is entirely sufficient to identify and describe the language. For convenience we write the blank as a 0 and the tick as a 1 as if they were bits in a computer, and we can now write L = 0101000111010001··· (and Σ∗ = 1111111111111111···). It should be noted that this is true for any language, be it a formal language like L, a programming language like Java or a natural language like English. In English, the 1s in the bitstring will be very scarce, since hardly any arbitrary sequence of words is a good English sentence (and hardly any arbitrary sequence of letters is a good English word, depending on whether we address the sentence/word level or the word/letter level).
+
+根据字母表的顺序，空白和记号列表就足够识别和描述该语言。为了方便起见，我们将空白记为0，将空格记为1，就好像它们时计算机中的位一样，我们可以写出L = 0101000111010001···（Σ∗ = 1111111111111111···）。应该注意的是，这适用于任何语言，像L这样的正式语言，像Java这样的编程语言，或者像英语这样的自然语言。在英语中，位串中的连续的1是非常少的，因为几乎没有任何的任意排序的单词是一个好的英语句子（并且根据我们是在句子/单词或单词/字母水平，几乎没有任何的任意排列的字母序列时一个号的英语单词）。
+```
+
+> 2.1.3.4 Diagonalization
+//TODO: 
