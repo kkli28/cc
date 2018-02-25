@@ -282,7 +282,179 @@ Suppose we want to generate the set of all enumerations of names, of the type �
 ```
 
 ```
-Although this will work for a cooperative reader, there are several things wrong with it. Clause 3 is especially wrought with trouble. For example, the sentence does not really end in “, name”, it ends in “, Dick” or such, and “name” is just a symbol that stands for a real name; such symbols cannot occur in a real sentence and must in the end be replaced by a real name as given in clause 0. Likewise, the word “sentence” in the recipe is a symbol that stands for all the actual sentences. So there are two kinds of symbols involved here: real symbols, which occur in finished sentences, like “Tom”, “Dick”, a comma and the word “and”; and there are intermediate symbols, like “sentence” and “name” that cannot occur in a finished sentence. The first kind corresponds to the words or tokens explained above; the technical term for them isterminal symbols(or short). The intermediate symbols are called nonterminals, a singularly uninspired term. To distinguish them, we write terminals in lower case letters and start non-terminals with an upper case letter. Non-terminals are called (grammar) variables or syntactic categories in linguistic contexts.
+Although this will work for a cooperative reader, there are several things wrong with it. Clause 3 is especially wrought with trouble. For example, the sentence does not really end in “, name”, it ends in “, Dick” or such, and “name” is just a symbol that stands for a real name; such symbols cannot occur in a real sentence and must in the end be replaced by a real name as given in clause 0. Likewise, the word “sentence” in the recipe is a symbol that stands for all the actual sentences. So there are two kinds of symbols involved here: real symbols, which occur in finished sentences, like “Tom”, “Dick”, a comma and the word “and”; and there are intermediate symbols, like “sentence” and “name” that cannot occur in a finished sentence. The first kind corresponds to the words or tokens explained above; the technical term for them isterminal symbols(or terminalsfor short). The intermediate symbols are called nonterminals, a singularly uninspired term. To distinguish them, we write terminals in lower case letters and start non-terminals with an upper case letter. Non-terminals are called (grammar) variables or syntactic categories in linguistic contexts.
 
-尽管这对一起合作的读者来说是有效的，但是依旧存在几个问题。特别是第三条。例如句子没有以“逗号 名字”结尾，而是以“逗号 Dick”结尾，名字只是代表真实名称的符号，这些符号不能出现在真正的句子中，最后必须用第0条中给出的真实名称代替。同样，规则中的“句子”一词代表所有实际句子的符号。这里涉及两种符号：出现在完整句子中的真正的符号，如“Tom”，“Dick”，逗号和“and”，还有一些中间符号，如“句子”和“名字”，他们不能再一个完整句子中出现。第一种对应于上面
+尽管这对一起合作的读者来说是有效的，但是依旧存在几个问题。特别是第三条。例如句子没有以“逗号 名字”结尾，而是以“逗号 Dick”结尾，名字只是代表真实名称的符号，这些符号不能出现在真正的句子中，最后必须用第0条中给出的真实名称代替。同样，规则中的“句子”一词代表所有实际句子的符号。这里涉及两种符号：出现在完整句子中的真正的符号，如“Tom”，“Dick”，逗号和“and”，还有一些中间符号，如“句子”和“名字”，他们不能再一个完整句子中出现。第一种对应于上面解释的单词或标记，它们的专业术语时终结符（或简称终结）。中间的符号被称为非终结符，一个没有启发性的术语。为了区分它们，用小写字母书写终结符，而用大写字母书写非终结符。非终结符在语言上下文中称为变量或句法类别。
+```
+
+```
+To stress the generative character of the recipe, we shall replace “X is a Y” by “Y may be replaced by X”: if “tom” is an instance of a Name, then everywhere we have a Name we may narrow it down to “tom”. This gives us: 
+    0. Name may be replaced by “tom”
+        Name may be replaced by “dick”
+        Name may be replaced by “harry”
+    1. Sentence may be replaced by Name
+    2. Sentence may be replaced by Sentence, Name
+    3. “, Name” at the end of a Sentence must be replaced by “and Name” before Name is replaced by any of its replacements
+    4. a sentence is finished only when it no longer contains non-terminals
+    5. we start our replacement procedure with Sentence
+
+Clause 0 through 3 describe replacements, but 4 and 5 are different. Clause 4 is not specific to this grammar. It is valid generally and is one of the rules of the game. Clause 5 tells us where to start generating. This name is quite naturally called the start symbol, and it is required for every grammar.
+
+为了强调规则的生成特性，我们将用“Y可能被X替换”来代替“X是Y”：假如“tom”时一个名字的实例，则无论任何地方有一个名字，我们都可以用“tom”代替。这告诉我们：
+    0. 名称可以用“tom”、“dick”、“harry”代替
+    1. 句子可以用名字代替
+    2. 句子可以用句子、名字代替
+    3. 名字被替换前，出现在句子末尾的“, 名字”必须用“and 名字”代替
+    4. 只有当句子不再包含非终结符时，句子才结束
+    5. 我们用句子开始替换程序
+第0-3条描述替换规则，而第4条和第5条不同。第四条不是针对文法的，它通常时有效的且是必要规则之一。第五条告诉我们从哪里开始生成。这个名称很自然地被称为初始符，它是每个文法所必须的。
+```
+
+```
+Clause 3 still looks worrisome; most rules have “may be replaced”, but this one has “must be replaced”, and it refers to the “end of a Sentence”. The rest of the rules work through replacement, but the problem remains how we can use replacement to test for the end of a Sentence. This can be solved by adding an end marker after it. And if we make the end marker a non-terminal which cannot be used anywhere except in the required replacement from “, Name” to “and Name”, we automatically enforce the restriction that no sentence is finished unless the replacement test has taken place. For brevity we write ---> instead of “may be replaced by”; since terminal and non-terminal symbols are now identified as technical objects we shall write them in a typewriter-like typeface. The part before the ---> is called the left-hand side, the part after it the right-hand side. This results in the recipe in Figure 2.3.
+
+第3条依旧看起来不是那么清晰，大多数规则都有“可能被替换”，但是这个规则有“必须被替换”，且它指的是“句子的结尾”。其余的规则通过替换来完成，但问题是我们如何测试句子的结尾。这可以通过在它之后添加一个结束标记来解决。如果我们将结束标记设置为非终结符，除了从“, 名称”到“and 名称”的替换外任何地方都无法使用，我们会自动执行除非进行替换测试，否则不会完成句子的限制。为了简洁起见，我们写 ---> 而不是“可以替换”，因为终结符和非终结符现在被确定为技术对象，所以我们将用类似打字机的字体来书写他们。在--->之前的部分称为左侧，之后的部分称为右侧，规则的结果如图2.3。（图2.3）
+
+0.      Name ---> tom
+        Name ---> dick
+        Name ---> harry
+1.  Sentence ---> Name
+    Sentence ---> List End
+2.      List ---> Name
+        List ---> List , Name
+3., Name End ---> and Name
+4. the start symbol is Sentence
+
+Fig. 2.3. A finite recipe for generating strings in the t, d & h language
+```
+
+> 2.2 Formal Grammars (形式文法)
+
+```
+The above recipe form, based on replacement according to rules, is strong enough to serve as a basis for formal grammars. Similar forms, often called “rewriting systems”, have a long history among mathematicians, and were already in use several centuries B.C. in India (see, for example, Bhate and Kak [411]). The specific form of Figure 2.3 was first studied extensively by Chomsky [385]. His analysis has been the foundation for almost all research and progress in formal languages, parsers and a considerable part of compiler construction and linguistics.
+
+上面的规则形式，根据规则进行替换，足以作为正式语法的基础。类似的形式，通常称为“重写系统”，在数学家中有着悠久的历史，且已经在印度使用了几个世纪（参见Bhate和Kak[411]）。图2.3的具体形式首先被Chomskey[385]广泛研究。他的研究是几乎所有形式语言、解析器、一部分编译器构造和语言学的基础。
+```
+
+> 2.2.1 The Formalism of Formal Grammars
+
+```
+Since formal languages are a branch of mathematics, work in this field is done in a special notation. To show some of its flavor, we shall give the formal definition of a grammar and then explain why it describes a grammar like the one in Figure 2.3. The formalism used is indispensable for correctness proofs, etc., but not for understanding the principles; it is shown here only to give an impression and, perhaps, to bridge a gap.
+
+由于形式语言是数学的一个分支，这个领域的工作是使用一种特殊的符号来完成的。为了展示它的风格，我们将给出一个语法的正式定义，然后解释为什么它描述了一个如图2.3中所示的语法。所使用的形式体系对于正确性证明时必不可少的，但不是用于理解这些原则。在这里展示仅仅是给人一种印象，或填补空白。
+```
+
+```
+Definition 2.1: A generative grammar is a 4-tuple (VN,VT ,R,S) such that
+(1) VN and VT are finite sets of symbols,
+(2) VN ∩VT = 0/,
+(3) R is a set of pairs (P,Q) such that
+(3a) P ∈ (VN ∪VT )+ and
+(3b) Q ∈ (VN ∪VT )∗,
+(4) S ∈ VN
+
+定义2.1：生成文法时一个四元组(VN, VT, R, S)，如：
+....
+```
+
+```
+A 4-tuple is just an object consisting of 4 identifiable parts; they are the nonterminals, the terminals, the rules and the start symbol, in that order. The above definition does not tell this, so this is for the teacher to explain. The set of nonterminals is named VN and the set of terminals VT . For our grammar we have:
+    VN = {Name, Sentence, List, End}
+    VT = {tom, dick, harry, ,, and}
+    (note the , in the set of terminal symbols).
+
+四元组只是一个由四个可识别部分组成的对象，它们是按照非终结符，终结符，规则和初始符的顺序排列。上面的定义并没有说明这一点，所以这是老师要解释的。非终结符集合称为VN，终结符集合称为VT。对于我们的文法，有：
+    VN = {Name, Sentence, List, End}
+    VT = {tom, dick, harry, ,, and}
+    （注意，逗号“，”在终结符集中）
+```
+
+```
+The intersection of VN and VT (2) must be empty, indicated by the symbol for the empty set, 0/. So the non-terminals and the terminals may not have a symbol in common, which is understandable.
+
+VN和VT的交集必须为空，由空集符号（======== 空集符号 ========）表示。因此非终结符和终结符没有一个共同符号，这是可以理解的。
+```
+
+```
+R is the set of all rules (3), and P and Q are the left-hand sides and right-hand sides, respectively. Each P must consist of sequences of one or more non-terminals and terminals and each Q must consist of sequences of zero or more non-terminals and terminals. For our grammar we have:
+    R = {(Name, tom), (Name, dick), (Name, harry),
+    (Sentence, Name), (Sentence, List End), (List, Name),
+    (List, List , Name), (, Name End, and Name)}
+Note again the two different commas.
+
+R是所有规则的集合，P和Q分别是左侧和右侧。每个P必须由一个或多个非终结符序列组成，每个Q必须由零个或多个非终结符或终结符序列组成。对于我们的文法，有：
+    R = {(Name, tom), (Name, dick), (Name, harry),
+    (Sentence, Name), (Sentence, List End), (List, Name),
+    (List, List , Name), (, Name End, and Name)}
+注意两个不同的逗号。
+```
+
+```
+The start symbol S must be an element of VN, that is, it must be a non-terminal:
+    S = Sentence
+
+初始符S必须是VN的一个元素，也就是说它必须是一个非终结符：
+    S = Sentence
+```
+
+```
+This concludes our field trip into formal linguistics. In short, the mathematics of formal languages is a language, a language that has to be learned; it allows very concise expression of what and how but gives very little information on why. Consider this book a translation and an exegesis.
+
+这结束了我们对正式语言学的考察，简而言之，正式语言的数学是一门语言，一门必须学习的语言，它可以非常简洁地表达什么和怎样，但是却很少提供关于原因的信息。考虑这本书的翻译和注释。
+```
+
+> 2.2.2 Generating Sentences from a Formal Grammar
+
+```
+The grammar in Figure 2.3 is what is known as a phrase structure grammar for our t,d&h language (often abbreviated to PS grammar). There is a more compact notation, in which several right-hand sides for one and the same left-hand side are grouped together and then separated by vertical bars, |. This bar belongs to the formalism, just as the arrow --->, and can be read “or else”. The right-hand sides separated by vertical bars are also called alternatives. In this more concise form our grammar becomes
+    0. Name ---> tom | dick | harry
+    1. Sentence_s ---> Name | List End
+    2. List ---> Name | Name , List
+    3. , Name End ---> and Name
+where the non-terminal with the subscript s is the start symbol. (The subscript identifies the symbol, not the rule.)
+
+图2.3中的文法时我们语言的短语结构语法（通常缩写为PS语法）。有一种更简洁的语法，其中相同左侧的多个右侧对象被组合在一起，然后用竖线“|”分开。这个分隔符属于形式定义，就像箭头--->一样，可以被读作“或者”。由竖线分隔的右侧对象也被称为替代品。在这个更简洁的形式中，我们的文法变成了：
+    0. Name ---> tom | dick | harry
+    1. Sentence_s ---> Name | List End
+    2. List ---> Name | Name , List
+    3. , Name End ---> and Name
+带有下标_s的非终结符是开始符号（下标标记的是符号，而不是规则）。
+```
+
+```
+Now let us generate our initial example from this grammar, using replacement according to the above rules only. We obtain the following successive forms for Sentence:
+
+Intermediate form       Rule used                   Explanation
+Sentence                                            the start symbol
+List End                Sentence ---> List End      rule 1
+Name , List End         List ---> Name , List       rule 2
+Name , Name , List End  List ---> Name , List       rule 2
+Name , Name , Name End  List ---> Name              rule 2
+Name , Name and Name    , Name End ---> and Name    rule 3
+tom , dick and harry                                rule 0, three times
+
+The intermediate forms are called sentential forms. If a sentential form contains no non-terminals it is called a sentence and belongs to the generated language. The transitions from one line to the next are called production steps and the rules are called production rules, for obvious reasons.
+
+现在让我们从这个文法中生成初始示例，只根据上述规则使用替换。我们获得下列连续形式的句子：
+
+中间类型                   使用的规则                 说明
+Sentence                                            初始符
+List End                Sentence ---> List End      规则1
+Name , List End         List ---> Name , List       规则2
+Name , Name , List End  List ---> Name , List       规则2
+Name , Name , Name End  List ---> Name              规则2
+Name , Name and Name    , Name End ---> and Name    规则3
+tom , dick and harry                                3次规则0
+
+中间形式被称为句型。如果一个句型不包含非终结符则称为句子，并且属于生成的语言。
+```
+
+```
+The production process can be made more visual by drawing connective lines between corresponding symbols, using a “graph”. A graph is a set of nodes connected by a set of edges. A node can be thought of as a point on paper, and an edge as a line, where each line connects two points; one point may be the end point of more than one line. The nodes in a graph are usually “labeled”, which means that they have been given names, and it is convenient to draw the nodes on paper as bubbles with their names in them, rather than as points. If the edges are arrows, the graph is a directed graph; if they are lines, the graph is undirected. Almost all graphs used in parsing techniques are directed.
+
+通过使用“图形”在相应符号之间绘制连接线，可以使生产过程更加可视化。图是由一组边连接起来的一组节点。一个节点可以被看做是纸上的一个点，边是一条线，每条线连接两个节点。一个点可能不止是一条线的端点。图中的节点通常是“被标记”的，这意味着它们被赋予了名称，而不仅仅是一个点。假如边是箭头，则图是一个有向图，如果边是线条，则图是无向的。几乎所有用于解析技术的图都是有向的。
+```
+
+```
+P38, The graph corresponding to ...
 ```
