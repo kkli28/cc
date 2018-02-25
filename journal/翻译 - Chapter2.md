@@ -191,5 +191,98 @@ Given the alphabet with its ordering, the list of blanks and ticks alone is enti
 根据字母表的顺序，空白和记号列表就足够识别和描述该语言。为了方便起见，我们将空白记为0，将空格记为1，就好像它们时计算机中的位一样，我们可以写出L = 0101000111010001···（Σ∗ = 1111111111111111···）。应该注意的是，这适用于任何语言，像L这样的正式语言，像Java这样的编程语言，或者像英语这样的自然语言。在英语中，位串中的连续的1是非常少的，因为几乎没有任何的任意排序的单词是一个好的英语句子（并且根据我们是在句子/单词或单词/字母水平，几乎没有任何的任意排列的字母序列时一个号的英语单词）。
 ```
 
-> 2.1.3.4 Diagonalization
-//TODO: 
+> 2.1.3.4 Diagonalization (对角化)
+
+```
+The previous section attaches the infinite bit-string 0101000111010001··· to the description “the set of all the words that contain more as than bs”. In the same vein we can attach such bit-strings to all descriptions. Some descriptions may not yield a language, in which case we can attach an arbitrary infinite bit-string to it. Since all descriptions can be put on a single numbered list, we get, for example, the following picture:
+    Description         Language
+    Description #1      000000100···
+    Description #2      110010001···
+    Description #3      011011010···
+    Description #4      110011010···
+    Description #5      100000011···
+    Description #6      111011011···
+    ...                 ...
+
+上一节将无限比特串0101000111010001···添加到描述“包含b字母以外的所有单词的集合”，同样的，我们可以将位串添加到所有描述中。某些描述可能不会产生一种语言，我们可以将任意的无限位串添加到其中。由于所有的描述都可以放在有单独编号的列表中，所以我们可以得到下图：
+    Description         Language
+    Description #1      000000100···
+    Description #2      110010001···
+    Description #3      011011010···
+    Description #4      110011010···
+    Description #5      100000011···
+    Description #6      111011011···
+    ...                 ...
+```
+
+```
+At the left we have all descriptions, at the right all languages they describe. We now claim that many languages exist that are not on the list of languages above: the above list is far from complete, although the list of descriptions is complete. We shall prove this by using the diagonalization process (“Diagonalverfahren”) of Cantor.
+
+左边所有的描述，定义了右边所有的语言。我们现在断言存在许多不在上述语言列表中的语言：上述列表并不完整，尽管描述列表是完整的。我们将用康托尔的对角论证法来证明这一点。
+```
+
+```
+Consider the language C = 100110···, which has the property that its n-th bit is unequal to the n-th bit of the language described by Description #n. The first bit of C is a 1, because the first bit for Description #1 is a 0; the second bit of C is a 0, because the second bit for Description #2 is a 1, and so on. C is made by walking the NW to SE diagonal of the language field and copying the opposites of the bits we meet. This is the diagonal in Figure 2.2(a). The language C cannot be on the list! It cannot be on line 1, since its first bit differs (is made to differ, one should say) from that on line 1, and in general it cannot be on line n, since its n-th bit will differ from that on line n, by definition.（图2.2）
+
+考虑语言C=100110...，它具有第n位比特与描述#n的第n位比特不同的属性。C的第一个比特是1，因为描述#1的第1位比特是0。C的第二个比特是0，因为描述#2的第二位比特是1，等等。C是通过沿着西北到东南的对角线，并复制遇到的位的反面来形成的。如图2.2(a)。语言C不可能在列表中！语言C不可能在第一行，因为它的第一个位与第一行的第一个位不同，根据定义，它也不可能在第n行，因为它的第n位为第n行的第n位不同。
+```
+
+```
+So, in spite of the fact that we have exhaustively listed all possible finite descriptions, we have at least one language that has no description on the list. But there exist more languages that are not on the list. Construct, for example, the language whose n+10-th bit differs from the n+10-th bit in Description #n. Again it cannot be on the list since for every n > 0 it differs from line n in the n+10-th bit. But that means that bits 1. . . 9 play no role, and can be chosen arbitrarily, as shown in Figure 2.2(b); this yields another 2^9 = 512 languages that are not on the list. And we can do even much better than that! Suppose we construct a language whose 2n-th bit differs from the 2n-th bit in Description #n (c). Again it is clear that it cannot be on the list, but now every odd bit is left unspecified and can be chosen freely! This allows us to create freely an infinite number of languages none of which allows a finite description; see the slanting diagonal in Figure 2.2. In short, for every language that can be described there are infinitely many that cannot.
+
+因此，尽管我们已经详尽地列出了所有可能地描述，我们至少有一种语言没有在列表中描述。而且还有更多的语言没有在列表中。例如，构造语言其n+10位与描述#n的第n+10位不同，它也不可能在列表中，因为对于n>0，其描述的语言的第n+10位都与第n行的第n+10位不同。这意味着第1到9比特不起作用，可以任意选择，如图2.2(b)，这会产生不在列表中的另外2^9=512种语言。我们还可以进一步这样做。假设我们构造了一门语言，它的第2n位与描述#n的第2n位不同，显然它也不可能在列表中，现在每一个奇数位都没有指定，并且可以自由选择。这使我们可以自由创造无限数量的语言，其中没有一种允许有限的描述。参见图2.2中的对角线，简而言之，对于每一种可以描述的语言，都有无限的无法描述的语言。
+```
+
+```
+The diagonalization technique is described more formally in most books on theoretical computer science; see e.g., Rayward-Smith [393, pp. 5-6], or Sudkamp [397, Section 1.4].
+
+对角化技术在大多数关于计算机科学理论的书籍中描述得更为正式，参见例如Rayward-Smith[393]第5-6页，或Sudkamp[397]第1.4节。
+```
+
+> 2.1.3.5 Discussion (讨论)
+
+```
+The above demonstration shows us several things. First, it shows the power of treating languages as formal objects. Although the above outline clearly needs considerable amplification and substantiation to qualify as a proof (for one thing it still has to be clarified why the above explanation, which defines the language C, is not itself on the list of descriptions; see Problem 2.1, it allows us to obtain insight into properties not otherwise assessable.
+
+上面的演示向我们展示了几件事情。首先，它显示了将语言作为形式对象的能力。虽然上述的内容需要大量的放大和证明才能作为证明的资格（还有一点需要澄清，为什么定义语言C的上述描述本身不在描述列表中，参见问题2.1，它使我们能够获得对不可评估的属性的洞察）。
+```
+
+```
+Secondly, it shows that we can only describe a tiny subset (not even a fraction) of all possible languages: there is an infinity of languages out there, forever beyond our reach.
+
+其次，它表明了我们只能描述所有可能语言中的一个很小的子集（甚至不是一小部分），这无限的语言，永远超出了我们可触及的范围。
+```
+
+```
+Thirdly, we have proved that, although there are infinitely many descriptions and infinitely many languages, these infinities are not equal to each other, and the latter is larger than the former. These infinities are called ℵ0 and ℵ1 by Cantor, and the above is just a special case of his proof that ℵ0 < ℵ1.
+
+第三，我们已经证明了，虽然有无穷多的描述和无穷多的语言，但是这些无穷大并不相等，后者比前者更大。Cantor称这些无穷大为ℵ0和ℵ1，以上只是他证明ℵ0<ℵ1的一个特例。
+```
+
+> 2.1.4 Describing a Language through a Finite Recipe
+
+```
+A good way to build a set of objects is to start with a small object and to give rules for how to add to it and construct new objects from it. “Two is an even number and the sum of two even numbers is again an even number” effectively generates the set of all even numbers. Formalists will add “and no other numbers are even”, but we will take that as understood.
+
+构造一组对象的好方法是从一个小对象开始。“2是偶数，两个偶数的和还是偶数”有效地生成了所有偶数的集合。形式主义者会补充“并且没有其他数字是偶数”，但我们知道这一点。
+```
+
+```
+Suppose we want to generate the set of all enumerations of names, of the type “Tom, Dick and Harry”, in which all names but the last two are separated by commas. We will not accept “Tom, Dick, Harry” nor “Tom and Dick and Harry”, but we shall not object to duplicates: “Grubb, Grubb and Burrowes”2 is all right. Although these are not complete sentences in normal English, we shall still call them “sentences” since that is what they are in our midget language of name enumerations. A simpleminded recipe would be:
+0. Tom is a name, Dick is a name, Harry is a name;
+1. a name is a sentence;
+2. a sentence followed by a comma and a name is again a sentence;
+3. before finishing, if the sentence ends in “, name”, replace it by “and name”.
+
+假设我们想要生成所有类型名为“Tom, Dick and Harry”的枚举集合，其中除了最后两个，所有名称都以逗号分隔。我们不接受“Tom, Dick Harry”或“Tom and Dick and Harry”，但是我们不反对重复：“Grubb, Grubb and Burrowes”是可以的。虽然这些句子都不是正常英语的完整句子，我们依旧叫它们“句子”因为这是我们用名词枚举的小型预言。一个简单的规则是：
+    0. Tom是一个名字，Dick是一个名字，Harry是一个名字
+    1. 一个名字是一个句子
+    2. 句子后面跟着逗号，并且名字也是一个句子
+    3. 在完成之前，如果句子以“逗号 名字”结尾，则用“and 名字”替换
+```
+
+```
+Although this will work for a cooperative reader, there are several things wrong with it. Clause 3 is especially wrought with trouble. For example, the sentence does not really end in “, name”, it ends in “, Dick” or such, and “name” is just a symbol that stands for a real name; such symbols cannot occur in a real sentence and must in the end be replaced by a real name as given in clause 0. Likewise, the word “sentence” in the recipe is a symbol that stands for all the actual sentences. So there are two kinds of symbols involved here: real symbols, which occur in finished sentences, like “Tom”, “Dick”, a comma and the word “and”; and there are intermediate symbols, like “sentence” and “name” that cannot occur in a finished sentence. The first kind corresponds to the words or tokens explained above; the technical term for them isterminal symbols(or short). The intermediate symbols are called nonterminals, a singularly uninspired term. To distinguish them, we write terminals in lower case letters and start non-terminals with an upper case letter. Non-terminals are called (grammar) variables or syntactic categories in linguistic contexts.
+
+尽管这对一起合作的读者来说是有效的，但是依旧存在几个问题。特别是第三条。例如句子没有以“逗号 名字”结尾，而是以“逗号 Dick”结尾，名字只是代表真实名称的符号，这些符号不能出现在真正的句子中，最后必须用第0条中给出的真实名称代替。同样，规则中的“句子”一词代表所有实际句子的符号。这里涉及两种符号：出现在完整句子中的真正的符号，如“Tom”，“Dick”，逗号和“and”，还有一些中间符号，如“句子”和“名字”，他们不能再一个完整句子中出现。第一种对应于上面
+```
