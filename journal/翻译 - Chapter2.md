@@ -424,7 +424,7 @@ where the non-terminal with the subscript s is the start symbol. (The subscript 
     1. Sentence_s ---> Name | List End
     2. List ---> Name | Name , List
     3. , Name End ---> and Name
-带有下标_s的非终结符是开始符号（下标标记的是符号，而不是规则）。
+带有下标s的非终结符是开始符号（下标标记的是符号，而不是规则）。
 ```
 
 ```
