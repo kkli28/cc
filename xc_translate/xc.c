@@ -33,7 +33,7 @@ enum {Global, Local};
 
 int *text, // text segment
     *stack;// stack
-int * old_text; // for dump text segment
+int *old_text; // for dump text segment
 char *data; // data segment
 int *idmain;
 
