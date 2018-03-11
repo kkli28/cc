@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="头文件\Eval">
+      <UniqueIdentifier>{cf934672-86be-4aae-8328-c9b9902a82f3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -31,7 +34,13 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Eval.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Eval</Filter>
+    </ClInclude>
+    <ClInclude Include="Instruction.h">
+      <Filter>头文件\Eval</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory.h">
+      <Filter>头文件\Eval</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -40,6 +49,9 @@
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory.cpp">
+      <Filter>头文件\Eval</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

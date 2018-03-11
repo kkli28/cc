@@ -14,6 +14,9 @@
 
 // TODO: 在此处引用程序需要的其他头文件
 
+//宏定义
+#define OUTPUT_MEMORY_ACTIONS true
+
 //标准库头文件
 #include <iostream>
 #include <fstream>
@@ -22,4 +25,3 @@
 
 //自己写的头文件
 #include "Utils.h"
-
