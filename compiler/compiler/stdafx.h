@@ -15,7 +15,7 @@
 // TODO: 在此处引用程序需要的其他头文件
 
 //宏定义
-#define OUTPUT_MEMORY_ACTIONS true
+#define OUTPUT_VM_ACTIONS true
 
 //标准库头文件
 #include <iostream>

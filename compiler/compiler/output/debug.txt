@@ -1,0 +1,16 @@
+VirtualMachine::VirtualMachine()
+VirtualMachine::addText: 1
+VirtualMachine::addText: 10
+VirtualMachine::addText: 13
+VirtualMachine::addText: 1
+VirtualMachine::addText: 20
+VirtualMachine::addText: 25
+VirtualMachine::addText: 13
+VirtualMachine::addText: 32
+VirtualMachine::run() called!
+execute: I_IMM   10
+execute: I_PUSH
+execute: I_IMM   20
+execute: I_ADD 
+execute: I_PUSH
+execute: I_EXIT

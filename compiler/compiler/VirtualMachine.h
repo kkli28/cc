@@ -1,19 +1,21 @@
-#ifndef __MEMORY_H__
-#define __MEMORY_H__
+#ifndef __VIRTUAL_MACHINE_H__
+#define __VIRTUAL_MACHINE_H__
 
 /*
-文件描述：内存，包括数据段、代码段、栈。虚拟机需要一个内存。
+文件描述：虚拟机定义。虚拟机拥有内存，寄存器，以及可以执行指令的 “CPU”。
 */
 
 #include "stdafx.h"
+#include "Instruction.h"
 
 namespace kkli {
 
 	//========================================
-	// 内存
+	// 虚拟机
 	//========================================
-	class Memory {
+	class VirtualMachine {
 	private:
+
 		const static int SEGMENT_SIZE = 256 * 1024; //内存段大小
 		int* data;        //数据段
 		int* text;        //代码段
@@ -29,15 +31,20 @@ namespace kkli {
 		int ax;     //ax寄存器（栈顶缓存）
 		
 	public:
-		Memory(const Memory& rhs) = delete;
-		const Memory& operator=(const Memory& rhs) = delete;
-		Memory();
-		
-		//添加数据、指令、及指令的操作数
-		void addData(int elem);
-		void addText(int elem);
+		//禁止复制、赋值
+		VirtualMachine(const VirtualMachine& rhs) = delete;
+		const VirtualMachine& operator=(const VirtualMachine& rhs) = delete;
 
-		//获取数据
+		VirtualMachine();
+		
+		//添加数据、指令
+		void addData(int elem);
+		void addInst(int elem);
+		
+		//删除顶部的指令
+		void deleteTopInst();
+
+		//getter
 		int* getDataSegment() const { return data; }
 		int* getTextSegment() const { return text; }
 		int* getStack() const { return stack; }
@@ -46,11 +53,14 @@ namespace kkli {
 		int pop();
 		void push(int elem);
 
-		//获取内存信息
+		//执行指令
+		int run();
+
+		//获取虚拟机信息
 		std::string getInfo() const;
 	};
 
-	const int Memory::SEGMENT_SIZE;
+	const int VirtualMachine::SEGMENT_SIZE;
 }
 
 #endif

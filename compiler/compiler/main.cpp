@@ -2,18 +2,24 @@
 //
 
 #include "stdafx.h"
-#include "Scanner.h"
+#include "VirtualMachine.h"
 
 using namespace std;
+using namespace kkli;
 
 int main()
 {
-	kkli::Scanner* scanner = kkli::Scanner::getInstance("input/test.txt");
-	char c;
-	while ((c=scanner->scan()) != EOF) {
-		cout << c << "|";
-	}
-	cout << endl;
+	kkli::VirtualMachine vm;
+	vm.addInst(I_IMM);
+	vm.addInst(10);
+	vm.addInst(I_PUSH);
+	vm.addInst(I_IMM);
+	vm.addInst(20);
+	vm.addInst(I_ADD);
+	vm.addInst(I_PUSH);
+	vm.addInst(I_EXIT);
+	vm.run();
+
 	system("pause");
     return 0;
 }

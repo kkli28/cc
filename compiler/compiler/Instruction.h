@@ -240,6 +240,16 @@ namespace kkli {
 
 		//TODO: 尝试提供scanf
 	};
+
+	//指令的文本
+	const std::string INSTRUCTION_STRING[INSTRUCTION_SIZE] = {
+		"I_LEA ", "I_IMM ", "I_JMP ", "I_CALL", "I_JZ  ", "I_JNZ ", "I_ENT ", "I_ADJ ",  //带参数的指令
+		"I_LEV ", "I_LI  ", "I_LC  ", "I_SI  ", "I_SC  ", "I_PUSH",
+		"I_OR  ", "I_XOR ", "I_AND ", "I_EQ  ", "I_NE  ", "I_LT  ", "I_GT  ", "I_LE  ", "I_GE  ", "I_SHL ", "I_SHR ",
+		"I_ADD ", "I_SUB ", "I_MUL ", "I_DIV ", "I_MOD ", //五则运算
+		"I_PRTF", "I_MALC", "I_EXIT" //内置函数
+	};
+
 }
 
 #endif
