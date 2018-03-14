@@ -79,7 +79,9 @@ int main()
 	vm.addInst(-3);
 	vm.addInst(I_LI);
 	vm.addInst(I_ADD);
-	vm.addInst(I_LEV);
+
+	//因为没有初始化pc指向main函数起点，因此不能LEV
+	//vm.addInst(I_LEV);
 	vm.addInst(I_PUSH);
 	vm.addInst(I_EXIT);
 	vm.run();
