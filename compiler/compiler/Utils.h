@@ -34,6 +34,10 @@ namespace kkli {
 			static std::ofstream outFile("output/debug.txt", std::ios::app);
 			outFile << desc << data << std::endl;
 		}
+		static void clear() {
+			static std::ofstream outFile("output/debug.txt", std::ios::ate);
+			outFile << std::endl;
+		}
 	};
 }
 

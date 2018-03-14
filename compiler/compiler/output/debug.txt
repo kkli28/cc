@@ -1,16 +1,126 @@
+
 VirtualMachine::VirtualMachine()
-VirtualMachine::addText: 1
-VirtualMachine::addText: 10
+VirtualMachine::addText: 6
+VirtualMachine::addText: 3
+VirtualMachine::addText: 0
+VirtualMachine::addText: -1
 VirtualMachine::addText: 13
 VirtualMachine::addText: 1
-VirtualMachine::addText: 20
+VirtualMachine::addText: 1
+VirtualMachine::addText: 11
+VirtualMachine::addText: 0
+VirtualMachine::addText: -2
+VirtualMachine::addText: 13
+VirtualMachine::addText: 1
+VirtualMachine::addText: 2
+VirtualMachine::addText: 11
+VirtualMachine::addText: 0
+VirtualMachine::addText: -3
+VirtualMachine::addText: 13
+VirtualMachine::addText: 1
+VirtualMachine::addText: 3
+VirtualMachine::addText: 11
+VirtualMachine::addText: 0
+VirtualMachine::addText: -1
+VirtualMachine::addText: 13
+VirtualMachine::addText: 0
+VirtualMachine::addText: -1
+VirtualMachine::addText: 9
+VirtualMachine::addText: 13
+VirtualMachine::addText: 0
+VirtualMachine::addText: -2
+VirtualMachine::addText: 9
+VirtualMachine::addText: 27
+VirtualMachine::addText: 11
+VirtualMachine::addText: 0
+VirtualMachine::addText: -2
+VirtualMachine::addText: 13
+VirtualMachine::addText: 0
+VirtualMachine::addText: -2
+VirtualMachine::addText: 9
+VirtualMachine::addText: 13
+VirtualMachine::addText: 0
+VirtualMachine::addText: -3
+VirtualMachine::addText: 9
+VirtualMachine::addText: 27
+VirtualMachine::addText: 11
+VirtualMachine::addText: 0
+VirtualMachine::addText: -3
+VirtualMachine::addText: 13
+VirtualMachine::addText: 0
+VirtualMachine::addText: -3
+VirtualMachine::addText: 9
+VirtualMachine::addText: 13
+VirtualMachine::addText: 0
+VirtualMachine::addText: -1
+VirtualMachine::addText: 9
+VirtualMachine::addText: 26
+VirtualMachine::addText: 11
+VirtualMachine::addText: 0
+VirtualMachine::addText: -1
+VirtualMachine::addText: 9
+VirtualMachine::addText: 13
+VirtualMachine::addText: 0
+VirtualMachine::addText: -2
+VirtualMachine::addText: 9
 VirtualMachine::addText: 25
+VirtualMachine::addText: 13
+VirtualMachine::addText: 0
+VirtualMachine::addText: -3
+VirtualMachine::addText: 9
+VirtualMachine::addText: 25
+VirtualMachine::addText: 8
 VirtualMachine::addText: 13
 VirtualMachine::addText: 32
 VirtualMachine::run() called!
-execute: I_IMM   10
+execute: I_ENT   3
+execute: I_LEA   -1
 execute: I_PUSH
-execute: I_IMM   20
+execute: I_IMM   1
+execute: I_SI  
+execute: I_LEA   -2
+execute: I_PUSH
+execute: I_IMM   2
+execute: I_SI  
+execute: I_LEA   -3
+execute: I_PUSH
+execute: I_IMM   3
+execute: I_SI  
+execute: I_LEA   -1
+execute: I_PUSH
+execute: I_LEA   -1
+execute: I_LI  
+execute: I_PUSH
+execute: I_LEA   -2
+execute: I_LI  
+execute: I_MUL 
+execute: I_SI  
+execute: I_LEA   -2
+execute: I_PUSH
+execute: I_LEA   -2
+execute: I_LI  
+execute: I_PUSH
+execute: I_LEA   -3
+execute: I_LI  
+execute: I_MUL 
+execute: I_SI  
+execute: I_LEA   -3
+execute: I_PUSH
+execute: I_LEA   -3
+execute: I_LI  
+execute: I_PUSH
+execute: I_LEA   -1
+execute: I_LI  
+execute: I_SUB 
+execute: I_SI  
+execute: I_LEA   -1
+execute: I_LI  
+execute: I_PUSH
+execute: I_LEA   -2
+execute: I_LI  
 execute: I_ADD 
 execute: I_PUSH
-execute: I_EXIT
+execute: I_LEA   -3
+execute: I_LI  
+execute: I_ADD 
+execute: I_LEV 

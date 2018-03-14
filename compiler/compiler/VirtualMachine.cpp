@@ -7,6 +7,7 @@ kkli::VirtualMachine::VirtualMachine() {
 
 	//调试
 	if (OUTPUT_VM_ACTIONS) {
+		Debug::clear();
 		Debug::output("VirtualMachine::VirtualMachine()");
 	}
 
@@ -101,6 +102,9 @@ std::string kkli::VirtualMachine::getInfo() const {
 	//拼装虚拟机信息
 	std::string str;
 	str += "SEGMENT_SIZE: " + std::to_string(SEGMENT_SIZE) + "\n";
+	str += "data: " + std::to_string(int(data)) + "\n";
+	str += "text: " + std::to_string(int(text)) + "\n";
+	str += "stack: " + std::to_string(int(stack)) + "\n";
 	str += "data count: " + std::to_string(nextData - data) + "\n";
 	str += "text count: " + std::to_string(nextText - text) + "\n";
 	str += "stack count: " + std::to_string(sp - stack) + "\n";
@@ -150,7 +154,7 @@ int kkli::VirtualMachine::run() {
 
 		//加载int值
 		else if (inst == I_LI) {
-			ax = *(reinterpret_cast<char*>(ax));
+			ax = *(reinterpret_cast<int*>(ax));
 		}
 
 		//存储char值
@@ -347,5 +351,7 @@ int kkli::VirtualMachine::run() {
 			printf("unknown instruction: %d\n", inst);
 			return -1;
 		}
+
+		//std::cout << getInfo() << std::endl;;
 	}
 }
