@@ -16,6 +16,9 @@
 
 //宏定义
 #define OUTPUT_VM_ACTIONS true
+#define OUTPUT_TOKEN_ACTIONS true
+#define OUTPUT_SYMBOL_ACTIONS true
+#define OUTPUT_LEXER_ACTIONS true
 
 //标准库头文件
 #include <iostream>
