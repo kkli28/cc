@@ -37,9 +37,10 @@ namespace kkli {
 
 		VirtualMachine();
 		
-		//添加数据、指令
+		//添加数据、指令、指令的操作数
 		void addData(int elem);
-		void addInst(int elem);
+		void addInst(Instruction elem);
+		void addInstData(int elem);
 		
 		//删除顶部的指令
 		void deleteTopInst();

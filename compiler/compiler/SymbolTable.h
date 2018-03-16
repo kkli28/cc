@@ -43,6 +43,10 @@ namespace kkli {
 
 	//判断符号是否存在
 	bool SymbolTable::has(std::string name) {
+		if (OUTPUT_SYMBOL_ACTIONS) {
+			Debug::output("SymbolTable::has(" + name + ")");
+		}
+
 		//已录入的符号
 		for (auto token : table) {
 			if (token.name == name) return true;
@@ -54,6 +58,10 @@ namespace kkli {
 	
 	//添加符号信息
 	void SymbolTable::addToken(TokenType type, std::string name, int hash) {
+		if (OUTPUT_SYMBOL_ACTIONS) {
+			Debug::output("SymbolTable::addToken(" + getTokenTypeName(type) + ", " + name + ", " + std::to_string(hash));
+		}
+
 		currToken.clear();
 
 		currToken.type = type;
@@ -63,6 +71,13 @@ namespace kkli {
 
 	//完善符号信息
 	void SymbolTable::finishToken(TokenKlass klass, DataType dataType, int value) {
+		if (OUTPUT_SYMBOL_ACTIONS) {
+			Debug::output("SymbolTable::finishToken("
+				+ getTokenKlassName(klass)
+				+ ", " + getDataTypeName(dataType)
+				+ ", " + std::to_string(value) + ")");
+		}
+
 		currToken.klass = klass;
 		currToken.dataType = dataType;
 		currToken.value = value;

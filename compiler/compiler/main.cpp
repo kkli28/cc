@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "VirtualMachine.h"
+#include "Lexer.h"
 
 using namespace std;
 using namespace kkli;
@@ -10,6 +11,7 @@ using namespace kkli;
 int main()
 {
 	kkli::VirtualMachine vm;
+	/*
 	vm.addInst(I_ENT);
 	vm.addInst(3);
 	vm.addInst(I_LEA);
@@ -85,6 +87,9 @@ int main()
 	vm.addInst(I_PUSH);
 	vm.addInst(I_EXIT);
 	vm.run();
+	*/
+
+	Lexer lexer("input/test.txt");
 
 	system("pause");
     return 0;

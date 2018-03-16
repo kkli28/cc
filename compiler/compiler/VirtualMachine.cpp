@@ -37,7 +37,7 @@ void kkli::VirtualMachine::addData(int elem) {
 
 	//调试
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::addData: ", elem);
+		Debug::output("VirtualMachine::addData(" + std::to_string(elem) + ")");
 	}
 
 	*nextData = elem;
@@ -45,11 +45,11 @@ void kkli::VirtualMachine::addData(int elem) {
 }
 
 //添加指令
-void kkli::VirtualMachine::addInst(int elem) {
+void kkli::VirtualMachine::addInst(Instruction elem) {
 
 	//调试
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::addText: ", elem);
+		Debug::output("VirtualMachine::addInst(" + getInstructionName(elem) + ")");
 	}
 
 	*nextText = elem;
@@ -119,7 +119,7 @@ std::string kkli::VirtualMachine::getInfo() const {
 int kkli::VirtualMachine::run() {
 
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::run() called!");
+		Debug::output("VirtualMachine::run()");
 	}
 
 	int inst;        //指令
@@ -136,7 +136,7 @@ int kkli::VirtualMachine::run() {
 		//输出执行的指令
 		if (OUTPUT_VM_ACTIONS) {
 			std::string debugInfo = "execute: ";
-			debugInfo += INSTRUCTION_STRING[inst];
+			debugInfo += getInstructionName(Instruction(inst));
 			if (inst <= I_ADJ) debugInfo += "  " + std::to_string(*pc);
 			Debug::output(debugInfo);
 		}

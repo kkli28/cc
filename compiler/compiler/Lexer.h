@@ -15,8 +15,8 @@ namespace kkli {
 	//========================================
 	class Lexer {
 	private:
-		std::string sourceCode;  //源代码
-		int index;
+		std::string source;  //源代码
+		int index;           //当前扫描的位置
 
 	public:
 		Lexer(std::string sourceFile);
@@ -29,13 +29,31 @@ namespace kkli {
 	};
 
 	Lexer::Lexer(std::string sourceFile) {
-		std::ifstream inFile(sourceFile);
-		char buff[100000];
-		inFile.read(buff, 100000);
-		sourceCode.assign(buff);
+		if (OUTPUT_LEXER_ACTIONS) {
+			Debug::output("Lexer::Lexer(" + sourceFile + ")");
+		}
 
-		std::cout << sourceCode.size() << std::endl;
-		index = 0;
+		std::ifstream inFile(sourceFile);
+		inFile >> std::noskipws;    //不跳过空白
+
+		char buff[1000000];
+		int i = 0;
+		while (!inFile.eof()) inFile >> buff[i++];
+
+		source = std::move(std::string(buff, i));
+
+		if (OUTPUT_LEXER_ACTIONS) {
+			Debug::output("    words: " + std::to_string(i));
+		}
+	}
+
+	//获取下一个词法单元
+	std::pair<TokenType, int> Lexer::next() {
+		if (OUTPUT_LEXER_ACTIONS) {
+			Debug::output("Lexer::next()");
+		}
+
+		//TODO:
 	}
 }
 

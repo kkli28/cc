@@ -1,6 +1,6 @@
 
 
-///*
+/*
 int debug;    // print the executed instructions
 int assembly; // print out the assembly and source
 
