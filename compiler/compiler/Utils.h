@@ -17,7 +17,7 @@ namespace kkli {
 		std::string info;
 	public:
 		Error(std::string i) : info(i) {}
-		std::string what()const { return info; }
+		std::string what()const { return "[Error] " + info; }
 	};
 
 	//========================================

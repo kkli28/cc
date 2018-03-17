@@ -11,7 +11,7 @@ void kkli::Token::saveInfo() {
 	if (OUTPUT_TOKEN_ACTIONS) {
 		Debug::output(std::string("Token::saveInfo: ")
 			+ "type = " + getTokenTypeName(type)
-			+ "klass = " + getTokenKlassName(klass));
+			+ "  klass = " + getTokenKlassName(klass));
 	}
 
 	Btype = type;
@@ -27,7 +27,7 @@ void kkli::Token::restoreInfo() {
 	if (OUTPUT_TOKEN_ACTIONS) {
 		Debug::output(std::string("Token::restoreInfo(): ")
 			+ "type = " + getTokenTypeName(Btype)
-			+ "klass = " + getTokenKlassName(Bklass));
+			+ "  klass = " + getTokenKlassName(Bklass));
 	}
 
 	type = Btype;
@@ -64,11 +64,24 @@ void kkli::Token::clear() {
 //获取TokenType类型名称
 std::string kkli::Token::getTokenTypeName(TokenType type) {
 	const std::string TOKEN_TYPE_STRING[TOKEN_TYPE_SIZE] = {
-		"ID", "NUM", "CHAR", "ELSE", "ENUM", "IF", "INT", "RETURN", "SIZEOF", "WHILE",
-		"ASSIGN", "COND", "LOR", "LAN", "OR", "XOR", "AND", "NOT", "EQ", "NE", "LT",
-		"GT", "LE", "GE", "SHL", "SHR", "ADD", "SUB", "MUL", "DIV", "MOD",
-		"INC", "DEC", "LPAREN", "RPAREN", "LBRACK", "RBRACK", "LBRACE", "RBRACE",
-		"COMMA", "COLON", "SEMICON", "STRING"
+		"ID", 
+		"NUM", 
+		"CHAR", "ELSE", "ENUM", "IF", "INT", "RETURN", "SIZEOF", "WHILE",
+		"ASSIGN", "COND", 
+		"LOR", 
+		"LAN", 
+		"OR", 
+		"XOR", 
+		"AND", 
+		"NOT", "EQ", "NE", "LT", "GT", "LE", "GE", 
+		"SHL", "SHR", "ADD", "SUB", "MUL", "DIV", "MOD",
+		"INC", "DEC",
+		"LPAREN", "RPAREN", 
+		"LBRACK", "RBRACK", 
+		"LBRACE", "RBRACE",
+		"COMMA", "COLON", "SEMICON", 
+		"STRING",
+		"END"
 	};
 	return TOKEN_TYPE_STRING[type];
 }
@@ -83,10 +96,6 @@ std::string kkli::Token::getTokenKlassName(TokenKlass klass) {
 
 //获取DataType名称
 std::string kkli::Token::getDataTypeName(int type) {
-	std::string DATA_TYPE_STRING[DATA_TYPE_SIZE] = {
-		"INT_TYPE", "CHAR_TYPE", "PTR_TYPE"
-	};
-
 	std::string result;
 	while (type >= PTR_TYPE) {
 		type -= 2;

@@ -29,7 +29,7 @@ namespace kkli {
 
 		//单例
 		static SymbolTable* getInstance() {
-			SymbolTable* table = nullptr;
+			static SymbolTable* table = nullptr;
 			if (table == nullptr) {
 				table = new SymbolTable();
 			}
@@ -47,6 +47,9 @@ namespace kkli {
 
 		//获取当前Token
 		Token getCurrToken() const { return currToken; }
+
+		//获取符号表信息
+		std::string getSymbolTableInfo() const;
 	};
 }
 

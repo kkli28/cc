@@ -27,7 +27,7 @@ std::pair<bool, kkli::TokenType> kkli::SymbolTable::has(int hash, std::string na
 //添加符号信息
 void kkli::SymbolTable::addToken(TokenType type, std::string name, int hash) {
 	if (OUTPUT_SYMBOL_ACTIONS) {
-		Debug::output("SymbolTable::addToken(" + Token::getTokenTypeName(type) + ", " + name + ", " + std::to_string(hash));
+		Debug::output("SymbolTable::addToken(" + Token::getTokenTypeName(type) + ", " + name + ", " + std::to_string(hash) + ")");
 	}
 
 	currToken.clear();
@@ -35,6 +35,9 @@ void kkli::SymbolTable::addToken(TokenType type, std::string name, int hash) {
 	currToken.type = type;
 	currToken.name = name;
 	currToken.hash = hash;
+
+	//TEST
+	//table.push_back(currToken);
 }
 
 //完善符号信息
@@ -51,4 +54,22 @@ void kkli::SymbolTable::finishToken(TokenKlass klass, int dataType, int value) {
 	currToken.value = value;
 
 	table.push_back(currToken);
+}
+
+//获取符号表的信息
+std::string kkli::SymbolTable::getSymbolTableInfo() const {
+	std::string result = "[SymbolTable info]:\n";
+	result += "token count: " + std::to_string(table.size()) + "\n";
+	result += "token info:\n";
+	int i = 0;
+	for (auto token : table) {
+		result += "Index: " + std::to_string(i++) + "\n";
+		result += "TokenType: " + Token::getTokenTypeName(token.type) + "\n";
+		result += "TokenKlass: " + Token::getTokenKlassName(token.klass) + "\n";
+		result += "DataType: " + Token::getDataTypeName(token.dataType) + "\n";
+		result += "name: " + token.name + "\n";
+		result += "value: " + std::to_string(token.value) + "\n";
+		result += "hash: " + std::to_string(token.hash) + "\n\n";
+	}
+	return std::move(result);
 }

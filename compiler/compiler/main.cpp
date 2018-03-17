@@ -92,6 +92,8 @@ int main()
 	//std::cout << lexer.getSouce() << std::endl;
 
 	while (lexer.next().first != kkli::TokenType::END) {}
+	kkli::SymbolTable* table = kkli::SymbolTable::getInstance();
+	std::cout << table->getSymbolTableInfo() << std::endl;
 
 	system("pause");
     return 0;

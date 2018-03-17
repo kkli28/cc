@@ -38,7 +38,7 @@ void kkli::VirtualMachine::addData(int elem) {
 		Debug::output("VirtualMachine::addData(" + std::to_string(elem) + ")");
 	}
 
-	if (nextData == data + SEGMENT_SIZE) throw new Error("VirtualMachine::addData: data overflow");
+	if (nextData == data + SEGMENT_SIZE) throw new Error("VirtualMachine::addData(): data overflow");
 
 	*nextData = elem;
 	++nextData;
@@ -53,7 +53,7 @@ void kkli::VirtualMachine::addInst(Instruction elem) {
 	}
 
 
-	if (nextText == text + SEGMENT_SIZE) throw new Error("VirtualMachine::addText: text overflow");
+	if (nextText == text + SEGMENT_SIZE) throw new Error("VirtualMachine::addText(): text overflow");
 	*nextText = elem;
 	++nextText;
 }
@@ -64,7 +64,7 @@ void kkli::VirtualMachine::addInstData(int elem) {
 		Debug::output("VirtualMachine::addInstData(" + std::to_string(elem) + ")");
 	}
 
-	if (nextText == text + SEGMENT_SIZE) throw new Error("VirtualMachine::addText: text overflow");
+	if (nextText == text + SEGMENT_SIZE) throw new Error("VirtualMachine::addText(): text overflow");
 
 	*nextText = elem;
 	++nextText;
@@ -73,11 +73,11 @@ void kkli::VirtualMachine::addInstData(int elem) {
 //删除顶部指令
 void kkli::VirtualMachine::deleteTopInst() {
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::deleteTopInst: ", *(nextText - 1));
+		Debug::output("VirtualMachine::deleteTopInst(): " + getInstructionName(Instruction(*(nextText - 1))));
 	}
 
 	--nextText;
-	if (nextText < text) throw new Error("VirtualMachine::deleteTopInst: no instruction to delete!");
+	if (nextText < text) throw new Error("VirtualMachine::deleteTopInst(): no instruction to delete!");
 }
 
 //出栈
@@ -85,10 +85,10 @@ int kkli::VirtualMachine::pop() {
 
 	//调试
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::pop: ", *(sp));
+		Debug::output("VirtualMachine::pop(): ", *(sp));
 	}
 
-	if (sp == stack) throw new Error("Error: empty stack!");
+	if (sp == stack) throw new Error("empty stack!");
 	return *(sp++);
 }
 
@@ -97,10 +97,10 @@ void kkli::VirtualMachine::push(int elem) {
 
 	//调试
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::push: ", elem);
+		Debug::output("VirtualMachine::push(" + std::to_string(elem) + ")");
 	}
 
-	if (sp == stack + SEGMENT_SIZE) throw new Error("Error: stack overflow!");
+	if (sp == stack + SEGMENT_SIZE) throw new Error("stack overflow!");
 	*sp = elem;
 	*(--sp) = elem;
 }
@@ -362,8 +362,7 @@ int kkli::VirtualMachine::run() {
 		
 		//错误的指令
 		else {
-			printf("unknown instruction: %d\n", inst);
-			return -1;
+			throw new Error("unknown instruction!");
 		}
 
 		//std::cout << getInfo() << std::endl;;
