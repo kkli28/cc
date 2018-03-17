@@ -1,4 +1,4 @@
-
+#include "stdafx.h"
 
 /*
 int debug;    // print the executed instructions

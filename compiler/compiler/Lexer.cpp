@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Lexer.h"
 
 //构造函数
@@ -16,9 +17,8 @@ kkli::Lexer::Lexer(std::string sourceFile) {
 	source = std::move(std::string(buff, i));
 	source[source.size() - 1] = eof;  //添加结尾字符
 
-	index = -1;
+	index = 0;
 	line = 1;
-	column = 1;
 
 	if (OUTPUT_LEXER_ACTIONS) {
 		Debug::output("    words: " + std::to_string(i));
@@ -28,24 +28,22 @@ kkli::Lexer::Lexer(std::string sourceFile) {
 
 //next
 std::pair<kkli::TokenType, int> kkli::Lexer::next() {
-	if (OUTPUT_LEXER_ACTIONS) {
-		Debug::output("Lexer::next()");
-	}
-
 	int value = 0;
+	SymbolTable* table = SymbolTable::getInstance();
+	VirtualMachine* vm = VirtualMachine::getInstance();
 
-	char curr = nextChar();
+	char curr = source[index];
 	while (curr != eof) {
 
 		//换行符
 		if (curr == '\n') {
+			curr = get();
 
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [\\n]");
 			}
 
 			++line;
-			column = 1;
 		}
 
 		//宏 或 文件引用（直接跳过，不支持）
@@ -54,8 +52,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [#...]");
 			}
 
-			curr = nextChar();
-			while (curr != eof && curr != '\n')  curr = nextChar();
+			curr = get();
+			while (curr != eof && curr != '\n')  curr = get();
 		}
 
 		//标识符
@@ -63,16 +61,16 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 			
 			int begIndex = index;      //该标识符名称的起始索引
 			int hash = curr;           //该标识符的hash值
-			curr = nextChar();
+			curr = get();
 			while (isAlpha(curr) || isNum(curr) || curr == '_') {
 				hash = hash * 147 + curr;
-				curr = nextChar();
+				curr = get();
 			}
 
 			std::string name(source, begIndex, index - begIndex);
 
 			//查符号表
-			auto info = table.has(hash, name);
+			auto info = table->has(hash, name);
 
 			//符号表中有该标识符
 			if (info.first) {
@@ -85,12 +83,11 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 			//符号表中没有该标识符，则向其中添加信息
 			else {
-
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 					Debug::output("Lexer::next(): [id] " + name + " [add]");
 				}
 
-				table.addToken(TokenType::ID, name, hash);
+				table->addToken(TokenType::ID, name, hash);
 				return { TokenType::ID, 0 };
 			}
 		}
@@ -98,13 +95,13 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 		//数字
 		else if (isNum(curr)) {
 			value = curr - '0';
-			curr = nextChar();
+			curr = get();
 
 			//十进制数（八进制数与十六进制数以0及0x开始）
 			if (value != 0) {
 				while (isNum(curr)) {
 					value = value * 10 + curr - '0';
-					curr = nextChar();
+					curr = get();
 				}
 
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
@@ -115,12 +112,12 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 			else {
 				//十六进制数
 				if (curr == 'x' || curr == 'X') {
-					curr = nextChar();
+					curr = get();
 					while (isNum(curr)
 						|| (curr >= 'a' && curr <= 'z')
 						|| (curr >= 'A' && curr <= 'Z')) {
 						value = value * 16 + (curr & 15) + (curr >= 'A' ? 9 : 0);
-						curr = nextChar();
+						curr = get();
 					}
 
 					if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
@@ -132,7 +129,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				else {
 					while (curr >= '0' && curr <= '7') {
 						value = value * 8 + curr - '0';
-						curr = nextChar();
+						curr = get();
 					}
 
 					if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
@@ -146,11 +143,11 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		//注释 或 除号
 		else if (curr == '/') {
-			curr = nextChar();
+			curr = get();
 
 			//单行注释
 			if (curr == '/') {
-				while (curr != '\n' || curr != eof) curr = nextChar();
+				while (curr != '\n' && curr != eof) curr = get();
 
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 					Debug::output("Lexer::next(): [//]");
@@ -159,17 +156,17 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 			//多行注释
 			else if (curr == '*') {
-				curr = nextChar();
+				curr = get();
 				while (true) {
 					if (curr == '*') {
-						curr = nextChar();
+						curr = get();
 						if (curr == '/') {
-							curr = nextChar();
+							curr = get();
 							break;
 						}
 					}
 					else if (curr == eof) break;
-					else curr = nextChar();
+					else curr = get();
 				}
 
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
@@ -189,14 +186,14 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		//字符
 		else if (curr == '\'') {
-			curr = nextChar();
+			curr = get();
 			if (curr == eof) {
 				throw new Error("Lexer::next(): invalid char type.");
 			}
 
 			//转义字符
 			if (curr == '\\') {
-				curr = nextChar();
+				curr = get();
 				if (curr == eof) {
 					throw new Error("Lexer::next(): invalid char type.");
 				}
@@ -205,11 +202,11 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				else value = curr;
 			}
 
-			curr = nextChar();
-			if (curr == eof || curr != '\'') {
+			curr = get();
+			if (curr != '\'') {
 				throw new Error("Lexer::next(): invalid char type.");
 			}
-			curr = nextChar();
+			curr = get();
 
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [char]");
@@ -220,31 +217,32 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		//字符串
 		else if (curr == '"') {
-			curr = nextChar();
+			curr = get();
 
 			//记录字符串起始位置
-			value = reinterpret_cast<int>(vm.getNextDataPos());
+			value = reinterpret_cast<int>(vm->getNextDataPos());
 
 			while (curr != '"' && curr != eof) {
 
 				//转义字符
 				if (curr == '\\') {
-					curr = nextChar();
-					if (curr == 'n') vm.addData('\n');
+					curr = get();
+					if (curr == 'n') vm->addData('\n');
 					else if (curr == eof) {
 						throw new Error("Lexer::next(): invalid string type.");
 					}
-					else vm.addData(curr);
+					else vm->addData(curr);
+					curr = get();
 				}
 				else {
-					vm.addData(curr);
-					curr = nextChar();
+					vm->addData(curr);
+					curr = get();
 				}
 			}
 			if (curr == eof) {
 				throw new Error("Lexer::next(): invalid string type.");
 			}
-			curr = nextChar();
+			curr = get();
 
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [string]");
@@ -255,11 +253,11 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// = 或 ==
 		else if (curr == '=') {
-			curr = nextChar();
+			curr = get();
 
 			// ==
 			if (curr == '=') {
-				curr = nextChar();
+				curr = get();
 				
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 					Debug::output("Lexer::next(): [EQ]");
@@ -280,11 +278,11 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// + 或 ++
 		else if (curr == '+') {
-			curr = nextChar();
+			curr = get();
 
 			// ++
 			if (curr == '+') {
-				curr = nextChar();
+				curr = get();
 
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 					Debug::output("Lexer::next(): [INC]");
@@ -305,11 +303,11 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// - 或 --
 		else if (curr == '-') {
-			curr = nextChar();
+			curr = get();
 
 			// --
 			if (curr == '-') {
-				curr = nextChar();
+				curr = get();
 
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 					Debug::output("Lexer::next(): [DEC]");
@@ -330,11 +328,11 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// ! 或 !=
 		else if (curr == '!') {
-			curr = nextChar();
+			curr = get();
 
 			// !=
 			if (curr == '=') {
-				curr = nextChar();
+				curr = get();
 
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 					Debug::output("Lexer::next(): [NE]");
@@ -355,11 +353,11 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// < 或 <= 或 <<
 		else if (curr == '<') {
-			curr = nextChar();
+			curr = get();
 
 			// <=
 			if (curr == '=') {
-				curr = nextChar();
+				curr = get();
 
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 					Debug::output("Lexer::next(): [LE]");
@@ -370,7 +368,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 			// <<
 			else if (curr == '<') {
-				curr = nextChar();
+				curr = get();
 
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 					Debug::output("Lexer::next(): [SHL]");
@@ -391,11 +389,11 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// > 或 >= 或 >>
 		else if (curr == '>') {
-			curr = nextChar();
+			curr = get();
 
 			// >=
 			if (curr == '=') {
-				curr = nextChar();
+				curr = get();
 
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 					Debug::output("Lexer::next(): [GE]");
@@ -406,7 +404,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 			// >>
 			else if (curr == '>') {
-				curr = nextChar();
+				curr = get();
 
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 					Debug::output("Lexer::next(): [SHR]");
@@ -427,11 +425,11 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// | 或 ||
 		else if (curr == '|') {
-			curr = nextChar();
+			curr = get();
 
 			// ||
 			if (curr == '|') {
-				curr = nextChar();
+				curr = get();
 
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 					Debug::output("Lexer::next(): [LOR]");
@@ -452,11 +450,11 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// & 或 &&
 		else if (curr == '&') {
-			curr = nextChar();
+			curr = get();
 
 			// &&
 			if (curr == '&') {
-				curr = nextChar();
+				curr = get();
 
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 					Debug::output("Lexer::next(): [LAN]");
@@ -477,6 +475,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// ^
 		else if (curr == '^') {
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [XOR]");
 			}
@@ -486,6 +486,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// %
 		else if (curr == '%') {
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [MOD]");
 			}
@@ -495,6 +497,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// *
 		else if (curr == '*') {
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [MUL]");
 			}
@@ -504,6 +508,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// ?
 		else if (curr == '?') {
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [COND]");
 			}
@@ -513,6 +519,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// ,
 		else if (curr == ',') {
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [COMMA]");
 			}
@@ -522,6 +530,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// :
 		else if (curr == ':') {
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [COLON]");
 			}
@@ -531,6 +541,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// ;
 		else if (curr == ';') {
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [SEMICON]");
 			}
@@ -540,6 +552,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// (
 		else if (curr == '(') {
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [LPAREN]");
 			}
@@ -549,6 +563,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// )
 		else if (curr == ')') {
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [RPAREN]");
 			}
@@ -558,6 +574,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// [
 		else if (curr == '[') {
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [LBRACK]");
 			}
@@ -567,6 +585,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// ]
 		else if (curr == ']') {
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [RBRACK]");
 			}
@@ -576,6 +596,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// {
 		else if (curr == '{'){
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [LBRACE]");
 			}
@@ -585,6 +607,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// }
 		else if (curr == '}'){
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [RBRACE]");
 			}
@@ -594,11 +618,11 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 		// 空白符
 		else {
+			curr = get();
+
 			if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 				Debug::output("Lexer::next(): [WS]");
 			}
-
-			curr = nextChar();
 		}
 	}
 

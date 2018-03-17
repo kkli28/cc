@@ -1,5 +1,5 @@
-#ifndef Utils_h
-#define Utils_h
+#ifndef __UTILS_H__
+#define __UTILS_H__
 
 /*
 文件说明：提供一些通用的工具（函数和类）

@@ -5,8 +5,8 @@
 文件描述：词法分析模块，为语法分析提供一个个的 “单词”
 */
 
-#include "stdafx.h"
-#include "Token.h"
+#include "SymbolTable.h"
+#include "VirtualMachine.h"
 
 namespace kkli {
 
@@ -17,6 +17,14 @@ namespace kkli {
 	private:
 		std::string source;  //源代码
 		int index;           //当前扫描的位置
+		int line;            //行号
+
+		const char eof = -1;
+
+	private:
+
+		//获取下一个字符
+		inline char get() { return source[++index]; }
 
 	public:
 		Lexer(std::string sourceFile);
@@ -24,37 +32,19 @@ namespace kkli {
 		//获取下一个词法单元
 		std::pair<TokenType, int> next();
 
+		//获取源代码
+		std::string getSouce() const { return source; }
+
 		//匹配一个词法单元
-		void match(TokenType type);
+		//void match(TokenType type);
+
+		//简单的功能函数
+		bool isNum(char c) const { return c >= '0' && c <= '9'; }
+		bool isWS(char c) const { return c == ' ' || c == '\n' || c == '\t'; }
+		bool isAlpha(char c) const {
+			return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+		}
 	};
-
-	Lexer::Lexer(std::string sourceFile) {
-		if (OUTPUT_LEXER_ACTIONS) {
-			Debug::output("Lexer::Lexer(" + sourceFile + ")");
-		}
-
-		std::ifstream inFile(sourceFile);
-		inFile >> std::noskipws;    //不跳过空白
-
-		char buff[1000000];
-		int i = 0;
-		while (!inFile.eof()) inFile >> buff[i++];
-
-		source = std::move(std::string(buff, i));
-
-		if (OUTPUT_LEXER_ACTIONS) {
-			Debug::output("    words: " + std::to_string(i));
-		}
-	}
-
-	//获取下一个词法单元
-	std::pair<TokenType, int> Lexer::next() {
-		if (OUTPUT_LEXER_ACTIONS) {
-			Debug::output("Lexer::next()");
-		}
-
-		//TODO:
-	}
 }
 
 #endif

@@ -157,7 +157,10 @@
     <ClInclude Include="xc.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Lexer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SymbolTable.cpp" />
+    <ClCompile Include="Token.cpp" />
     <ClCompile Include="VirtualMachine.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

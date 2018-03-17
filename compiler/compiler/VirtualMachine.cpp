@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 #include "VirtualMachine.h"
 
@@ -7,7 +6,6 @@ kkli::VirtualMachine::VirtualMachine() {
 
 	//调试
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::clear();
 		Debug::output("VirtualMachine::VirtualMachine()");
 	}
 
@@ -40,6 +38,8 @@ void kkli::VirtualMachine::addData(int elem) {
 		Debug::output("VirtualMachine::addData(" + std::to_string(elem) + ")");
 	}
 
+	if (nextData == data + SEGMENT_SIZE) throw new Error("VirtualMachine::addData: data overflow");
+
 	*nextData = elem;
 	++nextData;
 }
@@ -51,6 +51,20 @@ void kkli::VirtualMachine::addInst(Instruction elem) {
 	if (OUTPUT_VM_ACTIONS) {
 		Debug::output("VirtualMachine::addInst(" + getInstructionName(elem) + ")");
 	}
+
+
+	if (nextText == text + SEGMENT_SIZE) throw new Error("VirtualMachine::addText: text overflow");
+	*nextText = elem;
+	++nextText;
+}
+
+//添加指令的操作数
+void kkli::VirtualMachine::addInstData(int elem) {
+	if (OUTPUT_VM_ACTIONS) {
+		Debug::output("VirtualMachine::addInstData(" + std::to_string(elem) + ")");
+	}
+
+	if (nextText == text + SEGMENT_SIZE) throw new Error("VirtualMachine::addText: text overflow");
 
 	*nextText = elem;
 	++nextText;
@@ -121,7 +135,7 @@ int kkli::VirtualMachine::run() {
 	if (OUTPUT_VM_ACTIONS) {
 		Debug::output("VirtualMachine::run()");
 	}
-
+	
 	int inst;        //指令
 	int cycle = 0;   //执行周期
 

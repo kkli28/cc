@@ -1,16 +1,15 @@
-// compiler.cpp: 定义控制台应用程序的入口点。
-//
 
 #include "stdafx.h"
 #include "VirtualMachine.h"
+#include "SymbolTable.h"
 #include "Lexer.h"
-
-using namespace std;
-using namespace kkli;
 
 int main()
 {
-	kkli::VirtualMachine vm;
+	//每次都清空Debug信息
+	kkli::Debug::clear();
+
+	//kkli::VirtualMachine vm;
 	/*
 	vm.addInst(I_ENT);
 	vm.addInst(3);
@@ -89,7 +88,10 @@ int main()
 	vm.run();
 	*/
 
-	Lexer lexer("input/test.txt");
+	kkli::Lexer lexer("input/test.txt");
+	//std::cout << lexer.getSouce() << std::endl;
+
+	while (lexer.next().first != kkli::TokenType::END) {}
 
 	system("pause");
     return 0;
