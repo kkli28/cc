@@ -37,13 +37,13 @@ namespace kkli {
 		}
 
 		//判断是否存在符号
-		std::pair<bool, TokenType> has(int hash, std::string name);
+		std::pair<bool, int> has(int hash, std::string name);
 
 		//添加符号信息（在词法分析中能够获取的信息）
-		void addToken(TokenType type, std::string name, int hash);
+		void addToken(int type, std::string name, int hash);
 
 		//完善符号信息（在语法分析才能获取的信息）
-		void finishToken(TokenKlass klass, int dataType, int value);
+		void finishToken(int klass, int dataType, int value);
 
 		//获取当前Token
 		Token getCurrToken() const { return currToken; }

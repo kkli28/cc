@@ -1,10 +1,9 @@
 #include "stdafx.h"
 #include "Token.h"
 
-
 //构造函数
-kkli::Token::Token() : type(ID), klass(NUMBER), name(""), dataType(CHAR_TYPE), value(0), hash(0), 
-Btype(ID), Bklass(NUMBER), Bname(""), BdataType(CHAR_TYPE), Bvalue(0), Bhash(0) {}
+kkli::Token::Token() : type(0), klass(0), name(""), dataType(0), value(0), hash(0), Btype(0),
+Bklass(0), Bname(""), BdataType(0), Bvalue(0), Bhash(0) {}
 
 //保存信息
 void kkli::Token::saveInfo() {
@@ -46,10 +45,10 @@ void kkli::Token::clear() {
 			+ "  klass = " + getTokenKlassName(klass));
 	}
 
-	type = TokenType::ID;
-	klass = TokenKlass::NUMBER;
+	type = 0;
+	klass = 0;
 	name = "";
-	dataType = INT_TYPE;
+	dataType = 0;
 	value = 0;
 	hash = 0;
 
@@ -62,8 +61,9 @@ void kkli::Token::clear() {
 }
 
 //获取TokenType类型名称
-std::string kkli::Token::getTokenTypeName(TokenType type) {
+std::string kkli::Token::getTokenTypeName(int type) {
 	const std::string TOKEN_TYPE_STRING[TOKEN_TYPE_SIZE] = {
+		"ERR",
 		"ID", 
 		"NUM", 
 		"CHAR", "ELSE", "ENUM", "IF", "INT", "RETURN", "SIZEOF", "WHILE",
@@ -80,16 +80,16 @@ std::string kkli::Token::getTokenTypeName(TokenType type) {
 		"LBRACK", "RBRACK", 
 		"LBRACE", "RBRACE",
 		"COMMA", "COLON", "SEMICON", "TILDE",
-		"STRING",
-		"END"
+		"STRING"
 	};
+	if (type == END) return "END";
 	return TOKEN_TYPE_STRING[type];
 }
 
 //获取TokenKlass类型名称
-std::string kkli::Token::getTokenKlassName(TokenKlass klass) {
+std::string kkli::Token::getTokenKlassName(int klass) {
 	std::string TOKEN_KLASS_STRING[TOKEN_KLASS_SIZE] = {
-		"NUMBER", "FUNC", "SYS_FUNC", "GLOBAL", "LOCAL"
+		"INVALID_TOKEN_KLASS", "NUMBER", "FUNC", "SYS_FUNC", "GLOBAL", "LOCAL"
 	};
 	return TOKEN_KLASS_STRING[klass];
 }

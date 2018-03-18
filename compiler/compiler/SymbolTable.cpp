@@ -3,7 +3,7 @@
 
 
 //判断符号是否存在
-std::pair<bool, kkli::TokenType> kkli::SymbolTable::has(int hash, std::string name) {
+std::pair<bool, int> kkli::SymbolTable::has(int hash, std::string name) {
 	if (OUTPUT_SYMBOL_ACTIONS) {
 		Debug::output("SymbolTable::has(" + name + ")");
 	}
@@ -21,11 +21,11 @@ std::pair<bool, kkli::TokenType> kkli::SymbolTable::has(int hash, std::string na
 	if (currToken.hash == hash) {
 		if (name == currToken.name) return { true, currToken.type };
 	}
-	return { false, TokenType::ID };
+	return { false, ID };
 }
 
 //添加符号信息
-void kkli::SymbolTable::addToken(TokenType type, std::string name, int hash) {
+void kkli::SymbolTable::addToken(int type, std::string name, int hash) {
 	if (OUTPUT_SYMBOL_ACTIONS) {
 		Debug::output("SymbolTable::addToken(" + Token::getTokenTypeName(type) + ", " + name + ", " + std::to_string(hash) + ")");
 	}
@@ -41,7 +41,7 @@ void kkli::SymbolTable::addToken(TokenType type, std::string name, int hash) {
 }
 
 //完善符号信息
-void kkli::SymbolTable::finishToken(TokenKlass klass, int dataType, int value) {
+void kkli::SymbolTable::finishToken(int klass, int dataType, int value) {
 	if (OUTPUT_SYMBOL_ACTIONS) {
 		Debug::output("SymbolTable::finishToken("
 			+ Token::getTokenKlassName(klass)

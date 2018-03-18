@@ -15,7 +15,10 @@ kkli::Lexer::Lexer(std::string sourceFile) {
 	while (!inFile.eof()) inFile >> buff[i++];
 
 	source = std::move(std::string(buff, i));
-	source[source.size() - 1] = eof;  //Ìí¼Ó½áÎ²×Ö·û
+
+	//Ìí¼ÓÄ©Î²×Ö·û
+	source.push_back('\0');
+	source.push_back(eof);
 
 	index = 0;
 	line = 1;
@@ -27,7 +30,7 @@ kkli::Lexer::Lexer(std::string sourceFile) {
 }
 
 //next
-std::pair<kkli::TokenType, int> kkli::Lexer::next() {
+std::pair<int, int> kkli::Lexer::next() {
 	int value = 0;
 	SymbolTable* table = SymbolTable::getInstance();
 	VirtualMachine* vm = VirtualMachine::getInstance();
@@ -87,8 +90,8 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [id] " + name + " [add]");
 				}
 
-				table->addToken(TokenType::ID, name, hash);
-				return { TokenType::ID, 0 };
+				table->addToken(ID, name, hash);
+				return { ID, 0 };
 			}
 		}
 
@@ -148,7 +151,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				}
 			}
 
-			return { TokenType::NUM, value };
+			return { NUM, value };
 		}
 
 		//×¢ÊÍ »ò ³ýºÅ
@@ -190,7 +193,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [/]");
 				}
 
-				return { TokenType::DIV, 0 };
+				return { DIV, 0 };
 			}
 		}
 
@@ -222,7 +225,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [char]");
 			}
 
-			return { TokenType::NUM, value };
+			return { NUM, value };
 		}
 
 		//×Ö·û´®
@@ -258,7 +261,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [string]");
 			}
 
-			return { TokenType::STRING, value };
+			return { STRING, value };
 		}
 
 		// = »ò ==
@@ -273,7 +276,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [EQ]");
 				}
 				
-				return { TokenType::EQ, 0 };
+				return { EQ, 0 };
 			}
 
 			// =
@@ -282,7 +285,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [ASSIGN]");
 				}
 
-				return { TokenType::ASSIGN, 0 };
+				return { ASSIGN, 0 };
 			}
 		}
 
@@ -298,7 +301,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [INC]");
 				}
 
-				return { TokenType::INC, 0 };
+				return { INC, 0 };
 			}
 
 			// +
@@ -307,7 +310,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [ADD]");
 				}
 
-				return { TokenType::ADD, 0 };
+				return { ADD, 0 };
 			}
 		}
 
@@ -323,7 +326,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [DEC]");
 				}
 
-				return { TokenType::DEC, 0 };
+				return { DEC, 0 };
 			}
 
 			// -
@@ -332,7 +335,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [SUB]");
 				}
 
-				return { TokenType::SUB, 0 };
+				return { SUB, 0 };
 			}
 		}
 
@@ -348,7 +351,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [NE]");
 				}
 
-				return { TokenType::NE, 0 };
+				return { NE, 0 };
 			}
 
 			// !
@@ -357,7 +360,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [NOT]");
 				}
 
-				return { TokenType::NOT, 0 };
+				return { NOT, 0 };
 			}
 		}
 
@@ -373,7 +376,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [LE]");
 				}
 
-				return { TokenType::LE, 0 };
+				return { LE, 0 };
 			}
 
 			// <<
@@ -384,7 +387,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [SHL]");
 				}
 
-				return { TokenType::SHL, 0 };
+				return { SHL, 0 };
 			}
 
 			// <
@@ -393,7 +396,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [LT]");
 				}
 
-				return { TokenType::LT, 0 };
+				return { LT, 0 };
 			}
 		}
 
@@ -409,7 +412,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [GE]");
 				}
 
-				return { TokenType::GE, 0 };
+				return { GE, 0 };
 			}
 
 			// >>
@@ -420,7 +423,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [SHR]");
 				}
 
-				return { TokenType::SHR, 0 };
+				return { SHR, 0 };
 			}
 
 			// >
@@ -429,7 +432,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [GT]");
 				}
 
-				return { TokenType::GT, 0 };
+				return { GT, 0 };
 			}
 		}
 
@@ -445,7 +448,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [LOR]");
 				}
 
-				return { TokenType::LOR, 0 };
+				return { LOR, 0 };
 			}
 
 			// |
@@ -454,7 +457,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [OR]");
 				}
 
-				return { TokenType::OR, 0 };
+				return { OR, 0 };
 			}
 		}
 
@@ -470,7 +473,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [LAN]");
 				}
 
-				return { TokenType::LAN, 0 };
+				return { LAN, 0 };
 			}
 
 			// &
@@ -479,7 +482,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [AND]");
 				}
 
-				return { TokenType::AND, 0 };
+				return { AND, 0 };
 			}
 		}
 
@@ -491,7 +494,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [XOR]");
 			}
 
-			return { TokenType::XOR, 0 };
+			return { XOR, 0 };
 		}
 
 		// %
@@ -502,7 +505,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [MOD]");
 			}
 
-			return { TokenType::MOD, 0 };
+			return { MOD, 0 };
 		}
 
 		// *
@@ -513,7 +516,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [MUL]");
 			}
 
-			return { TokenType::MUL, 0 };
+			return { MUL, 0 };
 		}
 
 		// ?
@@ -524,7 +527,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [COND]");
 			}
 
-			return { TokenType::COND, 0 };
+			return { COND, 0 };
 		}
 
 		// ,
@@ -535,7 +538,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [COMMA]");
 			}
 
-			return { TokenType::COMMA, 0 };
+			return { COMMA, 0 };
 		}
 
 		// :
@@ -546,7 +549,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [COLON]");
 			}
 
-			return { TokenType::COLON, 0 };
+			return { COLON, 0 };
 		}
 
 		// ;
@@ -557,7 +560,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [SEMICON]");
 			}
 
-			return { TokenType::SEMICON, 0 };
+			return { SEMICON, 0 };
 		}
 
 		// (
@@ -568,7 +571,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [LPAREN]");
 			}
 
-			return { TokenType::LPAREN, 0 };
+			return { LPAREN, 0 };
 		}
 
 		// )
@@ -579,7 +582,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [RPAREN]");
 			}
 
-			return { TokenType::RPAREN, 0 };
+			return { RPAREN, 0 };
 		}
 
 		// [
@@ -590,7 +593,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [LBRACK]");
 			}
 
-			return { TokenType::LBRACK, 0 };
+			return { LBRACK, 0 };
 		}
 
 		// ]
@@ -601,7 +604,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [RBRACK]");
 			}
 
-			return { TokenType::RBRACK, 0 };
+			return { RBRACK, 0 };
 		}
 
 		// {
@@ -612,7 +615,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [LBRACE]");
 			}
 
-			return { TokenType::LBRACE, 0 };
+			return { LBRACE, 0 };
 		}
 
 		// }
@@ -623,7 +626,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				Debug::output("Lexer::next(): [RBRACE]");
 			}
 
-			return { TokenType::RBRACE, 0 };
+			return { RBRACE, 0 };
 		}
 
 		// ¿Õ°×·û
@@ -637,5 +640,5 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 	}
 
 	//É¨Ãè½áÊø
-	return { TokenType::END, 0 };
+	return { END, 0 };
 }

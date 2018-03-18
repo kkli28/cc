@@ -30,10 +30,11 @@ namespace kkli {
 		Lexer(std::string sourceFile);
 
 		//获取下一个词法单元
-		std::pair<TokenType, int> next();
+		std::pair<int, int> next();
 
 		//获取源代码
 		std::string getSouce() const { return source; }
+		int getLine() const { return line; }
 
 		//匹配一个词法单元
 		//void match(TokenType type);

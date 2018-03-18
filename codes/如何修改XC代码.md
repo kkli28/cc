@@ -69,6 +69,8 @@ int func() {
 进入statement()时，判定为expression，则进入expression()。在expression()中，Token==Id的处理中，发现不是函数调用，也不是enum变量，则只是普通的变量。但是因为没有Loc或Glo信息（均为0），因此不是一个合法的变量，故报错：undefined variable。其Loc或Glo信息，需要在函数体内的变量定义模块填充。
 ```
 
-```
+> 代码生成
 
+```
+在global_declaration中，识别为函数后，其value值为int(text+1)为何要+1？
 ```

@@ -89,8 +89,9 @@ int main()
 	*/
 
 	kkli::Lexer lexer("input/test.txt");
-	//std::cout << lexer.getSouce() << std::endl;
-
+	std::cout << lexer.getSouce() << std::endl;
+	
+	/*
 	try {
 		auto p = lexer.next();
 		while (p.first != kkli::TokenType::END) {
@@ -103,7 +104,7 @@ int main()
 	}
 	//kkli::SymbolTable* table = kkli::SymbolTable::getInstance();
 	//std::cout << table->getSymbolTableInfo() << std::endl;
-
+	*/
 	system("pause");
     return 0;
 }

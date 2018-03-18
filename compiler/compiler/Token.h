@@ -10,27 +10,28 @@
 namespace kkli {
 
 	//标记类型
-	enum TokenType {
+	enum {
+		ERROR = 0,
 
 		//用户定义标识符
-		ID = 0, 
+		ID,
 
 		//数字
 		NUM,
-		
+
 		//关键字
 		CHAR, ELSE, ENUM, IF, INT, RETURN, SIZEOF, WHILE,
 
 		//运算符
-		ASSIGN, COND, 
+		ASSIGN, COND,
 		LOR,   //逻辑或 ||
 		LAN,   //逻辑与 &&
 		OR,    //或 |
 		XOR,   //异或 ^
 		AND,   //与 &
 		NOT, EQ, NE, LT, GT, LE, GE,
-		SHL, SHR, ADD, SUB, MUL, DIV, MOD, 
-		
+		SHL, SHR, ADD, SUB, MUL, DIV, MOD,
+
 		//自增，自减
 		INC, DEC,
 
@@ -40,13 +41,14 @@ namespace kkli {
 		LBRACE, RBRACE,  // {}
 		COMMA, COLON, SEMICON, TILDE,  // , : ; ~
 		STRING,          //字符串
-		END,             //结束符
-		TOKEN_TYPE_SIZE  //仅计数用
+		TOKEN_TYPE_SIZE, //仅计数用
+
+		END = -1    //结束Token
 	};
 
 	//标记种类
-	enum TokenKlass {
-		NUMBER = 0,//数字
+	enum {
+		NUMBER = 1,//数字
 		FUNC,      //函数
 		SYS_FUNC,  //系统内部函数
 		GLOBAL,    //全局变量
@@ -56,10 +58,9 @@ namespace kkli {
 
 	//数据类型
 	enum {
-		CHAR_TYPE = 0,     //char型
-		INT_TYPE,          //int型
-		PTR_TYPE,          //指针类型
-		DATA_TYPE_SIZE     //仅计数用
+		CHAR_TYPE,     //char型
+		INT_TYPE,      //int型
+		PTR_TYPE       //指针类型
 	};
 	
 	//========================================
@@ -74,16 +75,16 @@ namespace kkli {
 	class Token {
 	public:
 		//主字段
-		TokenType type;        //类型
-		TokenKlass klass;      //种类
-		std::string name;      //名字
-		int dataType;     //数据类型
-		int value;             //值
-		int hash;              //hash值，便于标记快速查找
+		int type;          //类型
+		int klass;         //种类
+		std::string name;  //名字
+		int dataType;      //数据类型
+		int value;         //值
+		int hash;          //hash值，便于标记快速查找
 
 		//备份字段
-		TokenType Btype;
-		TokenKlass Bklass;
+		int Btype;
+		int Bklass;
 		std::string Bname;
 		int BdataType;
 		int Bvalue;
@@ -97,10 +98,10 @@ namespace kkli {
 		void clear();         //清空信息
 
 		//获取Token类型名称
-		static std::string getTokenTypeName(TokenType type);
+		static std::string getTokenTypeName(int type);
 
 		//获取TokenKlass类型名称
-		static std::string getTokenKlassName(TokenKlass klass);
+		static std::string getTokenKlassName(int klass);
 
 		//获取数据类型名称
 		static std::string getDataTypeName(int dataType);

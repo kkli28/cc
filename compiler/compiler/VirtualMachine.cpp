@@ -52,7 +52,6 @@ void kkli::VirtualMachine::addInst(Instruction elem) {
 		Debug::output("VirtualMachine::addInst(" + getInstructionName(elem) + ")");
 	}
 
-
 	if (nextText == text + SEGMENT_SIZE) throw new Error("VirtualMachine::addText(): text overflow");
 	*nextText = elem;
 	++nextText;
