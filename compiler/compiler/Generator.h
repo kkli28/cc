@@ -33,6 +33,9 @@ namespace kkli {
 		//enum定义
 		void enum_decl();
 
+		//函数定义
+		void func_decl();
+
 	public:
 		Generator(std::string sourceFile);
 		void run();

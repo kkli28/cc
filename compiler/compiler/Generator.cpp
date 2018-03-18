@@ -77,7 +77,20 @@ void kkli::Generator::global_decl() {
 		//函数定义
 		if (tokenInfo.first == LPAREN) {
 			table->finishToken(FUNC, type, reinterpret_cast<int>(vm->getNextTextPos()));
+			func_decl();
+		}
 
+		//变量之后没有分隔符（逗号或分号），则可能是 int a b; 或 int a 3; 等，提示变量定义错误
+		else if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON) {
+			throw Error(lexer.getLine(), "wrong variables declaration.");
+		}
+		else {
+			table->finishToken(GLOBAL, type, reinterpret_cast<int>(vm->getNextDataPos()));
+			vm->addData(0);  //添加一个0，为这个变量占据写入值的位置，避免这个位置被其他变量使用。
+		}
+		
+		if (tokenInfo.first == COMMA) {
+			match(COMMA);
 		}
 	}
 }
