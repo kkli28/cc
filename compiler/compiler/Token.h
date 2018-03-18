@@ -38,7 +38,7 @@ namespace kkli {
 		LPAREN, RPAREN,  // ()
 		LBRACK, RBRACK,  // []
 		LBRACE, RBRACE,  // {}
-		COMMA, COLON, SEMICON,  // , : ;
+		COMMA, COLON, SEMICON, TILDE,  // , : ; ~
 		STRING,          //字符串
 		END,             //结束符
 		TOKEN_TYPE_SIZE  //仅计数用

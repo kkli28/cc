@@ -79,7 +79,7 @@ std::string kkli::Token::getTokenTypeName(TokenType type) {
 		"LPAREN", "RPAREN", 
 		"LBRACK", "RBRACK", 
 		"LBRACE", "RBRACE",
-		"COMMA", "COLON", "SEMICON", 
+		"COMMA", "COLON", "SEMICON", "TILDE",
 		"STRING",
 		"END"
 	};

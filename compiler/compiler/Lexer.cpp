@@ -113,13 +113,18 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				//十六进制数
 				if (curr == 'x' || curr == 'X') {
 					curr = get();
+					bool hasNum = false;
 					while (isNum(curr)
 						|| (curr >= 'a' && curr <= 'z')
 						|| (curr >= 'A' && curr <= 'Z')) {
+						hasNum = true;
 						value = value * 16 + (curr & 15) + (curr >= 'A' ? 9 : 0);
 						curr = get();
 					}
 
+					if (!hasNum) {
+						throw Error("Line "+std::to_string(line)+". Invalid hex type, need 0~9 or a~z/A~Z after 0x.");
+					}
 					if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 						Debug::output("Lexer::next(): [hex] " + std::to_string(value));
 					}
@@ -127,11 +132,16 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 				//八进制数
 				else {
+					bool hasNum = false;
 					while (curr >= '0' && curr <= '7') {
+						hasNum = true;
 						value = value * 8 + curr - '0';
 						curr = get();
 					}
 
+					if (!hasNum) {
+						throw Error("Line " + std::to_string(line) + ". Invalid oct type, need 0~7 after 0.");
+					}
 					if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 						Debug::output("Lexer::next(): [oct] " + std::to_string(value));
 					}
@@ -188,14 +198,14 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 		else if (curr == '\'') {
 			curr = get();
 			if (curr == eof) {
-				throw new Error("Lexer::next(): invalid char type.");
+				throw Error("Line "+std::to_string(line)+". Invalid char type, need \'.");
 			}
 
 			//转义字符
 			if (curr == '\\') {
 				curr = get();
 				if (curr == eof) {
-					throw new Error("Lexer::next(): invalid char type.");
+					throw Error("Line " + std::to_string(line) + ". Invalid char type, need escape charactor after \\.");
 				}
 
 				if (curr == 'n') value = '\n';
@@ -204,7 +214,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 
 			curr = get();
 			if (curr != '\'') {
-				throw new Error("Lexer::next(): invalid char type.");
+				throw Error("Line "+std::to_string(line)+". Invalid char type, need \' to finish charactor");
 			}
 			curr = get();
 
@@ -229,7 +239,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 					curr = get();
 					if (curr == 'n') vm->addData('\n');
 					else if (curr == eof) {
-						throw new Error("Lexer::next(): invalid string type.");
+						throw Error("Line " + std::to_string(line) + ". Invalid string type, need escape charactor after \\.");
 					}
 					else vm->addData(curr);
 					curr = get();
@@ -240,7 +250,7 @@ std::pair<kkli::TokenType, int> kkli::Lexer::next() {
 				}
 			}
 			if (curr == eof) {
-				throw new Error("Lexer::next(): invalid string type.");
+				throw Error("Line " +std::to_string(line)+". Invalid string type, need \" to finish string.");
 			}
 			curr = get();
 

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-/*
+///*
 int debug;    // print the executed instructions
 int assembly; // print out the assembly and source
 
@@ -324,7 +324,6 @@ void match(int tk) {
 		exit(-1);
 	}
 }
-
 
 void expression(int level) {
 	// expressions have various format.

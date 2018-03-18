@@ -91,9 +91,18 @@ int main()
 	kkli::Lexer lexer("input/test.txt");
 	//std::cout << lexer.getSouce() << std::endl;
 
-	while (lexer.next().first != kkli::TokenType::END) {}
-	kkli::SymbolTable* table = kkli::SymbolTable::getInstance();
-	std::cout << table->getSymbolTableInfo() << std::endl;
+	try {
+		auto p = lexer.next();
+		while (p.first != kkli::TokenType::END) {
+			std::cout << "[" << kkli::Token::getTokenTypeName(p.first) << "]  [" << p.second << "]" << std::endl;
+			p = lexer.next();
+		}
+	}
+	catch (const kkli::Error& e) {
+		std::cout << e.what() << std::endl;
+	}
+	//kkli::SymbolTable* table = kkli::SymbolTable::getInstance();
+	//std::cout << table->getSymbolTableInfo() << std::endl;
 
 	system("pause");
     return 0;
