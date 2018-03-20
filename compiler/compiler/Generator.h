@@ -24,6 +24,9 @@ namespace kkli {
 		//当前处理的定义的类型
 		int baseType;
 
+		//函数参数与局部变量相对于bp的位置
+		int indexOfBP;
+
 	private:
 		void match(int type);
 
@@ -35,6 +38,12 @@ namespace kkli {
 
 		//函数定义
 		void func_decl();
+
+		//函数参数
+		void func_param();
+
+		//函数体
+		void func_body();
 
 	public:
 		Generator(std::string sourceFile);

@@ -21,9 +21,7 @@ namespace kkli {
 	class SymbolTable {
 	private:
 		std::vector<Token> table;
-		Token currToken;      //当前正在处理的Token
-
-		SymbolTable() : currToken() {}
+		int current;
 
 	public:
 
@@ -37,7 +35,7 @@ namespace kkli {
 		}
 
 		//判断是否存在符号
-		std::pair<bool, int> has(int hash, std::string name);
+		bool has(int hash, std::string name);
 
 		//添加符号信息（在词法分析中能够获取的信息）
 		void addToken(int type, std::string name, int hash);
@@ -45,11 +43,14 @@ namespace kkli {
 		//完善符号信息（在语法分析才能获取的信息）
 		void finishToken(int klass, int dataType, int value);
 
-		//获取当前Token
-		Token getCurrToken() const { return currToken; }
+		//获取当前符号
+		Token& getCurrentToken() { return table[current]; }
 
 		//获取符号表信息
 		std::string getSymbolTableInfo() const;
+
+		//获取内部结构table
+		std::vector<Token>& getTable() { return table; }
 	};
 }
 

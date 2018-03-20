@@ -67,9 +67,9 @@ void kkli::Generator::global_decl() {
 			throw Error(lexer.getLine(), "expected token [ID]");
 		}
 
-		if (table->getCurrToken().klass == ERROR) {
+		if (table->getCurrentToken().klass != ERROR) {
 			throw Error(lexer.getLine(), "duplicate global declaration, [id] = " +
-				table->getCurrToken().name);
+				table->getCurrentToken().name);
 		}
 
 		match(ID);
@@ -80,7 +80,7 @@ void kkli::Generator::global_decl() {
 			func_decl();
 		}
 
-		//变量之后没有分隔符（逗号或分号），则可能是 int a b; 或 int a 3; 等，提示变量定义错误
+		//全局变量声明之后必须为分隔符（逗号或分号）
 		else if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON) {
 			throw Error(lexer.getLine(), "wrong variables declaration.");
 		}
@@ -93,6 +93,8 @@ void kkli::Generator::global_decl() {
 			match(COMMA);
 		}
 	}
+
+	lexer.next();
 }
 
 //enum定义
@@ -149,3 +151,106 @@ void kkli::Generator::enum_decl() {
 	match(RBRACE);
 	match(SEMICON);
 }
+
+//函数定义
+void kkli::Generator::func_decl() {
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("Generator::func_del()");
+	}
+
+	match(LPAREN);
+	func_param();
+	match(RPAREN);
+	match(LBRACE);
+	func_body();
+	
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("before recover: \n" + table->getSymbolTableInfo());
+	}
+
+	//恢复全局变量
+	std::vector<Token> tb = table->getTable();
+	for (auto& tk : tb) {
+		if (tk.klass == LOCAL) {
+			tk.klass = tk.Bklass;
+			tk.type = tk.Btype;
+			tk.value = tk.Bvalue;
+		}
+	}
+
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("After recover: \n" + table->getSymbolTableInfo());
+	}
+}
+
+//函数参数定义
+void kkli::Generator::func_param() {
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("Generator::func_param()");
+	}
+
+	int type;
+	int params = 0;
+	while (tokenInfo.first != RPAREN) {
+		type = INT_TYPE;
+		if (tokenInfo.first == INT) {
+			match(INT);
+		}
+		else if (tokenInfo.first == CHAR) {
+			match(CHAR);
+			type = CHAR_TYPE;
+		}
+
+		//指针类型
+		while (tokenInfo.first == MUL) {
+			match(MUL);
+			type = type + PTR_TYPE;
+		}
+
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("param type: " + Token::getDataTypeName(type));
+		}
+
+		if (tokenInfo.first != ID) {
+			throw Error(lexer.getLine(), "bad parameter declaration.");
+		}
+		if (table->getCurrentToken().klass == LOCAL) {
+			throw Error(lexer.getLine(), "duplicate parameter declaration.");
+		}
+
+		match(ID);
+
+		if (tokenInfo.first != COMMA && tokenInfo.first != RPAREN) {
+			throw Error(lexer.getLine(), "wrong param declaration!");
+		}
+
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("before backup: " + table->getSymbolTableInfo());
+		}
+
+		//备份全局变量信息，并填入局部变量信息
+		Token& tk = table->getCurrentToken();
+		tk.Bklass = tk.klass;
+		tk.Btype = tk.type;
+		tk.Bvalue = tk.value;
+		tk.klass = LOCAL;
+		tk.type = type;
+		tk.value = params++;
+		
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("after backup: " + table->getSymbolTableInfo());
+		}
+
+		if (tokenInfo.first == COMMA) {
+			match(COMMA);
+		}
+	}
+
+	indexOfBP = params + 1;
+
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("indexOfBP: " + std::to_string(indexOfBP));
+	}
+}
+
+//TODO: 函数体

@@ -115,7 +115,6 @@ void next() {
 				current_id = current_id + IdSize;
 			}
 
-
 			// store new ID
 			current_id[Name] = (int)last_pos;
 			current_id[Hash] = hash;
