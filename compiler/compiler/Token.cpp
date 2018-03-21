@@ -2,8 +2,8 @@
 #include "Token.h"
 
 //构造函数
-kkli::Token::Token() : type(0), klass(0), name(""), dataType(0), value(0), hash(0), Btype(0),
-Bklass(0), Bname(""), BdataType(0), Bvalue(0), Bhash(0) {}
+kkli::Token::Token() : type(0), klass(0), name(""), dataType(0), value(0), hash(0),
+Bklass(0), BdataType(0), Bvalue(0) {}
 
 //保存信息
 void kkli::Token::saveInfo() {
@@ -13,12 +13,9 @@ void kkli::Token::saveInfo() {
 			+ "  klass = " + getTokenKlassName(klass));
 	}
 
-	Btype = type;
 	Bklass = klass;
-	Bname = name;
 	BdataType = dataType;
 	Bvalue = value;
-	Bhash = hash;
 }
 
 //恢复信息
@@ -29,12 +26,9 @@ void kkli::Token::restoreInfo() {
 			+ "  klass = " + getTokenKlassName(Bklass));
 	}
 
-	type = Btype;
 	klass = Bklass;
-	name = Bname;
 	dataType = BdataType;
 	value = Bvalue;
-	hash = Bhash;
 }
 
 //清空信息
@@ -52,12 +46,9 @@ void kkli::Token::clear() {
 	value = 0;
 	hash = 0;
 
-	Btype = type;
 	Bklass = klass;
-	Bname = name;
 	BdataType = dataType;
 	Bvalue = value;
-	Bhash = hash;
 }
 
 //获取TokenType类型名称

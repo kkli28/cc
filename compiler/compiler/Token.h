@@ -83,12 +83,9 @@ namespace kkli {
 		int hash;          //hash值，便于标记快速查找
 
 		//备份字段
-		int Btype;
 		int Bklass;
-		std::string Bname;
 		int BdataType;
 		int Bvalue;
-		int Bhash;
 
 		Token();
 

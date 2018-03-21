@@ -10,6 +10,10 @@ kkli::Generator::Generator(std::string sourceFile)
 
 //匹配Token
 void kkli::Generator::match(int type) {
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("Generator::match(" + Token::getTokenTypeName() + ")");
+	}
+
 	if (tokenInfo.first == type) {
 		tokenInfo = lexer.next();
 	}
@@ -19,6 +23,10 @@ void kkli::Generator::match(int type) {
 }
 
 void kkli::Generator::run() {
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("Generator::run()");
+	}
+
 	tokenInfo = lexer.next();
 	while (tokenInfo.first != END) {
 		global_decl();
@@ -61,6 +69,10 @@ void kkli::Generator::global_decl() {
 		while (tokenInfo.first == MUL) {
 			match(MUL);
 			type = type + PTR_TYPE;
+		}
+
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::global_decl(): type = " + Token::getDataTypeName(type));
 		}
 
 		if (tokenInfo.first != ID) {
@@ -172,14 +184,12 @@ void kkli::Generator::func_decl() {
 	std::vector<Token> tb = table->getTable();
 	for (auto& tk : tb) {
 		if (tk.klass == LOCAL) {
-			tk.klass = tk.Bklass;
-			tk.type = tk.Btype;
-			tk.value = tk.Bvalue;
+			tk.restoreInfo();
 		}
 	}
 
 	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("After recover: \n" + table->getSymbolTableInfo());
+		Debug::output("After restore: \n" + table->getSymbolTableInfo());
 	}
 }
 
@@ -189,26 +199,26 @@ void kkli::Generator::func_param() {
 		Debug::output("Generator::func_param()");
 	}
 
-	int type;
+	int dataType;
 	int params = 0;
 	while (tokenInfo.first != RPAREN) {
-		type = INT_TYPE;
+		dataType = INT_TYPE;
 		if (tokenInfo.first == INT) {
 			match(INT);
 		}
 		else if (tokenInfo.first == CHAR) {
 			match(CHAR);
-			type = CHAR_TYPE;
+			dataType = CHAR_TYPE;
 		}
 
 		//指针类型
 		while (tokenInfo.first == MUL) {
 			match(MUL);
-			type = type + PTR_TYPE;
+			dataType = type + PTR_TYPE;
 		}
 
 		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("param type: " + Token::getDataTypeName(type));
+			Debug::output("Generator::func_param(): param type = " + Token::getDataTypeName(type));
 		}
 
 		if (tokenInfo.first != ID) {
@@ -230,11 +240,9 @@ void kkli::Generator::func_param() {
 
 		//备份全局变量信息，并填入局部变量信息
 		Token& tk = table->getCurrentToken();
-		tk.Bklass = tk.klass;
-		tk.Btype = tk.type;
-		tk.Bvalue = tk.value;
+		tk.saveInfo();
 		tk.klass = LOCAL;
-		tk.type = type;
+		tk.dataType = dataType;
 		tk.value = params++;
 		
 		if (OUTPUT_GENERATOR_ACTIONS) {
@@ -254,3 +262,80 @@ void kkli::Generator::func_param() {
 }
 
 //TODO: 函数体
+void kkli::Generator::func_body() {
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("Generator::func_body()");
+	}
+
+	int variableIndex = indexOfBP;  //局部变量在栈上相对于bp的位置
+
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("Generator::func_body(), start variable decl.");
+	}
+
+	//局部变量定义
+	while (tokenInfo.first == INT || tokenInfo.first == CHAR) {
+		baseType = (tokenInfo.first == INT) ? INT_TYPE : CHAR_TYPE;
+		match(tokenInfo.first);
+
+		while (tokenInfo.first != SEMICON) {
+			int dataType = baseType;
+
+			//多级指针
+			while (tokenInfo.first == MUL) {
+				match(MUL);
+				dataType += PTR_TYPE;
+			}
+
+			if (tokenInfo.first != ID) {
+				throw Error(lexer.getLine(), "bad local declaration.");
+			}
+
+			if (table->getCurrentToken().klass == LOCAL) {
+				throw Error(lexer.getLine(), "duplicate local declaration.");
+			}
+
+			match(ID);
+
+			if (tokenInfo.first != COMMA || tokenInfo.first != SEMICON) {
+				throw Error(lexer.getLine(), "bad local declaration.");
+			}
+
+			//存储局部变量
+			Token& currToken = table->getCurrentToken();
+			currToken.saveInfo();
+			currToken.klass = LOCAL;
+			currToken.dataType = dataType;
+			currToken.value = ++variableIndex;
+
+			if (tokenInfo.first == COMMA) {
+				match(COMMA);
+			}
+		}
+
+		match(SEMICON);
+	}
+
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("Generator::func_body(), end variable decl.");
+	}
+
+	//在栈上留下保存变量所需的空间，并进入函数
+	vm->addInst(I_ENT);
+	vm->addInstData(variableIndex - indexOfBP);
+
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("Generator::func_body(), start statement decl.");
+	}
+
+	//语句定义
+	while (tokenInfo.first != RBRACE) {
+		statement();
+	}
+
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Deboug::output("Generator::func_body(), end statement decl.");
+	}
+
+	vm->addInst(I_LEV);
+}

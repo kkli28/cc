@@ -45,6 +45,9 @@ namespace kkli {
 		//º¯ÊıÌå
 		void func_body();
 
+		//Óï¾ä
+		void statement();
+
 	public:
 		Generator(std::string sourceFile);
 		void run();
