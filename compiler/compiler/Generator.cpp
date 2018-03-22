@@ -11,7 +11,7 @@ kkli::Generator::Generator(std::string sourceFile)
 //匹配Token
 void kkli::Generator::match(int type) {
 	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("Generator::match(" + Token::getTokenTypeName() + ")");
+		Debug::output("Generator::match(" + Token::getTokenTypeName(type) + ")");
 	}
 
 	if (tokenInfo.first == type) {
@@ -214,11 +214,11 @@ void kkli::Generator::func_param() {
 		//指针类型
 		while (tokenInfo.first == MUL) {
 			match(MUL);
-			dataType = type + PTR_TYPE;
+			dataType = dataType + PTR_TYPE;
 		}
 
 		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("Generator::func_param(): param type = " + Token::getDataTypeName(type));
+			Debug::output("Generator::func_param(): param type = " + Token::getDataTypeName(dataType));
 		}
 
 		if (tokenInfo.first != ID) {
@@ -261,7 +261,7 @@ void kkli::Generator::func_param() {
 	}
 }
 
-//TODO: 函数体
+//函数体
 void kkli::Generator::func_body() {
 	if (OUTPUT_GENERATOR_ACTIONS) {
 		Debug::output("Generator::func_body()");
@@ -334,8 +334,112 @@ void kkli::Generator::func_body() {
 	}
 
 	if (OUTPUT_GENERATOR_ACTIONS) {
-		Deboug::output("Generator::func_body(), end statement decl.");
+		Debug::output("Generator::func_body(), end statement decl.");
 	}
 
 	vm->addInst(I_LEV);
+}
+
+//语句
+void kkli::Generator::statement() {
+	//1. if(expr) statement [else statement]
+	//2. while(expr) statement
+	//3. { statement }
+	//4. return expr;
+	//5. expr;  //expr可空
+	
+	//if语句
+	if (tokenInfo.first == IF) {
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::statement(): [if]");
+		}
+
+		match(IF);
+		match(LPAREN);
+		expression(ASSIGN);
+		match(RPAREN);
+
+		int *branch;  //用于填写语句的分支跳转地址
+
+		vm->addInst(I_JZ);
+		branch = vm->getNextTextPos();
+		vm->addInstData(0);  //占据一个位置，用以写入 I_JZ 的跳转位置
+		statement();
+		if (tokenInfo.first == ELSE) {
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("    has [else]");
+			}
+
+			match(ELSE);
+			*branch = int(vm->getNextTextPos() + 2);
+			vm->addInst(I_JMP);
+			branch = vm->getNextTextPos();
+			vm->addInstData(0);  //占据一个位置
+			statement();
+		}
+		*branch = int(vm->getNextTextPos());
+	}
+
+	//while语句
+	else if (tokenInfo.first == WHILE) {
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::statement(): [while]");
+		}
+
+		int *branchA, *branchB;  //用于填写语句的分支跳转地址
+		match(WHILE);
+		branchA = vm->getNextTextPos();
+		match(LPAREN);
+		expression(ASSIGN);
+		match(RPAREN);
+
+		vm->addInst(I_JZ);
+		branchB = vm->getNextTextPos();
+		vm->addInstData(0);
+
+		statement();
+		vm->addInst(I_JMP);
+		vm->addInstData(int(branchA));
+		*branchB = int(vm->getNextTextPos());
+	}
+
+	//{ statement }
+	else if (tokenInfo.first == LBRACE) {
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::statement(): [{statement}]");
+		}
+
+		match(LBRACE);
+		while (tokenInfo.first != RBRACE) {
+			statement();
+		}
+		match(RBRACE);
+	}
+
+	//return语句
+	else if (tokenInfo.first == RETURN) {
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::statement(): [return]");
+		}
+
+		match(RETURN);
+		if (tokenInfo.first != SEMICON) {
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("    has [expr]");
+			}
+			expression(ASSIGN);
+		}
+		match(SEMICON);
+		vm->addInst(I_LEV);
+	}
+
+	//expr
+	else {
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::statement(): [expr]");
+		}
+
+		expression(ASSIGN);
+		match(SEMICON);
+	}
 }

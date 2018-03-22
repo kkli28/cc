@@ -48,6 +48,9 @@ namespace kkli {
 		//”Ôæ‰
 		void statement();
 
+		//±Ì¥Ô Ω
+		void expression(int priority);
+
 	public:
 		Generator(std::string sourceFile);
 		void run();
