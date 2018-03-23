@@ -10,7 +10,7 @@ kkli::VirtualMachine::VirtualMachine() {
 	}
 
 	//初始化三个段
-	data = new int[SEGMENT_SIZE];
+	data = new char[SEGMENT_SIZE];
 	text = new int[SEGMENT_SIZE];
 	stack = new int[SEGMENT_SIZE];
 
@@ -30,18 +30,41 @@ kkli::VirtualMachine::VirtualMachine() {
 	ax = 0;
 }
 
-//添加数据
-void kkli::VirtualMachine::addData(int elem) {
-
-	//调试
+//添加char型数据
+void kkli::VirtualMachine::addCharData(char elem) {
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::addData(" + std::to_string(elem) + ")");
+		Debug::output("VirtualMachine::addCharData(" + std::to_string(elem) + ")");
 	}
 
-	if (nextData == data + SEGMENT_SIZE) throw new Error("VirtualMachine::addData(): data overflow");
+	if (nextData == data + SEGMENT_SIZE) throw new Error("VirtualMachine::addCharData(): data overflow");
 
-	*nextData = elem;
+	*(reinterpret_cast<int*>(nextData)) = elem;
 	++nextData;
+}
+
+//添加int型数据
+void kkli::VirtualMachine::addIntData(int elem) {
+	if (OUTPUT_VM_ACTIONS) {
+		Debug::output("VirtualMachine::addIntData(" + std::to_string(elem) + ")");
+	}
+
+	if (OUTPUT_VM_ACTIONS) {
+		Debug::output("VirtualMachine::addIntData(): before data_align, nextData = "
+			+ std::to_string(reinterpret_cast<int>(nextData)) + ".");
+	}
+
+	//数据对齐
+	nextData = reinterpret_cast<char*>((reinterpret_cast<int>(data) + 4) & (-4));
+	
+	if (OUTPUT_VM_ACTIONS) {
+		Debug::output("VirtualMachine::addIntData(): after data_align, nextData = "
+			+ std::to_string(reinterpret_cast<int>(nextData)) + ".");
+	}
+
+	if (nextData == data + SEGMENT_SIZE) throw new Error("VirtualMachine::addIntData(): data overflow");
+
+	*(reinterpret_cast<int*>(nextData)) = elem;
+	nextData += 4;
 }
 
 //添加指令

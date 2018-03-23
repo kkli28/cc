@@ -24,6 +24,9 @@ namespace kkli {
 		//当前处理的定义的类型
 		int baseType;
 
+		//处理的表达式类型
+		int exprType;
+
 		//函数参数与局部变量相对于bp的位置
 		int indexOfBP;
 

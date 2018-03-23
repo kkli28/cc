@@ -28,10 +28,10 @@ namespace kkli {
 		const int SEGMENT_SIZE = 256 * 1024;
 
 	private:
-		int* data;        //数据段
+		char* data;       //数据段
 		int* text;        //代码段
 		int* stack;       //栈
-		int* nextData;    //下一个存放数据的位置
+		char* nextData;    //下一个存放数据的位置
 		int* nextText;    //下一个存放指令的位置
 
 		//程序中经常要用到寄存器，因此将其设置为public
@@ -58,7 +58,8 @@ namespace kkli {
 		}
 		
 		//添加数据、指令、指令的操作数
-		void addData(int elem);
+		void addCharData(char elem);
+		void addIntData(int elem);
 		void addInst(Instruction elem);
 		void addInstData(int elem);
 		
@@ -66,9 +67,9 @@ namespace kkli {
 		void deleteTopInst();
 
 		//getter
-		int* getDataSegment() const { return data; }
-		int* getTextSegment() const { return text; }
-		int* getStack() const { return stack; }
+		char* getDataSegment() { return data; }
+		int* getTextSegment() { return text; }
+		int* getStack() { return stack; }
 
 		//获取下一个存放位置
 		int* getNextDataPos() const { return nextData; }

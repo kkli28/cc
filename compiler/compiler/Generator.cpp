@@ -98,7 +98,7 @@ void kkli::Generator::global_decl() {
 		}
 		else {
 			table->finishToken(GLOBAL, type, reinterpret_cast<int>(vm->getNextDataPos()));
-			vm->addData(0);  //添加一个0，为这个变量占据写入值的位置，避免这个位置被其他变量使用。
+			vm->addIntData(0);  //添加一个0，为这个变量占据写入值的位置，避免这个位置被其他变量使用。
 		}
 		
 		if (tokenInfo.first == COMMA) {
@@ -441,5 +441,41 @@ void kkli::Generator::statement() {
 
 		expression(ASSIGN);
 		match(SEMICON);
+	}
+}
+
+//表达式
+void kkli::Generator::expression(int priority) {
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("Generator::expression(" + std::to_string(priority) + ")");
+	}
+
+	//单元表达式
+	{
+		if (tokenInfo.first == ERROR) {
+			throw Error(lexer.getLine(), "bad identifier ERROR.");
+		}
+
+		if (tokenInfo.first == END) {
+			throw Error(lexer.getLine(), "unexpected token EOF of expression.");
+		}
+
+		if (tokenInfo.first == NUM) {
+			match(NUM);
+			vm->addInst(I_IMM);
+			vm->addInstData(tokenInfo.second);
+			exprType = INT_TYPE;
+		}
+
+		if (tokenInfo.first == STRING) {
+			vm->addInst(I_IMM);
+			vm->addInstData(tokenInfo.second);
+			match(STRING);
+
+			vm->addCharData('\0');
+			exprType = PTR_TYPE;
+		}
+
+		//TODO: 
 	}
 }
