@@ -60,10 +60,11 @@ namespace kkli {
 		//添加数据、指令、指令的操作数
 		void addCharData(char elem);
 		void addIntData(int elem);
-		void addInst(Instruction elem);
+		void addInst(int elem);
 		void addInstData(int elem);
 		
-		//删除顶部的指令
+		//操作顶部的指令
+		int getTopInst();
 		void deleteTopInst();
 
 		//getter
@@ -72,7 +73,7 @@ namespace kkli {
 		int* getStack() { return stack; }
 
 		//获取下一个存放位置
-		int* getNextDataPos() const { return nextData; }
+		char* getNextDataPos() const { return nextData; }
 		int* getNextTextPos() const { return nextText; }
 
 		//栈操作
@@ -89,7 +90,7 @@ namespace kkli {
 		const std::vector<std::string>& getInstructionInfo() const { return INSTRUCTION_NAME; }
 
 		//获取指令名称
-		std::string getInstructionName(Instruction i) const { return INSTRUCTION_NAME[i]; }
+		std::string getInstructionName(int i) const { return INSTRUCTION_NAME[i]; }
 	};
 }
 
