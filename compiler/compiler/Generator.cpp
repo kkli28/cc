@@ -450,294 +450,528 @@ void kkli::Generator::expression(int priority) {
 		Debug::output("Generator::expression(" + std::to_string(priority) + ")");
 	}
 
-	//单元表达式
-	{
+	//一元表达式
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("Generator::expression(): ======== [unary expression] ========");
+	}
+	if (tokenInfo.first == ERROR) {
+		throw Error(lexer.getLine(), "bad identifier ERROR.");
+	}
+
+	else if (tokenInfo.first == END) {
+		throw Error(lexer.getLine(), "unexpected token EOF of expression.");
+	}
+
+	else if (tokenInfo.first == NUM) {
+		match(NUM);
+		vm->addInst(I_IMM);
+		vm->addInstData(tokenInfo.second);
 		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("Generator::expression(): ======== [unary expression] ========");
+			Debug::output("Generator::expression(): [NUM] " + std::to_string(tokenInfo.second));
 		}
-		if (tokenInfo.first == ERROR) {
-			throw Error(lexer.getLine(), "bad identifier ERROR.");
+		exprType = INT_TYPE;
+	}
+
+	else if (tokenInfo.first == STRING) {
+		vm->addInst(I_IMM);
+		vm->addInstData(tokenInfo.second);
+		match(STRING);
+
+		vm->addCharData('\0');
+		exprType = PTR_TYPE;
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output(std::string("Generator::expression(): [STRING] ")
+				+ reinterpret_cast<char*>(tokenInfo.second));
 		}
+	}
 
-		else if (tokenInfo.first == END) {
-			throw Error(lexer.getLine(), "unexpected token EOF of expression.");
+	else if (tokenInfo.first == SIZEOF) {
+		match(SIZEOF);
+		match(LPAREN);
+		exprType = INT_TYPE;
+		if (tokenInfo.first == INT) {
+			match(INT);
 		}
-
-		else if (tokenInfo.first == NUM) {
-			match(NUM);
-			vm->addInst(I_IMM);
-			vm->addInstData(tokenInfo.second); 
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("Generator::expression(): [NUM] "+std::to_string(tokenInfo.second));
-			}
-			exprType = INT_TYPE;
+		else if (tokenInfo.first == CHAR) {
+			match(CHAR);
+			exprType = CHAR_TYPE;
 		}
-
-		else if (tokenInfo.first == STRING) {
-			vm->addInst(I_IMM);
-			vm->addInstData(tokenInfo.second);
-			match(STRING);
-
-			vm->addCharData('\0');
-			exprType = PTR_TYPE;
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output(std::string("Generator::expression(): [STRING] ")
-					+ reinterpret_cast<char*>(tokenInfo.second));
-			}
+		while (tokenInfo.first == MUL) {
+			match(MUL);
+			exprType = exprType + PTR_TYPE;
 		}
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::expression(): [SIZEOF] " + Token::getDataTypeName(exprType));
+		}
+		match(RPAREN);
+		vm->addInst(I_IMM);
+		vm->addInstData(exprType == CHAR_TYPE ? 1 : 4);
+		exprType = INT;
+	}
 
-		else if (tokenInfo.first == SIZEOF) {
-			match(SIZEOF);
+	else if (tokenInfo.first == ID) {
+		//三种可能：函数调用、enum变量、全局/局部变量
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::expression(): [ID]");
+		}
+		match(ID);
+
+		Token& current = table->getCurrentToken();
+
+		//函数调用
+		if (tokenInfo.first == LPAREN) {
 			match(LPAREN);
-			exprType = INT_TYPE;
-			if (tokenInfo.first == INT) {
-				match(INT);
-			}
-			else if (tokenInfo.first == CHAR) {
-				match(CHAR);
-				exprType = CHAR_TYPE;
-			}
-			while (tokenInfo.first == MUL) {
-				match(MUL);
-				exprType = exprType + PTR_TYPE;
-			}
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("Generator::expression(): [SIZEOF] " + Token::getDataTypeName(exprType));
-			}
-			match(RPAREN);
-			vm->addInst(I_IMM);
-			vm->addInstData(exprType == CHAR_TYPE ? 1 : 4);
-			exprType = INT;
-		}
-
-		else if (tokenInfo.first == ID) {
-			//三种可能：函数调用、enum变量、全局/局部变量
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("Generator::expression(): [ID]");
-			}
-			match(ID);
-			
-			Token& current = table->getCurrentToken();
-
-			//函数调用
-			if (tokenInfo.first == LPAREN) {
-				match(LPAREN);
-				int args = 0;
-				while (tokenInfo.first != RPAREN) {
-					expression(ASSIGN);
-					vm->addInst(I_PUSH);
-					++args;
-					if (tokenInfo.first == COMMA) {
-						match(COMMA);
-					}
-					if (tokenInfo.first == RPAREN) {
-						throw Error(lexer.getLine(), "bad function call.");
-					}
+			int args = 0;
+			while (tokenInfo.first != RPAREN) {
+				expression(ASSIGN);
+				vm->addInst(I_PUSH);
+				++args;
+				if (tokenInfo.first == COMMA) {
+					match(COMMA);
 				}
-				match(RPAREN);
-
-				//系统函数
-				if (current.klass == SYS_FUNC) {
-					if (OUTPUT_GENERATOR_ACTIONS) {
-						Debug::output("Generator::expression(): [SYS_FUNC]");
-					}
-					vm->addInst(current.value);
-				}
-
-				//用户自定义函数
-				else if (current.klass == FUNC) {
-					if (OUTPUT_GENERATOR_ACTIONS) {
-						Debug::output("Generator::expression(): [CUSTOM_FUNC]");
-					}
-					vm->addInst(I_CALL);
-					vm->addInstData(current.value);
-				}
-				else {
+				if (tokenInfo.first == RPAREN) {
 					throw Error(lexer.getLine(), "bad function call.");
 				}
+			}
+			match(RPAREN);
 
-				//清除栈上参数
-				if (args > 0) {
-					if (OUTPUT_GENERATOR_ACTIONS) {
-						Debug::output("Generator::expression(): elim params("
-							+ std::to_string(args) + ") on stack");
-					}
-					vm->addInst(I_ADJ);
-					vm->addInstData(args);
+			//系统函数
+			if (current.klass == SYS_FUNC) {
+				if (OUTPUT_GENERATOR_ACTIONS) {
+					Debug::output("Generator::expression(): [SYS_FUNC]");
 				}
-				exprType = current.dataType;
+				vm->addInst(current.value);
 			}
 
-			//enum变量
-			else if (current.klass == NUMBER) {
+			//用户自定义函数
+			else if (current.klass == FUNC) {
 				if (OUTPUT_GENERATOR_ACTIONS) {
-					Debug::output("Generator::expression(): [enum variable]");
+					Debug::output("Generator::expression(): [CUSTOM_FUNC]");
+				}
+				vm->addInst(I_CALL);
+				vm->addInstData(current.value);
+			}
+			else {
+				throw Error(lexer.getLine(), "bad function call.");
+			}
+
+			//清除栈上参数
+			if (args > 0) {
+				if (OUTPUT_GENERATOR_ACTIONS) {
+					Debug::output("Generator::expression(): elim params("
+						+ std::to_string(args) + ") on stack");
+				}
+				vm->addInst(I_ADJ);
+				vm->addInstData(args);
+			}
+			exprType = current.dataType;
+		}
+
+		//enum变量
+		else if (current.klass == NUMBER) {
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [enum variable]");
+			}
+			vm->addInst(I_IMM);
+			vm->addInstData(current.value);
+			exprType = INT_TYPE;
+		}
+
+		//普通变量
+		else {
+			if (current.klass == LOCAL) {
+				if (OUTPUT_GENERATOR_ACTIONS) {
+					Debug::output("Generator::expression(): [local variable]");
+				}
+				vm->addInst(I_LEA);
+				vm->addInstData(indexOfBP - current.value);
+			}
+			else if (current.klass == GLOBAL) {
+				if (OUTPUT_GENERATOR_ACTIONS) {
+					Debug::output("Generator::expression(): [global variable]");
 				}
 				vm->addInst(I_IMM);
 				vm->addInstData(current.value);
-				exprType = INT_TYPE;
 			}
-
-			//普通变量
 			else {
-				if (current.klass == LOCAL) {
-					if (OUTPUT_GENERATOR_ACTIONS) {
-						Debug::output("Generator::expression(): [local variable]");
-					}
-					vm->addInst(I_LEA);
-					vm->addInstData(indexOfBP - current.value);
-				}
-				else if (current.klass == GLOBAL) {
-					if (OUTPUT_GENERATOR_ACTIONS) {
-						Debug::output("Generator::expression(): [global variable]");
-					}
-					vm->addInst(I_IMM);
-					vm->addInstData(current.value);
-				}
-				else {
-					throw Error(lexer.getLine(), "undefined variable.");
-				}
-
-				//默认操作是加载值（右值），如果后续是赋值，则抹掉I_LC/I_LI，只用其地址
-				exprType = current.dataType;
-				vm->addInst = (exprType == CHAR_TYPE) ? I_LC : I_LI;
+				throw Error(lexer.getLine(), "undefined variable.");
 			}
+
+			//默认操作是加载值（右值），如果后续是赋值，则抹掉I_LC/I_LI，只用其地址
+			exprType = current.dataType;
+			vm->addInst = (exprType == CHAR_TYPE) ? I_LC : I_LI;
 		}
+	}
 
-		else if (tokenInfo.first == LPAREN) {
-			match(LPAREN);
+	else if (tokenInfo.first == LPAREN) {
+		match(LPAREN);
 
-			//强制类型转换
-			if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
-				int castType = (tokenInfo.first == CHAR) ? CHAR_TYPE : INT_TYPE;
-				match(tokenInfo.first);
-				while (tokenInfo.first == MUL) {
-					match(MUL);
-					castType += PTR_TYPE;
-				}
-				match(RPAREN);
-				if (OUTPUT_GENERATOR_ACTIONS) {
-					Debug::output("Generator::expression(): [cast] "
-						+ Token::getDataTypeName(castType));
-				}
-				expression(INC);  //优先级同++
-				exprType = castType;
+		//强制类型转换
+		if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
+			int castType = (tokenInfo.first == CHAR) ? CHAR_TYPE : INT_TYPE;
+			match(tokenInfo.first);
+			while (tokenInfo.first == MUL) {
+				match(MUL);
+				castType += PTR_TYPE;
 			}
-
-			//括号表达式
-			else {
-				if (OUTPUT_GENERATOR_ACTIONS) {
-					Debug::output("Generator::expression(): [ parenthiesis ]");
-				}
-				expression(ASSIGN);
-				match(RPAREN);
-			}
-		}
-
-		else if (tokenInfo.first == MUL) {
+			match(RPAREN);
 			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("Generator::expression(): [MUL]");
+				Debug::output("Generator::expression(): [cast] "
+					+ Token::getDataTypeName(castType));
 			}
-			//*a，即取某个地址的值
-			match(MUL);
+			expression(INC);  //优先级同++
+			exprType = castType;
+		}
+
+		//括号表达式
+		else {
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [ parenthiesis ]");
+			}
+			expression(ASSIGN);
+			match(RPAREN);
+		}
+	}
+
+	else if (tokenInfo.first == MUL) {
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::expression(): [MUL]");
+		}
+		//*a，即取某个地址的值
+		match(MUL);
+		expression(INC);
+		if (exprType >= PTR_TYPE) {
+			exprType -= PTR_TYPE;
+		}
+		else {
+			throw Error(lexer.getLine(), "bad dereference.");
+		}
+
+		//除了取一个char外，取int和取地址都是取int（默认int和指针字节数相同）
+		vm->addInst(exprType == CHAR_TYPE ? I_LC : I_LI);
+	}
+
+	else if (tokenInfo.first == AND) {
+		//取地址
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::expression(): [AND]");
+		}
+		match(AND);
+		expression(INC);
+		int inst = vm->getTopInst();
+		if (inst == I_LC || inst == I_LI) {
+			vm->deleteTopInst();
+		}
+		else {
+			throw Error(lexer.getLine(), "bad address of.");
+		}
+
+		exprType = exprType + PTR_TYPE;
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::expression(): exprType = "
+				+ Token::getDataTypeName(exprType));
+		}
+	}
+
+	else if (tokenInfo.first == NOT) {
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::expression(): [NOT]");
+		}
+		match(NOT);
+		expression(INC);
+
+		//!expr 等价于 expr == 0
+		vm->addInst(I_PUSH);
+		vm->addInst(I_IMM);
+		vm->addInstData(0);
+		vm->addInst(I_EQ);
+
+		exprType = INT_TYPE;
+	}
+
+	else if (tokenInfo.first == TILDE) {
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::expression(): [TILDE]");
+		}
+		match(TILDE);
+		expression(INC);
+
+		//~a 等价于 a^(-1)
+		vm->addInst(I_PUSH);
+		vm->addInst(I_IMM);
+		vm->addInstData(-1);
+		vm->addInst(I_XOR);
+
+		exprType = INT_TYPE;
+	}
+
+	else if (tokenInfo.first == ADD) {
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::expression(): [ADD]");
+		}
+		//+a，啥也不做
+		match(ADD);
+		expression(INC);
+		exprType = INT_TYPE;
+	}
+
+	else if (tokenInfo.first == SUB) {
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::expression(): [SUB]");
+		}
+		//-a
+		match(SUB);
+		if (tokenInfo.first == NUM) {
+			vm->addInst(I_IMM);
+			vm->addInstData(-tokenInfo.second);
+		}
+		else {
+			//-a 等价于 (-1)*a
+			vm->addInst(I_IMM);
+			vm->addInstData(-1);
 			expression(INC);
-			if (exprType >= PTR_TYPE) {
-				exprType -= PTR_TYPE;
+			vm->addInst(I_MUL);
+		}
+
+		exprType = INT_TYPE;
+	}
+
+	else if (tokenInfo.first == INC || tokenInfo.first == DEC) {
+		if (OUTPUT_GENERATOR_ACTIONS) {
+			Debug::output("Generator::expression(): [INC/DEC]");
+		}
+		int tk = tokenInfo.first;
+		match(tk);
+		expression(INC);
+		if (vm->getTopInst() == I_LC) {
+			vm->addInst(I_PUSH);
+			vm->addInst(I_LC);
+		}
+		else if (vm->getTopInst() == I_LI) {
+			vm->addInst(I_PUSH);
+			vm->addInst(I_LI);
+		}
+		else {
+			throw Error(lexer.getLine(), "bad lvalue of pre-increment.");
+		}
+		vm->addInst(I_PUSH);
+		vm->addInst(I_IMM);
+		vm->addInstData(exprType > PTR_TYPE ? 4 : 1);
+		vm->addInst(tk == INC ? I_ADD : I_SUB);
+		vm->addInst(exprType == CHAR_TYPE ? I_SC : I_SI);
+	}
+
+	else {
+		throw Error(lexer.getLine(), "bad expression.");
+	}
+
+	//二元表达式
+	if (OUTPUT_GENERATOR_ACTIONS) {
+		Debug::output("Generator::expression(): ======== [binary expression] ========");
+	}
+	while (tokenInfo.first >= priority) {
+		if (tokenInfo.first == ASSIGN) {
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [ASSIGN]");
+			}
+			int tempType = exprType;
+			match(ASSIGN);
+			if (vm->getTopInst() == I_LI || vm->getTopInst() == I_LC) {
+				vm->deleteTopInst();
+				vm->addInst(I_PUSH);
 			}
 			else {
-				throw Error(lexer.getLine(), "bad dereference.");
+				throw Error(lexer.getLine(), "bad lvalue in assignment.");
 			}
+			expression(ASSIGN);
+			exprType = tempType;
+			vm->addInst(exprType == CHAR_TYPE ? I_SC : I_SI);
+		}
 
-			//除了取一个char外，取int和取地址都是取int（默认int和指针字节数相同）
-			vm->addInst(exprType == CHAR_TYPE ? I_LC : I_LI);
+		else if (tokenInfo.first == COND) {
+			//expr ? a : b
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [COND]");
+			}
+			match(COND);
+			vm->addInst(I_JZ);
+			int* addr = vm->getNextTextPos();
+			vm->addInstData(0);      //占据一个位置用于写入跳转地址
+			expression(ASSIGN);
+			if (tokenInfo.first == COLON) {
+				match(COLON);
+			}
+			else {
+				throw Error(lexer.getLine(), "missing colon in conditional.");
+			}
+			*addr = reinterpret_cast<int>(vm->getNextTextPos() + 2);
+			vm->addInst(I_JMP);
+			addr = vm->getNextTextPos();
+			vm->addInstData(0);     //占据一个位置用于写入跳转地址
+			expression(COND);
+			*addr = reinterpret_cast<int>(vm->getNextTextPos());
+		}
+
+		else if (tokenInfo.first == LOR) {
+			// ||
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [LOR]");
+			}
+			match(LOR);
+			vm->addInst(I_JNZ);
+			int* addr = vm->getNextTextPos();
+			vm->addInstData(0);
+			expression(LAN);
+			*addr = reinterpret_cast<int>(vm->getNextTextPos());
+			exprType = INT_TYPE;
+		}
+
+		else if (tokenInfo.first == LAN) {
+			// &&
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [LAN]");
+			}
+			match(LAN);
+			vm->addInst(I_JZ);
+			int* addr = vm->getNextTextPos();
+			vm->addInstData(0);
+			expression(OR);
+			*addr = reinterpret_cast<int>(vm->getNextTextPos());
+			exprType = INT_TYPE;
+		}
+
+		else if (tokenInfo.first == OR) {
+			// |
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [OR]");
+			}
+			match(OR);
+			vm->addInst(I_PUSH);
+			expression(XOR);
+			vm->addInst(I_OR);
+			exprType = INT_TYPE;
+		}
+
+		else if (tokenInfo.first == XOR) {
+			// ^
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [XOR]");
+			}
+			match(XOR);
+			vm->addInst(I_PUSH);
+			expression(AND);
+			vm->addInst(I_XOR);
+			exprType = INT_TYPE;
 		}
 
 		else if (tokenInfo.first == AND) {
-			//取地址
+			// &
 			if (OUTPUT_GENERATOR_ACTIONS) {
 				Debug::output("Generator::expression(): [AND]");
 			}
 			match(AND);
-			expression(INC);
-			int inst = vm->getTopInst();
-			if (inst == I_LC || inst == I_LI) {
-				vm->deleteTopInst();
-			}
-			else {
-				throw Error(lexer.getLine(), "bad address of.");
-			}
-
-			exprType = exprType + PTR_TYPE;
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("Generator::expression(): exprType = "
-					+ Token::getDataTypeName(exprType));
-			}
-		}
-
-		else if (tokenInfo.first == NOT) {
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("Generator::expression(): [NOT]");
-			}
-			match(NOT);
-			expression(INC);
-
-			//!expr 等价于 expr == 0
 			vm->addInst(I_PUSH);
-			vm->addInst(I_IMM);
-			vm->addInstData(0);
-			vm->addInst(I_EQ);
-
+			expression(EQ);
+			vm->addInst(I_AND);
 			exprType = INT_TYPE;
 		}
 
-		else if (tokenInfo.first == TILDE) {
+		else if (tokenInfo.first == EQ) {
+			// ==
 			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("Generator::expression(): [TILDE]");
+				Debug::output("Generator::expression(): [EQ]");
 			}
-			match(TILDE);
-			expression(INC);
-			
-			//~a 等价于 a^(-1)
+			match(EQ);
 			vm->addInst(I_PUSH);
-			vm->addInst(I_IMM);
-			vm->addInstData(-1);
-			vm->addInst(I_XOR);
+			expression(NE);
+			vm->addInst(I_EQ);
+			exprType = INT_TYPE;
+		}
 
+		else if (tokenInfo.first == NE) {
+			//!=
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [NE]");
+			}
+			match(NE);
+			vm->addInst(I_PUSH);
+			expression(LT);
+			vm->addInst(I_NE);
+			exprType = INT_TYPE;
+		}
+
+		else if (tokenInfo.first == LT) {
+			// <
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [LT]");
+			}
+			match(LT);
+			vm->addInst(I_PUSH);
+			expression(SHL);
+			vm->addInst(I_LT);
+			exprType = INT_TYPE;
+		}
+
+		else if (tokenInfo.first == GT) {
+			// >
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [GT]");
+			}
+			match(GT);
+			vm->addInst(I_PUSH);
+			expression(SHL);
+			vm->addInst(I_GT);
+			exprType = INT_TYPE;
+		}
+
+		else if (tokenInfo.first == LE) {
+			// <=
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [LE]");
+			}
+			match(LE);
+			vm->addInst(I_PUSH);
+			expression(SHL);
+			vm->addInst(I_LE);
+			exprType = INT_TYPE;
+		}
+
+		else if (tokenInfo.first == GE) {
+			// >=
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [GE]");
+			}
+			vm->addInst(I_PUSH);
+			expression(SHL);
+			vm->addInst(I_GE);
+			exprType = INT_TYPE;
+		}
+
+		else if (tokenInfo.first == SHL) {
+			// <<
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [SHL]");
+			}
+			match(SHL);
+			vm->addInst(I_PUSH);
+			expression(ADD);
+			vm->addInst(I_SHL);
+			exprType = INT_TYPE;
+		}
+
+		else if (tokenInfo.first == SHR) {
+			// >>
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [SHR]");
+			}
+			match(SHR);
+			vm->addInst(I_PUSH);
+			expression(ADD);
+			vm->addInst(I_SHR);
 			exprType = INT_TYPE;
 		}
 
 		else if (tokenInfo.first == ADD) {
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("Generator::expression(): [ADD]");
-			}
-			//+a，啥也不做
-			match(ADD);
-			expression(INC);
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == SUB) {
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("Generator::expression(): [SUB]");
-			}
-			//-a
-			match(SUB);
-			if (tokenInfo.first == NUM) {
-				vm->addInst(I_IMM);
-				vm->addInstData(-tokenInfo.second);
-			}
-			else {
-				//-a 等价于 (-1)*a
-				vm->addInst(I_IMM);
-				vm->addInstData(-1);
-				expression(INC);
-				vm->addInst(I_MUL);
-			}
-
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == INC || tokenInfo.first == DEC) {
 			//TODO: 
 		}
 	}
