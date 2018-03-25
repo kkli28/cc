@@ -9,8 +9,8 @@ int main()
 	//每次都清空Debug信息
 	kkli::Debug::clear();
 
-	//kkli::VirtualMachine vm;
-	/*
+	kkli::VirtualMachine vm;
+	///*
 	vm.addInst(I_ENT);
 	vm.addInst(3);
 	vm.addInst(I_LEA);
@@ -86,11 +86,12 @@ int main()
 	vm.addInst(I_PUSH);
 	vm.addInst(I_EXIT);
 	vm.run();
-	*/
+	//*/
 
+	/*
 	kkli::Lexer lexer("input/test.txt");
 	std::cout << lexer.getSouce() << std::endl;
-	
+	*/
 	/*
 	try {
 		auto p = lexer.next();

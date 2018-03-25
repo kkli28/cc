@@ -1,4 +1,1 @@
 
-Lexer::Lexer(input/test.txt)
-    words: 1035
-    end word: -1

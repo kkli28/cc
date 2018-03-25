@@ -599,7 +599,7 @@ void kkli::Generator::expression(int priority) {
 
 			//默认操作是加载值（右值），如果后续是赋值，则抹掉I_LC/I_LI，只用其地址
 			exprType = current.dataType;
-			vm->addInst = (exprType == CHAR_TYPE) ? I_LC : I_LI;
+			vm->addInst(exprType == CHAR_TYPE ? I_LC : I_LI);
 		}
 	}
 
@@ -619,7 +619,7 @@ void kkli::Generator::expression(int priority) {
 				Debug::output("Generator::expression(): [cast] "
 					+ Token::getDataTypeName(castType));
 			}
-			expression(INC);  //优先级同++
+			expression(INC);  //需要优先级INC（高一级）
 			exprType = castType;
 		}
 
@@ -972,7 +972,175 @@ void kkli::Generator::expression(int priority) {
 		}
 
 		else if (tokenInfo.first == ADD) {
-			//TODO: 
+			// a + b
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [ADD]");
+			}
+			int tempType = exprType;
+			match(ADD);
+			vm->addInst(I_PUSH);
+			expression(MUL);
+			exprType = tempType;  //结果类型以左操作数为准
+			//问题：当 'a' + 1000 时会溢出吗？因为char型最大255
+
+
+			//非char*型指针，则加数乘以4再加到指针上
+			if (exprType > PTR_TYPE) {
+				vm->addInst(I_PUSH);
+				vm->addInst(I_IMM);
+				vm->addInstData(4);
+				vm->addInst(MUL);
+			}
+			vm->addInst(I_ADD);
+		}
+
+		else if (tokenInfo.first == SUB) {
+			// a - b
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [SUB]");
+			}
+			int tempType = exprType;
+			vm->addInst(I_PUSH);
+			expression(MUL);
+
+			//指针相减 p1 - p2
+			if (tempType > PTR_TYPE && tempType == exprType) {
+				if (OUTPUT_GENERATOR_ACTIONS) {
+					Debug::output("Generator::expression(): [SUB ptr - ptr]");
+				}
+				vm->addInst(I_SUB);
+				vm->addInst(I_PUSH);
+				vm->addInst(I_IMM);
+				vm->addInstData(4);
+				vm->addInst(I_DIV);
+				exprType = INT_TYPE;
+			}
+
+			//指针移动 p1 - 2
+			else if (tempType > PTR_TYPE) {
+				if (OUTPUT_GENERATOR_ACTIONS) {
+					Debug::output("Generator::expression(): [SUB ptr - var]");
+				}
+				vm->addInst(I_PUSH);
+				vm->addInst(I_IMM);
+				vm->addInstData(4);
+				vm->addInst(I_MUL);
+				vm->addInst(MUL);
+				exprType = tempType;
+			}
+
+			//普通变量相减 a - b
+			else {
+				if (OUTPUT_GENERATOR_ACTIONS) {
+					Debug::output("Generator::expression(): [SUB var - var]");
+				}
+				vm->addInst(I_SUB);
+				exprType = tempType;
+			}
+		}
+
+		else if (tokenInfo.first == MUL) {
+			// a * b
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [MUL]");
+			}
+			int tempType = exprType;
+			match(MUL);
+			vm->addInst(I_PUSH);
+			expression(INC);
+			vm->addInst(I_MUL);
+			exprType = tempType;
+		}
+
+		else if (tokenInfo.first == DIV) {
+			// a / b
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [DIV]");
+			}
+			int tempType = exprType;
+			match(DIV);
+			vm->addInst(I_PUSH);
+			expression(INC);
+			vm->addInst(I_DIV);
+			exprType = tempType;
+		}
+
+		else if (tokenInfo.first == MOD) {
+			// a % b
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [MOD]");
+			}
+			int tempType = exprType;
+			match(MOD);
+			vm->addInst(I_PUSH);
+			expression(INC);
+			vm->addInst(I_MOD);
+			exprType = tempType;
+		}
+
+		else if (tokenInfo.first == INC || tokenInfo.first == DEC) {
+			// a++
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [INC]");
+			}
+			if (vm->getTopInst() == I_LI) {
+				vm->deleteTopInst();
+				vm->addInst(I_PUSH);
+				vm->addInst(I_LI);
+			}
+			else if (vm->getTopInst() == I_LC) {
+				vm->deleteTopInst();
+				vm->addInst(I_PUSH);
+				vm->addInst(I_LC);
+			}
+			else {
+				throw Error(lexer.getLine(), "bad value in increment.");
+			}
+
+			//先++a，存储，再用a-1参与计算
+			vm->addInst(I_PUSH);
+			vm->addInst(I_IMM);
+			vm->addInstData(exprType > PTR_TYPE ? 4 : 1);
+			vm->addInst(tokenInfo.first == INC ? I_ADD : I_SUB);
+			vm->addInst(exprType == CHAR_TYPE ? I_SC : I_SI);
+			vm->addInst(I_PUSH);
+			vm->addInst(I_IMM);
+			vm->addInst(exprType > PTR_TYPE ? 4 : 1);
+			vm->addInst(tokenInfo.first == INC ? I_SUB : I_ADD);
+			match(INC);
+		}
+
+		else if (tokenInfo.first == LBRACK) {
+			// a[1]
+			if (OUTPUT_GENERATOR_ACTIONS) {
+				Debug::output("Generator::expression(): [LBRACK]");
+			}
+			int tempType = exprType;
+			match(LBRACK);
+			vm->addInst(I_PUSH);
+			expression(ASSIGN);
+			match(RBRACK);
+
+			//非char*型指针
+			if (tempType > PTR_TYPE) {
+				vm->addInst(I_PUSH);
+				vm->addInst(I_IMM);
+				vm->addInstData(4);
+				vm->addInst(I_MUL);
+			}
+			//对变量执行[]操作，错误
+			else if (tempType < PTR_TYPE) {
+				throw Error(lexer.getLine(), "pointer type expected.");
+			}
+
+			exprType = tempType - PTR_TYPE;
+			vm->addInst(I_ADD);
+			vm->addInst(exprType == CHAR ? I_LC : I_LI);
+		}
+
+		else {
+			throw Error(lexer.getLine(), "compiler error, token = "
+				+ Token::getTokenTypeName(tokenInfo.first));
 		}
 	}
 }

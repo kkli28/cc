@@ -73,15 +73,15 @@ std::pair<int, int> kkli::Lexer::next() {
 			std::string name(source, begIndex, index - begIndex);
 
 			//查符号表
-			auto info = table->has(hash, name);
+			bool has = table->has(hash, name);
 
 			//符号表中有该标识符
-			if (info.first) {
+			if (table->has(hash, name)) {
 				if (OUTPUT_LEXER_FUNC_NEXT_DETAIL) {
 					Debug::output("Lexer::next(): [id] " + name + " [has]");
 				}
 
-				return { info.second, 0 };
+				return { table->getCurrentToken().type, 0 };
 			}
 
 			//符号表中没有该标识符，则向其中添加信息
@@ -240,15 +240,15 @@ std::pair<int, int> kkli::Lexer::next() {
 				//转义字符
 				if (curr == '\\') {
 					curr = get();
-					if (curr == 'n') vm->addData('\n');
+					if (curr == 'n') vm->addCharData('\n');
 					else if (curr == eof) {
 						throw Error("Line " + std::to_string(line) + ". Invalid string type, need escape charactor after \\.");
 					}
-					else vm->addData(curr);
+					else vm->addCharData(curr);
 					curr = get();
 				}
 				else {
-					vm->addData(curr);
+					vm->addCharData(curr);
 					curr = get();
 				}
 			}

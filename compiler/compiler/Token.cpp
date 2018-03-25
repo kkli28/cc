@@ -22,7 +22,7 @@ void kkli::Token::saveInfo() {
 void kkli::Token::restoreInfo() {
 	if (OUTPUT_TOKEN_ACTIONS) {
 		Debug::output(std::string("Token::restoreInfo(): ")
-			+ "type = " + getTokenTypeName(Btype)
+			+ "type = " + getTokenTypeName(type)
 			+ "  klass = " + getTokenKlassName(Bklass));
 	}
 
