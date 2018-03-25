@@ -1,1 +1,1145 @@
 
+Lexer::Lexer(input/hello.c)
+SymbolTable::has(char)
+SymbolTable::has(char)
+Lexer::next(): [id] char [add]
+Lexer::next(): [WS]
+SymbolTable::has(else)
+SymbolTable::has(else)
+Lexer::next(): [id] else [add]
+Lexer::next(): [WS]
+SymbolTable::has(enum)
+SymbolTable::has(enum)
+Lexer::next(): [id] enum [add]
+Lexer::next(): [WS]
+SymbolTable::has(if)
+SymbolTable::has(if)
+Lexer::next(): [id] if [add]
+Lexer::next(): [WS]
+SymbolTable::has(int)
+SymbolTable::has(int)
+Lexer::next(): [id] int [add]
+Lexer::next(): [WS]
+SymbolTable::has(return)
+SymbolTable::has(return)
+Lexer::next(): [id] return [add]
+Lexer::next(): [WS]
+SymbolTable::has(sizeof)
+SymbolTable::has(sizeof)
+Lexer::next(): [id] sizeof [add]
+Lexer::next(): [WS]
+SymbolTable::has(while)
+SymbolTable::has(while)
+Lexer::next(): [id] while [add]
+Lexer::next(): [WS]
+SymbolTable::has(printf)
+SymbolTable::has(printf)
+Lexer::next(): [id] printf [add]
+Lexer::next(): [WS]
+SymbolTable::has(malloc)
+SymbolTable::has(malloc)
+Lexer::next(): [id] malloc [add]
+Lexer::next(): [WS]
+SymbolTable::has(exit)
+SymbolTable::has(exit)
+Lexer::next(): [id] exit [add]
+Lexer::next(): [WS]
+SymbolTable::has(void)
+SymbolTable::has(void)
+Lexer::next(): [id] void [add]
+Lexer::next(): [WS]
+SymbolTable::has(main)
+SymbolTable::has(main)
+Lexer::next(): [id] main [add]
+    words: 108
+    end word: -1
+Generator::run()
+SymbolTable::has(int)
+SymbolTable::has(int)
+Lexer::next(): [id] int [has]
+Generator::global_decl()
+Generator::match(INT)
+Lexer::next(): [WS]
+SymbolTable::has(func)
+SymbolTable::has(func)
+Lexer::next(): [id] func [add]
+Generator::global_decl(): type = INT_TYPE
+Generator::match(ID)
+Lexer::next(): [LPAREN]
+Generator::func_del()
+Generator::match(LPAREN)
+SymbolTable::has(int)
+SymbolTable::has(int)
+Lexer::next(): [id] int [has]
+Generator::func_param()
+Generator::match(INT)
+Lexer::next(): [WS]
+SymbolTable::has(a)
+SymbolTable::has(a)
+Lexer::next(): [id] a [add]
+Generator::func_param(): param type = INT_TYPE
+Generator::match(ID)
+Lexer::next(): [COMMA]
+before backup: [SymbolTable info]:
+token count: 30
+token info:
+Index: 0
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 1
+type: CHAR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: char
+value: 0
+hash: 316737486
+
+Index: 2
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 3
+type: ELSE
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: else
+value: 0
+hash: 323179601
+
+Index: 4
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 5
+type: ENUM
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: enum
+value: 0
+hash: 323223121
+
+Index: 6
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 7
+type: IF
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: if
+value: 0
+hash: 15537
+
+Index: 8
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 9
+type: INT
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: int
+value: 0
+hash: 2285231
+
+Index: 10
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 11
+type: RETURN
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: return
+value: 0
+hash: -12847000
+
+Index: 12
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 13
+type: SIZEOF
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: sizeof
+value: 0
+hash: 1795670240
+
+Index: 14
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 15
+type: WHILE
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: while
+value: 0
+hash: 64985305
+
+Index: 16
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 17
+type: ID
+klass: SYS_FUNC
+dataType: PTR PTR PTR INT_TYPE
+name: printf
+value: 30
+hash: 1883410885
+
+Index: 18
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 19
+type: ID
+klass: SYS_FUNC
+dataType: PTR PTR PTR INT_TYPE
+name: malloc
+value: 31
+hash: -1516293496
+
+Index: 20
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 21
+type: ID
+klass: SYS_FUNC
+dataType: PTR PTR PTR INT_TYPE
+name: exit
+value: 32
+hash: 323437454
+
+Index: 22
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 23
+type: CHAR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: void
+value: 0
+hash: 377243848
+
+Index: 24
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 25
+type: ID
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: main
+value: 0
+hash: 348352625
+
+Index: 26
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 27
+type: ID
+klass: FUNC
+dataType: INT_TYPE
+name: func
+value: 58654784
+hash: 326549868
+
+Index: 28
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 29
+type: ID
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: a
+value: 0
+hash: 97
+
+
+after backup: [SymbolTable info]:
+token count: 30
+token info:
+Index: 0
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 1
+type: CHAR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: char
+value: 0
+hash: 316737486
+
+Index: 2
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 3
+type: ELSE
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: else
+value: 0
+hash: 323179601
+
+Index: 4
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 5
+type: ENUM
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: enum
+value: 0
+hash: 323223121
+
+Index: 6
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 7
+type: IF
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: if
+value: 0
+hash: 15537
+
+Index: 8
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 9
+type: INT
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: int
+value: 0
+hash: 2285231
+
+Index: 10
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 11
+type: RETURN
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: return
+value: 0
+hash: -12847000
+
+Index: 12
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 13
+type: SIZEOF
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: sizeof
+value: 0
+hash: 1795670240
+
+Index: 14
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 15
+type: WHILE
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: while
+value: 0
+hash: 64985305
+
+Index: 16
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 17
+type: ID
+klass: SYS_FUNC
+dataType: PTR PTR PTR INT_TYPE
+name: printf
+value: 30
+hash: 1883410885
+
+Index: 18
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 19
+type: ID
+klass: SYS_FUNC
+dataType: PTR PTR PTR INT_TYPE
+name: malloc
+value: 31
+hash: -1516293496
+
+Index: 20
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 21
+type: ID
+klass: SYS_FUNC
+dataType: PTR PTR PTR INT_TYPE
+name: exit
+value: 32
+hash: 323437454
+
+Index: 22
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 23
+type: CHAR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: void
+value: 0
+hash: 377243848
+
+Index: 24
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 25
+type: ID
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: main
+value: 0
+hash: 348352625
+
+Index: 26
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 27
+type: ID
+klass: FUNC
+dataType: INT_TYPE
+name: func
+value: 58654784
+hash: 326549868
+
+Index: 28
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 29
+type: ID
+klass: LOCAL
+dataType: INT_TYPE
+name: a
+value: 0
+hash: 97
+
+
+Generator::match(COMMA)
+Lexer::next(): [WS]
+SymbolTable::has(int)
+SymbolTable::has(int)
+Lexer::next(): [id] int [has]
+Generator::match(INT)
+Lexer::next(): [WS]
+SymbolTable::has(b)
+SymbolTable::has(b)
+Lexer::next(): [id] b [add]
+Generator::func_param(): param type = INT_TYPE
+Generator::match(ID)
+Lexer::next(): [RPAREN]
+before backup: [SymbolTable info]:
+token count: 32
+token info:
+Index: 0
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 1
+type: CHAR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: char
+value: 0
+hash: 316737486
+
+Index: 2
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 3
+type: ELSE
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: else
+value: 0
+hash: 323179601
+
+Index: 4
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 5
+type: ENUM
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: enum
+value: 0
+hash: 323223121
+
+Index: 6
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 7
+type: IF
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: if
+value: 0
+hash: 15537
+
+Index: 8
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 9
+type: INT
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: int
+value: 0
+hash: 2285231
+
+Index: 10
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 11
+type: RETURN
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: return
+value: 0
+hash: -12847000
+
+Index: 12
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 13
+type: SIZEOF
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: sizeof
+value: 0
+hash: 1795670240
+
+Index: 14
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 15
+type: WHILE
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: while
+value: 0
+hash: 64985305
+
+Index: 16
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 17
+type: ID
+klass: SYS_FUNC
+dataType: PTR PTR PTR INT_TYPE
+name: printf
+value: 30
+hash: 1883410885
+
+Index: 18
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 19
+type: ID
+klass: SYS_FUNC
+dataType: PTR PTR PTR INT_TYPE
+name: malloc
+value: 31
+hash: -1516293496
+
+Index: 20
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 21
+type: ID
+klass: SYS_FUNC
+dataType: PTR PTR PTR INT_TYPE
+name: exit
+value: 32
+hash: 323437454
+
+Index: 22
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 23
+type: CHAR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: void
+value: 0
+hash: 377243848
+
+Index: 24
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 25
+type: ID
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: main
+value: 0
+hash: 348352625
+
+Index: 26
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 27
+type: ID
+klass: FUNC
+dataType: INT_TYPE
+name: func
+value: 58654784
+hash: 326549868
+
+Index: 28
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 29
+type: ID
+klass: LOCAL
+dataType: INT_TYPE
+name: a
+value: 0
+hash: 97
+
+Index: 30
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 31
+type: ID
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: b
+value: 0
+hash: 98
+
+
+after backup: [SymbolTable info]:
+token count: 32
+token info:
+Index: 0
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 1
+type: CHAR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: char
+value: 0
+hash: 316737486
+
+Index: 2
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 3
+type: ELSE
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: else
+value: 0
+hash: 323179601
+
+Index: 4
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 5
+type: ENUM
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: enum
+value: 0
+hash: 323223121
+
+Index: 6
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 7
+type: IF
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: if
+value: 0
+hash: 15537
+
+Index: 8
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 9
+type: INT
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: int
+value: 0
+hash: 2285231
+
+Index: 10
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 11
+type: RETURN
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: return
+value: 0
+hash: -12847000
+
+Index: 12
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 13
+type: SIZEOF
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: sizeof
+value: 0
+hash: 1795670240
+
+Index: 14
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 15
+type: WHILE
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: while
+value: 0
+hash: 64985305
+
+Index: 16
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 17
+type: ID
+klass: SYS_FUNC
+dataType: PTR PTR PTR INT_TYPE
+name: printf
+value: 30
+hash: 1883410885
+
+Index: 18
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 19
+type: ID
+klass: SYS_FUNC
+dataType: PTR PTR PTR INT_TYPE
+name: malloc
+value: 31
+hash: -1516293496
+
+Index: 20
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 21
+type: ID
+klass: SYS_FUNC
+dataType: PTR PTR PTR INT_TYPE
+name: exit
+value: 32
+hash: 323437454
+
+Index: 22
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 23
+type: CHAR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: void
+value: 0
+hash: 377243848
+
+Index: 24
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 25
+type: ID
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: main
+value: 0
+hash: 348352625
+
+Index: 26
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 27
+type: ID
+klass: FUNC
+dataType: INT_TYPE
+name: func
+value: 58654784
+hash: 326549868
+
+Index: 28
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 29
+type: ID
+klass: LOCAL
+dataType: INT_TYPE
+name: a
+value: 0
+hash: 97
+
+Index: 30
+type: ERR
+klass: INVALID_TOKEN_KLASS
+dataType: CHAR_TYPE
+name: 
+value: 0
+hash: 0
+
+Index: 31
+type: ID
+klass: LOCAL
+dataType: INT_TYPE
+name: b
+value: 1
+hash: 98
+
+
+indexOfBP: 3
+Generator::match(RPAREN)
+Lexer::next(): [LBRACE]
+Generator::match(LBRACE)
+Lexer::next(): [\n]
+Lexer::next(): [WS]
+Lexer::next(): [WS]
+Lexer::next(): [WS]
+Lexer::next(): [WS]
+SymbolTable::has(return)
+SymbolTable::has(return)
+Lexer::next(): [id] return [has]
+Generator::func_body()
+Generator::func_body(), start variable decl.
+Generator::func_body(), end variable decl.
+Generator::func_body(), start statement decl.
+Generator::statement(): [return]
+Generator::match(RETURN)
+Lexer::next(): [WS]
+SymbolTable::has(a)
+SymbolTable::has(a)
+Lexer::next(): [id] a [has]
+    has [expr]
+Generator::expression(11)
+Generator::expression(): ======== [unary expression] ========
+Generator::expression(): [ID]
+Generator::match(ID)
+Lexer::next(): [ADD]
+Generator::expression(): [local variable]
+Generator::expression(): ======== [binary expression] ========
+Generator::expression(): [ADD]
+Generator::match(ADD)
+SymbolTable::has(b)
+SymbolTable::has(b)
+Lexer::next(): [id] b [has]
+Generator::expression(29)
+Generator::expression(): ======== [unary expression] ========
+Generator::expression(): [ID]
+Generator::match(ID)
+Lexer::next(): [SEMICON]
+Generator::expression(): [local variable]
+Generator::expression(): ======== [binary expression] ========

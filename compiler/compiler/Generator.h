@@ -56,7 +56,7 @@ namespace kkli {
 
 	public:
 		Generator(std::string sourceFile);
-		void run();
+		void gen();
 	};
 }
 

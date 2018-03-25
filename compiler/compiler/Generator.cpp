@@ -22,7 +22,7 @@ void kkli::Generator::match(int type) {
 	}
 }
 
-void kkli::Generator::run() {
+void kkli::Generator::gen() {
 	if (OUTPUT_GENERATOR_ACTIONS) {
 		Debug::output("Generator::run()");
 	}
@@ -88,7 +88,10 @@ void kkli::Generator::global_decl() {
 
 		//函数定义
 		if (tokenInfo.first == LPAREN) {
-			table->finishToken(FUNC, type, reinterpret_cast<int>(vm->getNextTextPos()));
+			Token& tk = table->getCurrentToken();
+			tk.klass = FUNC;
+			tk.dataType = type;
+			tk.value = reinterpret_cast<int>(vm->getNextTextPos());
 			func_decl();
 		}
 
@@ -97,7 +100,10 @@ void kkli::Generator::global_decl() {
 			throw Error(lexer.getLine(), "wrong variables declaration.");
 		}
 		else {
-			table->finishToken(GLOBAL, type, reinterpret_cast<int>(vm->getNextDataPos()));
+			Token& tk = table->getCurrentToken();
+			tk.klass = GLOBAL;
+			tk.dataType = type;
+			tk.value = reinterpret_cast<int>(vm->getNextDataPos());
 			vm->addIntData(0);  //添加一个0，为这个变量占据写入值的位置，避免这个位置被其他变量使用。
 		}
 		
@@ -148,8 +154,11 @@ void kkli::Generator::enum_decl() {
 				+ "  value = " + std::to_string(varValue));
 		}
 
-		table->finishToken(NUMBER, INT_TYPE, varValue++);
-
+		Token& tk = table->getCurrentToken();
+		tk.klass = NUMBER;
+		tk.dataType = INT_TYPE;
+		tk.value = varValue++;
+		
 		//{ a = 0, b = 1 } 中的逗号
 		if (tokenInfo.first == COMMA) {
 			tokenInfo = lexer.next();

@@ -7,6 +7,33 @@ kkli::Lexer::Lexer(std::string sourceFile) {
 		Debug::output("Lexer::Lexer(" + sourceFile + ")");
 	}
 
+	//向符号表插入内部符号 -- begin
+	source = "char else enum if int return sizeof while printf malloc exit void main";
+	source.push_back(eof);
+	
+	SymbolTable* table = SymbolTable::getInstance();
+	int type = CHAR;
+	while (type <= WHILE) {
+		next();
+		table->getCurrentToken().type = type;
+		++type;
+	}
+
+	type = I_PRTF;
+	while (type <= I_EXIT) {
+		next();
+		Token& tk = table->getCurrentToken();
+		tk.klass = SYS_FUNC;
+		tk.dataType = INT;
+		tk.value = type++;
+	}
+
+	next();
+	table->getCurrentToken().type = CHAR;
+	next();
+	table->setMainAddr(reinterpret_cast<int*>(&(table->getCurrentToken())));
+	//向符号表插入内部符号 -- end
+
 	std::ifstream inFile(sourceFile);
 	inFile >> std::noskipws;    //不跳过空白
 
@@ -90,7 +117,10 @@ std::pair<int, int> kkli::Lexer::next() {
 					Debug::output("Lexer::next(): [id] " + name + " [add]");
 				}
 
-				table->addToken(ID, name, hash);
+				Token& tk = table->getCurrentToken();
+				tk.type = ID;
+				tk.name = name;
+				tk.hash = hash;
 				return { ID, 0 };
 			}
 		}

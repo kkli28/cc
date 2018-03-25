@@ -23,32 +23,6 @@ bool kkli::SymbolTable::has(int hash, std::string name) {
 	return false;
 }
 
-//添加符号信息
-void kkli::SymbolTable::addToken(int type, std::string name, int hash) {
-	if (OUTPUT_SYMBOL_ACTIONS) {
-		Debug::output("SymbolTable::addToken(" + Token::getTokenTypeName(type) + ", " + name + ", " + std::to_string(hash) + ")"
-			+ "    current: " + std::to_string(current));
-	}
-
-	table[current].type = type;
-	table[current].name = name;
-	table[current].hash = hash;
-}
-
-//完善符号信息
-void kkli::SymbolTable::finishToken(int klass, int dataType, int value) {
-	if (OUTPUT_SYMBOL_ACTIONS) {
-		Debug::output("SymbolTable::finishToken("
-			+ Token::getTokenKlassName(klass)
-			+ ", " + Token::getDataTypeName(dataType)
-			+ ", " + std::to_string(value) + ")" + "    current: " + std::to_string(current));
-	}
-
-	table[current].klass = klass;
-	table[current].dataType = dataType;
-	table[current].value = value;
-}
-
 //获取符号表的信息
 std::string kkli::SymbolTable::getSymbolTableInfo() const {
 	std::string result = "[SymbolTable info]:\n";

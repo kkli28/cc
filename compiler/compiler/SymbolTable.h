@@ -22,6 +22,7 @@ namespace kkli {
 	private:
 		std::vector<Token> table;
 		int current;
+		int* mainAddr;    //main函数的地址
 
 	public:
 
@@ -37,12 +38,6 @@ namespace kkli {
 		//判断是否存在符号
 		bool has(int hash, std::string name);
 
-		//添加符号信息（在词法分析中能够获取的信息）
-		void addToken(int type, std::string name, int hash);
-
-		//完善符号信息（在语法分析才能获取的信息）
-		void finishToken(int klass, int dataType, int value);
-
 		//获取当前符号
 		Token& getCurrentToken() { return table[current]; }
 
@@ -51,6 +46,10 @@ namespace kkli {
 
 		//获取内部结构table
 		std::vector<Token>& getTable() { return table; }
+
+		//设置main函数地址
+		void setMainAddr(int* addr) { mainAddr = addr; }
+		int* getMainAddr() { return mainAddr; }
 	};
 }
 
