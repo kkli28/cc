@@ -10,7 +10,7 @@
 namespace kkli {
 
 	//========================================
-	// Error: 错误类，程序中异常信息都用这个
+	// Error: 错误类，用于生成程序中异常信息
 	//========================================
 	class Error {
 	private:
@@ -21,6 +21,67 @@ namespace kkli {
 			info = "Line: " + std::to_string(line) + ". " + i;
 		}
 		std::string what()const { return "[Error] " + info; }
+	};
+
+	//========================================
+	// NewError: 新的错误类，支持延后报错，将取代旧的错误类。
+	//========================================
+	class NewError {
+	private:
+		std::vector<std::string> errors;
+		int errorCount;
+		int maxErrorCount;
+		NewError(int maxErr) : maxErrorCount(maxErr) {};
+	public:
+		static NewError* getInstance() {
+			static NewError* error = nullptr;
+			if (!error) {
+				error = new NewError();
+			}
+			return error;
+		}
+		void add(int line, std::string info) {
+			errors.push_back("[Error] Line " + std::to_string(line) + ": " + info);
+			++errorCount;
+			if (errorCount >= maxErrorCount) {
+				output();
+				clear();
+				throw 1;
+			}
+		}
+		void output() const {
+			for (auto err : errors) {
+				std::cout << err << std::endl;
+			}
+		}
+		void clear() { errors.clear();  }
+	};
+
+	//========================================
+	// Warning: 警告类，用于程序中的类型不匹配等问题
+	//========================================
+	class Warning {
+	private:
+		std::vector<std::string> warnings;
+		Warning() {}
+	public:
+		static Warning* getInstance() {
+			static Warning* warning = nullptr;
+			if (!warning) {
+				warning = new Warning();
+			}
+			return warning;
+		}
+		void clear() { warnings.clear(); }
+		void add(int line, std::string info) {
+			std::string str = "[Warning] Line " + std::to_string(line) + ": " + info;
+			warnings.push_back(std::move(str));
+		}
+		void output()const {
+			for (auto str : warnings) {
+				std::cout << str << std::endl;
+			}
+		}
 	};
 
 	//========================================
