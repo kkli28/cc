@@ -331,7 +331,7 @@ void kkli::Generator::func_body() {
 
 	//在栈上留下保存变量所需的空间，并进入函数
 	vm->addInst(I_ENT);
-	vm->addInstData(variableIndex - indexOfBP);
+	vm->addInstData(variableIndex - indexOfBP);  //Tips: 这里可以放入0，然后一直记录变量count，最后回填，实现变量在函数体中间定义。
 
 	if (OUTPUT_GENERATOR_ACTIONS) {
 		Debug::output("Generator::func_body(), start statement decl.");
