@@ -99,6 +99,8 @@ void kkli::Generator::global_decl() {
 		else if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON) {
 			throw Error(lexer.getLine(), "wrong variables declaration.");
 		}
+
+		//Tips: 处理后续符号为ASSIGN的情况，将初始值写入tk.value，以实现变量声明时初始化。
 		else {
 			Token& tk = table->getCurrentToken();
 			tk.klass = GLOBAL;
@@ -133,12 +135,13 @@ void kkli::Generator::enum_decl() {
 	while (tokenInfo.first != RBRACE) {
 		++varIndex;
 
+		//TODO: 可写为：match(ID); tokenInfo将自动获取下一个词法单元的值
 		if (tokenInfo.first != ID) {
 			throw Error(lexer.getLine(), "expected token [ID]");
 		}
 		tokenInfo = lexer.next();
 
-		//{ a = 0 } 中的等于
+		//enum { a = 0, ... } 中的等于
 		if (tokenInfo.first == ASSIGN) {
 			tokenInfo = lexer.next();
 			if (tokenInfo.first != NUM) {
