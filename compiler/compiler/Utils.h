@@ -9,52 +9,23 @@
 
 namespace kkli {
 
+#define FORMAT(f) (f+"    ")
+#define WARNNING Warnning::getInstance()
+#define DEBUG_TO_FILE false
+
 	//========================================
 	// Error: 错误类，用于生成程序中异常信息
 	//========================================
 	class Error {
 	private:
-		std::string info;
+		std::string info;  //错误信息
+
 	public:
-		Error(std::string i) : info(i) {}
+		Error(std::string i) :info(i) {}
 		Error(int line, std::string i) {
 			info = "Line: " + std::to_string(line) + ". " + i;
 		}
-		std::string what()const { return "[Error] " + info; }
-	};
-
-	//========================================
-	// NewError: 新的错误类，支持延后报错，将取代旧的错误类。
-	//========================================
-	class NewError {
-	private:
-		std::vector<std::string> errors;
-		int errorCount;
-		int maxErrorCount;
-		NewError(int maxErr) : maxErrorCount(maxErr) {};
-	public:
-		static NewError* getInstance() {
-			static NewError* error = nullptr;
-			if (!error) {
-				error = new NewError(3);
-			}
-			return error;
-		}
-		void add(int line, std::string info) {
-			errors.push_back("[Error] Line " + std::to_string(line) + ": " + info);
-			++errorCount;
-			if (errorCount >= maxErrorCount) {
-				output();
-				clear();
-				throw 1;
-			}
-		}
-		void output() const {
-			for (auto err : errors) {
-				std::cout << err << std::endl;
-			}
-		}
-		void clear() { errors.clear();  }
+		std::string what()const { return "\n[Error] " + info + "\n"; }
 	};
 
 	//========================================
@@ -64,6 +35,7 @@ namespace kkli {
 	private:
 		std::vector<std::string> warnings;
 		Warning() {}
+
 	public:
 		static Warning* getInstance() {
 			static Warning* warning = nullptr;
@@ -77,6 +49,7 @@ namespace kkli {
 			std::string str = "[Warning] Line " + std::to_string(line) + ": " + info;
 			warnings.push_back(std::move(str));
 		}
+
 		void output()const {
 			for (auto str : warnings) {
 				std::cout << str << std::endl;
@@ -88,15 +61,13 @@ namespace kkli {
 	// Debug: 调试类，主要用于输出调试信息
 	//========================================
 	class Debug {
-	private:
 	public:
-		static void output(const std::string& desc) {
-			static std::ofstream outFile("file/debug.txt", std::ios::app);
-			outFile << desc << std::endl;
-		}
-		static void output(const std::string& desc, int data) {
-			static std::ofstream outFile("file/debug.txt", std::ios::app);
-			outFile << desc << data << std::endl;
+		static void output(const std::string& desc, std::string format) {
+			if (DEBUG_TO_FILE) {
+				static std::ofstream outFile("file/debug.txt", std::ios::app);
+				outFile << format << desc << std::endl;
+			}
+			else std::cout << format << desc << std::endl;
 		}
 		static void clear() {
 			static std::ofstream outFile("file/debug.txt", std::ios::ate);

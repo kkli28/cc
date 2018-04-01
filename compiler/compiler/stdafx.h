@@ -7,11 +7,10 @@
 #include <tchar.h>
 
 //宏定义
-#define OUTPUT_VM_ACTIONS false
-#define OUTPUT_TOKEN_ACTIONS false
+#define OUTPUT_VM_ACTIONS true
+#define OUTPUT_TOKEN_ACTIONS true
 #define OUTPUT_SYMBOL_ACTIONS true
 #define OUTPUT_LEXER_ACTIONS true
-#define OUTPUT_LEXER_FUNC_NEXT_DETAIL true
 #define OUTPUT_GENERATOR_ACTIONS true
 
 //标准库头文件

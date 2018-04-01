@@ -58,15 +58,15 @@ namespace kkli {
 		}
 		
 		//添加数据、指令、指令的操作数
-		void addCharData(char elem);
-		void addIntData(int elem);
-		void addInst(int elem);
-		void addInstData(int elem);
+		void addDataChar(char elem, std::string format);
+		void addDataInt(int elem, std::string format);
+		void addInst(int elem, std::string format);
+		void addInstData(int elem, std::string format);
 		
 		//操作顶部的指令
-		int getTopInst();
-		void deleteTopInst();
-
+		int getTopInst(std::string format);
+		void deleteTopInst(std::string format);
+		
 		//getter
 		char* getDataSegment() { return data; }
 		int* getTextSegment() { return text; }
@@ -77,11 +77,11 @@ namespace kkli {
 		int* getNextTextPos() const { return nextText; }
 
 		//栈操作
-		int pop();
-		void push(int elem);
+		int pop(std::string format);
+		void push(int elem, std::string format);
 
 		//执行指令
-		int run();
+		int run(std::string format);
 
 		//获取虚拟机信息
 		std::string getInfo() const;

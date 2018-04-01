@@ -4,11 +4,6 @@
 //构造函数
 kkli::VirtualMachine::VirtualMachine() {
 
-	//调试
-	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::VirtualMachine()");
-	}
-
 	//初始化三个段
 	data = new char[SEGMENT_SIZE];
 	text = new int[SEGMENT_SIZE];
@@ -31,9 +26,9 @@ kkli::VirtualMachine::VirtualMachine() {
 }
 
 //添加char型数据
-void kkli::VirtualMachine::addCharData(char elem) {
+void kkli::VirtualMachine::addDataChar(char elem, std::string format) {
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::addCharData(" + std::to_string(elem) + ")");
+		Debug::output("VirtualMachine::addCharData(" + std::to_string(elem) + ")", format);
 	}
 
 	if (nextData == data + SEGMENT_SIZE) throw Error("VirtualMachine::addCharData(): data overflow");
@@ -43,22 +38,22 @@ void kkli::VirtualMachine::addCharData(char elem) {
 }
 
 //添加int型数据
-void kkli::VirtualMachine::addIntData(int elem) {
+void kkli::VirtualMachine::addDataInt(int elem, std::string format) {
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::addIntData(" + std::to_string(elem) + ")");
+		Debug::output("VirtualMachine::addIntData(" + std::to_string(elem) + ")", format);
 	}
 
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::addIntData(): before data_align, nextData = "
-			+ std::to_string(reinterpret_cast<int>(nextData)) + ".");
+		Debug::output("[before data_align] nextData = "
+			+ std::to_string(reinterpret_cast<int>(nextData)) + ".", FORMAT(format));
 	}
 
 	//数据对齐
 	nextData = reinterpret_cast<char*>((reinterpret_cast<int>(data) + 4) & (-4));
 	
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::addIntData(): after data_align, nextData = "
-			+ std::to_string(reinterpret_cast<int>(nextData)) + ".");
+		Debug::output("[after data_align] nextData = "
+			+ std::to_string(reinterpret_cast<int>(nextData)) + ".", FORMAT(format));
 	}
 
 	if (nextData == data + SEGMENT_SIZE) throw Error("VirtualMachine::addIntData(): data overflow");
@@ -68,11 +63,11 @@ void kkli::VirtualMachine::addIntData(int elem) {
 }
 
 //添加指令
-void kkli::VirtualMachine::addInst(int elem) {
+void kkli::VirtualMachine::addInst(int elem, std::string format) {
 
 	//调试
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::addInst(" + getInstructionName(elem) + ")");
+		Debug::output("VirtualMachine::addInst(" + getInstructionName(elem) + ")", format);
 	}
 
 	if (nextText == text + SEGMENT_SIZE) throw Error("VirtualMachine::addText(): text overflow");
@@ -81,9 +76,9 @@ void kkli::VirtualMachine::addInst(int elem) {
 }
 
 //添加指令的操作数
-void kkli::VirtualMachine::addInstData(int elem) {
+void kkli::VirtualMachine::addInstData(int elem, std::string format) {
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::addInstData(" + std::to_string(elem) + ")");
+		Debug::output("VirtualMachine::addInstData(" + std::to_string(elem) + ")", format);
 	}
 
 	if (nextText == text + SEGMENT_SIZE) throw Error("VirtualMachine::addText(): text overflow");
@@ -93,18 +88,18 @@ void kkli::VirtualMachine::addInstData(int elem) {
 }
 
 //获取顶部指令
-int kkli::VirtualMachine::getTopInst() {
+int kkli::VirtualMachine::getTopInst(std::string format) {
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::getTopInst(): " + getInstructionName(*(nextText - 1)));
+		Debug::output("VirtualMachine::getTopInst(): " + getInstructionName(*(nextText - 1)), format);
 	}
 	if (nextText - 1 < text) throw Error("VirtualMachine::getTopInst(): no instruction to get!");
 	return *(nextText - 1);
 }
 
 //删除顶部指令
-void kkli::VirtualMachine::deleteTopInst() {
+void kkli::VirtualMachine::deleteTopInst(std::string format) {
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::deleteTopInst(): " + getInstructionName(*(nextText - 1)));
+		Debug::output("VirtualMachine::deleteTopInst(): " + getInstructionName(*(nextText - 1)), format);
 	}
 
 	--nextText;
@@ -112,11 +107,11 @@ void kkli::VirtualMachine::deleteTopInst() {
 }
 
 //出栈
-int kkli::VirtualMachine::pop() {
+int kkli::VirtualMachine::pop(std::string format) {
 
 	//调试
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::pop(): ", *(sp));
+		Debug::output("VirtualMachine::pop(): " + std::to_string(*sp), format);
 	}
 
 	if (sp == stack) throw Error("empty stack!");
@@ -124,11 +119,11 @@ int kkli::VirtualMachine::pop() {
 }
 
 //入栈
-void kkli::VirtualMachine::push(int elem) {
+void kkli::VirtualMachine::push(int elem, std::string format) {
 
 	//调试
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::push(" + std::to_string(elem) + ")");
+		Debug::output("VirtualMachine::push(" + std::to_string(elem) + ")", format);
 	}
 
 	if (sp == stack + SEGMENT_SIZE) throw Error("stack overflow!");
@@ -139,32 +134,27 @@ void kkli::VirtualMachine::push(int elem) {
 //获取内存信息
 std::string kkli::VirtualMachine::getInfo() const {
 
-	//调试
-	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::getInfo()");
-	}
-
 	//拼装虚拟机信息
 	std::string str;
-	str += "SEGMENT_SIZE: " + std::to_string(SEGMENT_SIZE) + "\n";
-	str += "data: " + std::to_string(int(data)) + "\n";
-	str += "text: " + std::to_string(int(text)) + "\n";
-	str += "stack: " + std::to_string(int(stack)) + "\n";
-	str += "data count: " + std::to_string(nextData - data) + "\n";
-	str += "text count: " + std::to_string(nextText - text) + "\n";
-	str += "stack count: " + std::to_string(sp - stack) + "\n";
-	str += "sp: " + ((sp == stack) ? "emtpy stack" : std::to_string(*(sp - 1))) + "\n";
-	str += "bp: " + std::to_string(*bp) + "\n";
-	str += "pc: " + std::to_string(*pc) + "\n";
-	str += "ax: " + std::to_string(ax) + "\n";
+	str += "\n[VM info]:";
+	str += "[SEGMENT_SIZE]: " + std::to_string(SEGMENT_SIZE) + "\n";
+	str += "[data]: " + std::to_string(int(data)) + "\n";
+	str += "[text]: " + std::to_string(int(text)) + "\n";
+	str += "[stack]: " + std::to_string(int(stack)) + "\n";
+	str += "[data count]: " + std::to_string(nextData - data) + "\n";
+	str += "[text count]: " + std::to_string(nextText - text) + "\n";
+	str += "[stack count]: " + std::to_string(sp - stack) + "\n";
+	str += "[sp]: " + ((sp == stack) ? "emtpy stack" : std::to_string(*sp)) + "\n";
+	str += "[bp]: " + std::to_string(*bp) + "\n";
+	str += "[pc]: " + std::to_string(*pc) + "\n";
+	str += "[ax]: " + std::to_string(ax) + "\n";
 	return std::move(str);
 }
 
 //执行指令
-int kkli::VirtualMachine::run() {
-
+int kkli::VirtualMachine::run(std::string format) {
 	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::run()");
+		Debug::output("VirtualMachine::run()", format);
 	}
 	
 	int inst;        //指令
@@ -183,7 +173,7 @@ int kkli::VirtualMachine::run() {
 			std::string debugInfo = "execute: ";
 			debugInfo += getInstructionName(inst);
 			if (inst <= I_ADJ) debugInfo += "  " + std::to_string(*pc);
-			Debug::output(debugInfo);
+			Debug::output(debugInfo, FORMAT(format));
 		}
 
 		//取立即数

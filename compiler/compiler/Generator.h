@@ -31,32 +31,32 @@ namespace kkli {
 		int indexOfBP;
 
 	private:
-		void match(int type);
+		void match(int type, std::string format);
 
 		//全局定义
-		void global_decl();
+		void global_decl(std::string format);
 
 		//enum定义
-		void enum_decl();
+		void enum_decl(std::string format);
 
 		//函数定义
-		void func_decl();
+		void func_decl(std::string format);
 
 		//函数参数
-		void func_param();
+		void func_param(std::string format);
 
 		//函数体
-		void func_body();
+		void func_body(std::string format);
 
 		//语句
-		void statement();
+		void statement(std::string format);
 
 		//表达式
-		void expression(int priority);
+		void expression(int priority, std::string format);
 
 	public:
 		Generator(std::string sourceFile);
-		void gen();
+		void gen(std::string format);
 	};
 }
 

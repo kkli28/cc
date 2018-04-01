@@ -1,6 +1,7 @@
 
 #include "stdafx.h"
 #include "Generator.h"
+#include "SymbolTable.h"
 
 using namespace std;
 
@@ -23,21 +24,26 @@ int main()
 	try {
 		cout << "code generating..." << endl;
 		kkli::Generator gen(sourceFile);
-		gen.gen();
+		gen.gen("");
 
 		cout << "runing..." << endl;
 		kkli::VirtualMachine* vm = kkli::VirtualMachine::getInstance();
-		int mainAddr = kkli::SymbolTable::getInstance()->getMainToken()->value;
-		vm->pc = reinterpret_cast<int*>(mainAddr);
-		vm->addInst(I_EXIT);
+		kkli::Token& tk = kkli::SymbolTable::getInstance()->getMainToken("");
+		
+		vm->pc = reinterpret_cast<int*>(tk.value);
+		vm->addInst(I_EXIT, "");
 		//vm->addInst(I_PUSH);
 		//int* tempSP = vm->sp;
-		vm->run();
+		
+		vm->run("");
 	}
 	catch (const kkli::Error& err) {
 		cout << err.what() << endl;
 	}
 
 	system("pause");
+	char c;
+	getchar();
+	getchar();
     return 0;
 }

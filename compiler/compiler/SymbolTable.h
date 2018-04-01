@@ -22,7 +22,7 @@ namespace kkli {
 	private:
 		std::vector<Token> table;
 		int current;
-		Token* mainTk;    //Token为main的位置
+		int mainIndex;  //main函数Token的索引
 
 	public:
 
@@ -36,10 +36,12 @@ namespace kkli {
 		}
 
 		//判断是否存在符号
-		bool has(int hash, std::string name);
+		bool has(int hash, std::string name, std::string format);
 
 		//获取当前符号
-		Token& getCurrentToken() { return table[current]; }
+		Token& getCurrentToken(std::string format) { 
+			return table[current]; 
+		}
 
 		//获取符号表信息
 		std::string getSymbolTableInfo() const;
@@ -48,13 +50,18 @@ namespace kkli {
 		std::vector<Token>& getTable() { return table; }
 
 		//设置main函数位置
-		void setMainToken(Token* tk) {
+		void setMainToken(std::string format) {
 			if (OUTPUT_SYMBOL_ACTIONS) {
-				Debug::output("SymbolTable::setMainToken()");
+				Debug::output("SymbolTable::setMainToken(), current = " + std::to_string(int(current)), format);
 			}
-			mainTk = tk; 
+			mainIndex = current;
 		}
-		Token* getMainToken() { return mainTk; }
+		Token& getMainToken(std::string format) { 
+			if (OUTPUT_SYMBOL_ACTIONS) {
+				Debug::output("SymbolTable::getMainToken() " + std::to_string(int(mainIndex)), format);
+			}
+			return table[mainIndex];
+		}
 	};
 }
 

@@ -19,18 +19,15 @@ namespace kkli {
 		int index;           //当前扫描的位置
 		int line;            //行号
 
-		const char eof = -1;
-
 	private:
-
 		//获取下一个字符
 		inline char get() { return source[++index]; }
 
 	public:
-		Lexer(std::string sourceFile);
+		Lexer(std::string sourceFile, std::string format);
 
 		//获取下一个词法单元
-		std::pair<int, int> next();
+		std::pair<int, int> next(std::string format);
 
 		//获取源代码
 		std::string getSouce() const { return source; }

@@ -343,6 +343,9 @@ void expression(int level) {
 	int tmp;
 	int *addr;
 	{
+		//TEST
+		printf("unary()");
+
 		if (!token) {
 			printf("%d: unexpected token EOF of expression\n", line);
 			exit(-1);
@@ -614,6 +617,8 @@ void expression(int level) {
 
 	// binary operator and postfix operators.
 	{
+	//TEST
+	printf("binary()");
 		while (token >= level) {
 			// handle according to current operator's precedence
 			tmp = expr_type;

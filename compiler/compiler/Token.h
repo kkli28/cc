@@ -11,10 +11,16 @@ namespace kkli {
 
 	//标记类型
 	enum {
+		END = -1,
 		ERROR = 0,
 
+		LPAREN, RPAREN,  // ()
+		RBRACK,          // ]
+		LBRACE, RBRACE,  // {}
+		COMMA, COLON, SEMICON, TILDE,  // , : ; ~
+
 		//用户定义标识符
-		ID,
+		ID = 128,
 
 		//数字
 		NUM,
@@ -32,18 +38,10 @@ namespace kkli {
 		NOT, EQ, NE, LT, GT, LE, GE,
 		SHL, SHR, ADD, SUB, MUL, DIV, MOD,
 
-		//自增，自减
-		INC, DEC,
+		//自增，自减，[
+		INC, DEC, LBRACK,
 
-		//其他标记
-		LPAREN, RPAREN,  // ()
-		LBRACK, RBRACK,  // []
-		LBRACE, RBRACE,  // {}
-		COMMA, COLON, SEMICON, TILDE,  // , : ; ~
-		STRING,          //字符串
-		TOKEN_TYPE_SIZE, //仅计数用
-
-		END = -1    //结束Token
+		STRING    //字符串
 	};
 
 	//标记种类
@@ -52,8 +50,7 @@ namespace kkli {
 		FUNC,      //函数
 		SYS_FUNC,  //系统内部函数
 		GLOBAL,    //全局变量
-		LOCAL,     //局部变量
-		TOKEN_KLASS_SIZE    //仅计数用
+		LOCAL      //局部变量
 	};
 
 	//数据类型
@@ -90,9 +87,8 @@ namespace kkli {
 		Token();
 
 	public:
-		void saveInfo();      //保存信息
-		void restoreInfo();   //恢复信息
-		void clear();         //清空信息
+		void saveInfo(std::string format);      //保存信息
+		void restoreInfo(std::string format);   //恢复信息
 
 		//获取Token类型名称
 		static std::string getTokenTypeName(int type);
