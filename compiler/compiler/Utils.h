@@ -36,7 +36,7 @@ namespace kkli {
 		static NewError* getInstance() {
 			static NewError* error = nullptr;
 			if (!error) {
-				error = new NewError();
+				error = new NewError(3);
 			}
 			return error;
 		}
@@ -91,15 +91,15 @@ namespace kkli {
 	private:
 	public:
 		static void output(const std::string& desc) {
-			static std::ofstream outFile("output/debug.txt", std::ios::app);
+			static std::ofstream outFile("file/debug.txt", std::ios::app);
 			outFile << desc << std::endl;
 		}
 		static void output(const std::string& desc, int data) {
-			static std::ofstream outFile("output/debug.txt", std::ios::app);
+			static std::ofstream outFile("file/debug.txt", std::ios::app);
 			outFile << desc << data << std::endl;
 		}
 		static void clear() {
-			static std::ofstream outFile("output/debug.txt", std::ios::ate);
+			static std::ofstream outFile("file/debug.txt", std::ios::ate);
 			outFile << std::endl;
 		}
 	};

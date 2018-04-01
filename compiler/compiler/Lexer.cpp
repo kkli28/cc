@@ -31,7 +31,7 @@ kkli::Lexer::Lexer(std::string sourceFile) {
 	next();
 	table->getCurrentToken().type = CHAR;
 	next();
-	table->setMainAddr(reinterpret_cast<int*>(&(table->getCurrentToken())));
+	table->setMainToken(&(table->getCurrentToken()));
 	//向符号表插入内部符号 -- end
 
 	std::ifstream inFile(sourceFile);
@@ -282,6 +282,9 @@ std::pair<int, int> kkli::Lexer::next() {
 					curr = get();
 				}
 			}
+
+			//TODO: 末尾添加0？
+
 			if (curr == eof) {
 				throw Error("Line " +std::to_string(line)+". Invalid string type, need \" to finish string.");
 			}
@@ -670,5 +673,6 @@ std::pair<int, int> kkli::Lexer::next() {
 	}
 
 	//扫描结束
+	//TODO: 改成EOF?
 	return { END, 0 };
 }

@@ -122,8 +122,6 @@ LEV             ;sp=bp; bp=(int*)*sp++; pc=(int*)*sp++;
 
 ADJ  <num>      ;sp=sp+*pc++;
                 ;函数调用参数出栈
-
-
 ...
 ```
 

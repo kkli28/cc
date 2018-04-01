@@ -1,0 +1,54 @@
+
+Lexer::Lexer(hello.c)
+SymbolTable::has(char)
+SymbolTable::has(char)
+Lexer::next(): [id] char [add]
+Lexer::next(): [WS]
+SymbolTable::has(else)
+SymbolTable::has(else)
+Lexer::next(): [id] else [add]
+Lexer::next(): [WS]
+SymbolTable::has(enum)
+SymbolTable::has(enum)
+Lexer::next(): [id] enum [add]
+Lexer::next(): [WS]
+SymbolTable::has(if)
+SymbolTable::has(if)
+Lexer::next(): [id] if [add]
+Lexer::next(): [WS]
+SymbolTable::has(int)
+SymbolTable::has(int)
+Lexer::next(): [id] int [add]
+Lexer::next(): [WS]
+SymbolTable::has(return)
+SymbolTable::has(return)
+Lexer::next(): [id] return [add]
+Lexer::next(): [WS]
+SymbolTable::has(sizeof)
+SymbolTable::has(sizeof)
+Lexer::next(): [id] sizeof [add]
+Lexer::next(): [WS]
+SymbolTable::has(while)
+SymbolTable::has(while)
+Lexer::next(): [id] while [add]
+Lexer::next(): [WS]
+SymbolTable::has(printf)
+SymbolTable::has(printf)
+Lexer::next(): [id] printf [add]
+Lexer::next(): [WS]
+SymbolTable::has(malloc)
+SymbolTable::has(malloc)
+Lexer::next(): [id] malloc [add]
+Lexer::next(): [WS]
+SymbolTable::has(exit)
+SymbolTable::has(exit)
+Lexer::next(): [id] exit [add]
+Lexer::next(): [WS]
+SymbolTable::has(void)
+SymbolTable::has(void)
+Lexer::next(): [id] void [add]
+Lexer::next(): [WS]
+SymbolTable::has(main)
+SymbolTable::has(main)
+Lexer::next(): [id] main [add]
+SymbolTable::setMainToken(9197772)

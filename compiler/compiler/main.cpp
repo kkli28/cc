@@ -20,14 +20,15 @@ int main()
 		else break;
 	}
 
-	//向符号表中插入预定内容
-	
 	try {
+		cout << "code generating..." << endl;
 		kkli::Generator gen(sourceFile);
 		gen.gen();
 
+		cout << "runing..." << endl;
 		kkli::VirtualMachine* vm = kkli::VirtualMachine::getInstance();
-		vm->pc = kkli::SymbolTable::getInstance()->getMainAddr();
+		int mainAddr = kkli::SymbolTable::getInstance()->getMainToken()->value;
+		vm->pc = reinterpret_cast<int*>(mainAddr);
 		vm->addInst(I_EXIT);
 		//vm->addInst(I_PUSH);
 		//int* tempSP = vm->sp;

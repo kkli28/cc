@@ -22,7 +22,7 @@ namespace kkli {
 	private:
 		std::vector<Token> table;
 		int current;
-		int* mainAddr;    //main函数的地址
+		Token* mainTk;    //Token为main的位置
 
 	public:
 
@@ -47,9 +47,14 @@ namespace kkli {
 		//获取内部结构table
 		std::vector<Token>& getTable() { return table; }
 
-		//设置main函数地址
-		void setMainAddr(int* addr) { mainAddr = addr; }
-		int* getMainAddr() { return mainAddr; }
+		//设置main函数位置
+		void setMainToken(Token* tk) {
+			if (OUTPUT_SYMBOL_ACTIONS) {
+				Debug::output("SymbolTable::setMainToken()");
+			}
+			mainTk = tk; 
+		}
+		Token* getMainToken() { return mainTk; }
 	};
 }
 
