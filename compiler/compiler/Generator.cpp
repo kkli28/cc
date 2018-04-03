@@ -493,13 +493,13 @@ void kkli::Generator::expression(int priority, std::string format) {
 	}
 
 	else if (tokenInfo.first == NUM) {
-		match(NUM, FORMAT(format));
 		vm->addInst(I_IMM, FORMAT(format));
 		vm->addInstData(tokenInfo.second, FORMAT(format));
 		if (OUTPUT_GENERATOR_ACTIONS) {
 			Debug::output("[NUM] " + std::to_string(tokenInfo.second), FORMAT(format));
 		}
 		exprType = INT_TYPE;
+		match(NUM, FORMAT(format));
 	}
 
 	else if (tokenInfo.first == STRING) {
@@ -557,9 +557,6 @@ void kkli::Generator::expression(int priority, std::string format) {
 				++args;
 				if (tokenInfo.first == COMMA) {
 					match(COMMA, FORMAT(format));
-				}
-				if (tokenInfo.first == RPAREN) {
-					throw Error(lexer.getLine(), "bad function call.");
 				}
 			}
 			match(RPAREN, FORMAT(format));

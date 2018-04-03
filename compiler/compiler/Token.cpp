@@ -10,7 +10,8 @@ void kkli::Token::saveInfo(std::string format) {
 	if (OUTPUT_TOKEN_ACTIONS) {
 		Debug::output(std::string("Token::saveInfo: ")
 			+ "type = " + getTokenTypeName(type)
-			+ "  klass = " + getTokenKlassName(klass), format);
+			+ "  klass = " + getTokenKlassName(klass)
+			+ "  value = " + std::to_string(value), format);
 	}
 
 	Bklass = klass;
@@ -23,7 +24,8 @@ void kkli::Token::restoreInfo(std::string format) {
 	if (OUTPUT_TOKEN_ACTIONS) {
 		Debug::output(std::string("Token::restoreInfo(): ")
 			+ "type = " + getTokenTypeName(type)
-			+ "  klass = " + getTokenKlassName(Bklass), format);
+			+ "  klass = " + getTokenKlassName(Bklass)
+			+ "  value = " + std::to_string(value), format);
 	}
 
 	klass = Bklass;
