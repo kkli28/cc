@@ -42,7 +42,6 @@ int main()
 	}
 
 	system("pause");
-	char c;
 	getchar();
 	getchar();
 	getchar();

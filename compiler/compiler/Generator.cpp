@@ -41,12 +41,12 @@ void kkli::Generator::global_decl(std::string format) {
 	baseType = INT_TYPE;  //基本类型默认为INT_TYPE
 
 	//enum常量定义
-	if (tokenInfo.first == ENUM) {
+	while (tokenInfo.first == ENUM) {
 		enum_decl(FORMAT(format));
 	}
 
 	//全局变量或函数定义的类型
-	else if (tokenInfo.first == INT) {
+	if (tokenInfo.first == INT) {
 		match(INT, FORMAT(format));
 	}
 	else if (tokenInfo.first == CHAR) {
@@ -122,20 +122,26 @@ void kkli::Generator::enum_decl(std::string format) {
 	while (tokenInfo.first != RBRACE) {
 		++varIndex;
 
-		//TODO: 可写为：match(ID); tokenInfo将自动获取下一个词法单元的值
-		if (tokenInfo.first != ID) {
-			throw Error(lexer.getLine(), "expected token [ID]");
-		}
-		tokenInfo = lexer.next(FORMAT(format));
+		match(ID, FORMAT(format));
 
 		//enum { a = 0, ... } 中的等于
 		if (tokenInfo.first == ASSIGN) {
-			tokenInfo = lexer.next(FORMAT(format));
+			match(ASSIGN, FORMAT(format));
+
+			//允许正负数 +1, -1 等
+			bool negtive = false;
+			if (tokenInfo.first == SUB) {
+				match(SUB, FORMAT(format));
+				negtive = true;
+			}
+			else if (tokenInfo.first == ADD) {
+				match(ADD, FORMAT(format));
+			}
 			if (tokenInfo.first != NUM) {
 				throw Error(lexer.getLine(), "expected token [NUM]");
 			}
-			varValue = tokenInfo.second;
-			tokenInfo = lexer.next(FORMAT(format));
+			varValue = negtive ? -tokenInfo.second : tokenInfo.second;
+			match(NUM, FORMAT(format));
 		}
 		DEBUG_GENERATOR("[index] = " + std::to_string(varIndex)
 			+ "  value = " + std::to_string(varValue), FORMAT(format));
@@ -147,7 +153,7 @@ void kkli::Generator::enum_decl(std::string format) {
 		
 		//{ a = 0, b = 1 } 中的逗号
 		if (tokenInfo.first == COMMA) {
-			tokenInfo = lexer.next(FORMAT(format));
+			match(COMMA, FORMAT(format));
 
 			//逗号后必须跟enum常量
 			if (tokenInfo.first != ID) {

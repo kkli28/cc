@@ -122,9 +122,9 @@ std::string kkli::VirtualMachine::getInfo() const {
 	std::string str;
 	str += "\n[VM info]:";
 	str += "[SEGMENT_SIZE]: " + std::to_string(SEGMENT_SIZE) + "\n";
-	str += "[data]: " + std::to_string(int(data)) + "\n";
-	str += "[text]: " + std::to_string(int(text)) + "\n";
-	str += "[stack]: " + std::to_string(int(stack)) + "\n";
+	str += "[data]: " + std::to_string(reinterpret_cast<int>(data)) + "\n";
+	str += "[text]: " + std::to_string(reinterpret_cast<int>(text)) + "\n";
+	str += "[stack]: " + std::to_string(reinterpret_cast<int>(stack)) + "\n";
 	str += "[data count]: " + std::to_string(nextData - data) + "\n";
 	str += "[text count]: " + std::to_string(nextText - text) + "\n";
 	str += "[stack count]: " + std::to_string(sp - stack) + "\n";
@@ -390,7 +390,7 @@ int kkli::VirtualMachine::run(std::string format) {
 		*/
 		//�ҵİ汾
 		else if (inst == I_EXIT) {
-			printf("exit(%d)", ax);
+			printf("exit(%d)\n", ax);
 			return ax;
 		}
 

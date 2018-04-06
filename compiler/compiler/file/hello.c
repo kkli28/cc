@@ -4,12 +4,7 @@ int feb(int n){
     else return n;
 }
 
-int func(){
-    return 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 - 1 -2 -3-4-5-6-7-8;
-}
-
 int main(){
     printf("the result of feb(10) is: %d", feb(10));
-    printf("the result of func() is: %d", func());
     return 1;
 }

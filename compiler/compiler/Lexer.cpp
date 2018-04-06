@@ -150,9 +150,6 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 						curr = get();
 					}
 
-					if (!hasNum) {
-						throw Error("Line " + std::to_string(line) + ". Invalid oct type, need 0~7 after 0.");
-					}
 					DEBUG_LEXER_NEXT("[oct] " + std::to_string(value), FORMAT(format));
 				}
 			}
