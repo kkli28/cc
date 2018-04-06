@@ -31,9 +31,9 @@ int main()
 		kkli::Token& tk = kkli::SymbolTable::getInstance()->getMainToken("");
 		
 		vm->pc = reinterpret_cast<int*>(tk.value);
+		vm->deleteTopInst("");
+		vm->deleteTopInst("");
 		vm->addInst(I_EXIT, "");
-		//vm->addInst(I_PUSH);
-		//int* tempSP = vm->sp;
 		
 		vm->run("");
 	}
@@ -43,6 +43,8 @@ int main()
 
 	system("pause");
 	char c;
+	getchar();
+	getchar();
 	getchar();
 	getchar();
     return 0;

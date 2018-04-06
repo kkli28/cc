@@ -3,10 +3,9 @@
 
 //构造函数
 kkli::Lexer::Lexer(std::string sourceFile, std::string format) {
-	if (OUTPUT_LEXER_ACTIONS) {
-		Debug::output("Lexer::lexer(" + sourceFile + ")", format);
-		Debug::output("[add builtin] begin", FORMAT(format));
-	}
+	DEBUG_LEXER("Lexer::lexer(" + sourceFile + ")", format);
+	DEBUG_LEXER("[add builtin] begin", FORMAT(format));
+
 	source = "char else enum if int return sizeof while printf malloc exit void main";
 	source.push_back(END);
 	
@@ -32,13 +31,8 @@ kkli::Lexer::Lexer(std::string sourceFile, std::string format) {
 	next(FORMAT(format));
 	table->setMainToken(FORMAT(format));
 
-	if (OUTPUT_LEXER_ACTIONS) {
-		Debug::output("[add builtin] end", FORMAT(format));
-	}
-
-	if (OUTPUT_LEXER_ACTIONS) {
-		Debug::output(table->getSymbolTableInfo(), FORMAT(format));
-	}
+	DEBUG_LEXER("[add builtin] end", FORMAT(format));
+	DEBUG_LEXER_SYMBOL_TABLE(table->getSymbolTableInfo(), FORMAT(format));
 
 	std::ifstream inFile(sourceFile);
 	inFile >> std::noskipws;    //不跳过空白
@@ -53,16 +47,16 @@ kkli::Lexer::Lexer(std::string sourceFile, std::string format) {
 	source.push_back('\0');
 	source.push_back(END);
 
+	DEBUG_LEXER_SOURCE("\n[source--begin]:\n" + source + "\n[source--end]\n", FORMAT(format));
+
 	index = 0;
 	line = 1;
 }
 
 //next
 std::pair<int, int> kkli::Lexer::next(std::string format) {
-	if (OUTPUT_LEXER_ACTIONS) {
-		Debug::output("Lexer::next()", format);
-	}
-
+	DEBUG_LEXER("Lexer::next()", format);
+	
 	int value = 0;
 	SymbolTable* table = SymbolTable::getInstance();
 	VirtualMachine* vm = VirtualMachine::getInstance();
@@ -73,29 +67,20 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 		//换行符
 		if (curr == '\n') {
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[\\n]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[\\n]", FORMAT(format));
 			++line;
 		}
 
 		//宏 或 文件引用（直接跳过，不支持）
 		else if (curr == '#') {
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[#...]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[#...]", FORMAT(format));
 			curr = get();
 			while (curr != END && curr != '\n')  curr = get();
 		}
 
 		//标识符
 		else if (isAlpha(curr) || curr == '_') {
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[ID]", FORMAT(format));
-			}
+			DEBUG_LEXER_NEXT("[ID]", FORMAT(format));
 			int begIndex = index;      //该标识符名称的起始索引
 			int hash = curr;           //该标识符的hash值
 			curr = get();
@@ -118,9 +103,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 				tk.name = name;
 				tk.hash = hash;
 
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("add [type] ID, [name] " + name + ", [hash] " + std::to_string(hash), FORMAT(format));
-				}
+				DEBUG_LEXER_NEXT("add [type] ID, [name] " + name + ", [hash] " + std::to_string(hash), FORMAT(format));
 				return { ID, 0 };
 			}
 		}
@@ -136,10 +119,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 					value = value * 10 + curr - '0';
 					curr = get();
 				}
-
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[dec] " + std::to_string(value), FORMAT(format));
-				}
+				DEBUG_LEXER_NEXT("[dec] " + std::to_string(value), FORMAT(format));
 			}
 
 			else {
@@ -158,9 +138,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 					if (!hasNum) {
 						throw Error("Line "+std::to_string(line)+". Invalid hex type, need 0~9 or a~z/A~Z after 0x.");
 					}
-					if (OUTPUT_LEXER_ACTIONS) {
-						Debug::output("[hex] " + std::to_string(value), FORMAT(format));
-					}
+					DEBUG_LEXER_NEXT("[hex] " + std::to_string(value), FORMAT(format));
 				}
 
 				//八进制数
@@ -175,9 +153,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 					if (!hasNum) {
 						throw Error("Line " + std::to_string(line) + ". Invalid oct type, need 0~7 after 0.");
 					}
-					if (OUTPUT_LEXER_ACTIONS) {
-						Debug::output("[oct] " + std::to_string(value), FORMAT(format));
-					}
+					DEBUG_LEXER_NEXT("[oct] " + std::to_string(value), FORMAT(format));
 				}
 			}
 
@@ -191,10 +167,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			//单行注释
 			if (curr == '/') {
 				while (curr != '\n' && curr != END) curr = get();
-
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[//]", FORMAT(format));
-				}
+				DEBUG_LEXER_NEXT("[//]", FORMAT(format));
 			}
 
 			//多行注释
@@ -211,18 +184,12 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 					else if (curr == END) break;
 					else curr = get();
 				}
-
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[/**/]", FORMAT(format));
-				}
+				DEBUG_LEXER_NEXT("[/**/]", FORMAT(format));
 			}
 
 			//除号
 			else {
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[/]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[/]", FORMAT(format));
 				return { DIV, 0 };
 			}
 		}
@@ -251,10 +218,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			}
 			curr = get();
 
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[char]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[char]", FORMAT(format));
 			return { NUM, value };
 		}
 
@@ -290,10 +254,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			}
 			curr = get();
 
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[string]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[string]", FORMAT(format));
 			return { STRING, value };
 		}
 
@@ -304,20 +265,14 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			// ==
 			if (curr == '=') {
 				curr = get();
-				
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[EQ]", FORMAT(format));
-				}
-				
+
+				DEBUG_LEXER_NEXT("[EQ]", FORMAT(format));
 				return { EQ, 0 };
 			}
 
 			// =
 			else {
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[ASSIGN]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[ASSIGN]", FORMAT(format));
 				return { ASSIGN, 0 };
 			}
 		}
@@ -329,20 +284,14 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			// ++
 			if (curr == '+') {
 				curr = get();
-
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[INC]", FORMAT(format));
-				}
-
+				
+				DEBUG_LEXER_NEXT("[INC]", FORMAT(format));
 				return { INC, 0 };
 			}
 
 			// +
 			else {
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[ADD]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[ADD]", FORMAT(format));
 				return { ADD, 0 };
 			}
 		}
@@ -354,20 +303,13 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			// --
 			if (curr == '-') {
 				curr = get();
-
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[DEC]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[DEC]", FORMAT(format));
 				return { DEC, 0 };
 			}
 
 			// -
 			else {
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[SUB]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[SUB]", FORMAT(format));
 				return { SUB, 0 };
 			}
 		}
@@ -379,20 +321,13 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			// !=
 			if (curr == '=') {
 				curr = get();
-
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[NE]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[NE]", FORMAT(format));
 				return { NE, 0 };
 			}
 
 			// !
 			else {
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[NOT]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[NOT]", FORMAT(format));
 				return { NOT, 0 };
 			}
 		}
@@ -404,31 +339,20 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			// <=
 			if (curr == '=') {
 				curr = get();
-
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[LE]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[LE]", FORMAT(format));
 				return { LE, 0 };
 			}
 
 			// <<
 			else if (curr == '<') {
 				curr = get();
-
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[SHL]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[SHL]", FORMAT(format));
 				return { SHL, 0 };
 			}
 
 			// <
 			else {
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[LT]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[LT]", FORMAT(format));
 				return { LT, 0 };
 			}
 		}
@@ -440,31 +364,20 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			// >=
 			if (curr == '=') {
 				curr = get();
-
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[GE]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[GE]", FORMAT(format));
 				return { GE, 0 };
 			}
 
 			// >>
 			else if (curr == '>') {
 				curr = get();
-
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[SHR]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[SHR]", FORMAT(format));
 				return { SHR, 0 };
 			}
 
 			// >
 			else {
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[GT]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[GT]", FORMAT(format));
 				return { GT, 0 };
 			}
 		}
@@ -476,20 +389,13 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			// ||
 			if (curr == '|') {
 				curr = get();
-
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[LOR]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[LOR]", FORMAT(format));
 				return { LOR, 0 };
 			}
 
 			// |
 			else {
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[OR]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[OR]", FORMAT(format));
 				return { OR, 0 };
 			}
 		}
@@ -501,20 +407,13 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			// &&
 			if (curr == '&') {
 				curr = get();
-
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[LAN]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[LAN]", FORMAT(format));
 				return { LAN, 0 };
 			}
 
 			// &
 			else {
-				if (OUTPUT_LEXER_ACTIONS) {
-					Debug::output("[AND]", FORMAT(format));
-				}
-
+				DEBUG_LEXER_NEXT("[AND]", FORMAT(format));
 				return { AND, 0 };
 			}
 		}
@@ -522,152 +421,98 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 		// ^
 		else if (curr == '^') {
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[XOR]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[XOR]", FORMAT(format));
 			return { XOR, 0 };
 		}
 
 		// %
 		else if (curr == '%') {
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[MOD]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[MOD]", FORMAT(format));
 			return { MOD, 0 };
 		}
 
 		// *
 		else if (curr == '*') {
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[MUL]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[MUL]", FORMAT(format));
 			return { MUL, 0 };
 		}
 
 		// ?
 		else if (curr == '?') {
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[COND]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[COND]", FORMAT(format));
 			return { COND, 0 };
 		}
 
 		// ,
 		else if (curr == ',') {
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[COMMA]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[COMMA]", FORMAT(format));
 			return { COMMA, 0 };
 		}
 
 		// :
 		else if (curr == ':') {
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[COLON]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[COLON]", FORMAT(format));
 			return { COLON, 0 };
 		}
 
 		// ;
 		else if (curr == ';') {
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[SEMICON]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[SEMICON]", FORMAT(format));
 			return { SEMICON, 0 };
 		}
 
 		// (
 		else if (curr == '(') {
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[LPAREN]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[LPAREN]", FORMAT(format));
 			return { LPAREN, 0 };
 		}
 
 		// )
 		else if (curr == ')') {
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[RPAREN]", FORMAT(format));
-			}
+			DEBUG_LEXER_NEXT("[RPAREN]", FORMAT(format));
 			return { RPAREN, 0 };
 		}
 
 		// [
 		else if (curr == '[') {
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[LBRACK]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[LBRACK]", FORMAT(format));
 			return { LBRACK, 0 };
 		}
 
 		// ]
 		else if (curr == ']') {
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[RBRACK]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[RBRACK]", FORMAT(format));
 			return { RBRACK, 0 };
 		}
 
 		// {
 		else if (curr == '{'){
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[LBRACE]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[LBRACE]", FORMAT(format));
 			return { LBRACE, 0 };
 		}
 
 		// }
 		else if (curr == '}'){
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[RBRACE]", FORMAT(format));
-			}
-
+			DEBUG_LEXER_NEXT("[RBRACE]", FORMAT(format));
 			return { RBRACE, 0 };
 		}
 
 		// 空白符
 		else {
 			curr = get();
-
-			if (OUTPUT_LEXER_ACTIONS) {
-				Debug::output("[WS]", FORMAT(format));
-			}
+			DEBUG_LEXER_NEXT("[WS]", FORMAT(format));
 		}
 	}
 

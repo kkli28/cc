@@ -35,6 +35,9 @@ namespace kkli {
 			return table;
 		}
 
+		//重置所有信息
+		void reset(std::string format);
+
 		//判断是否存在符号
 		bool has(int hash, std::string name, std::string format);
 
@@ -51,15 +54,11 @@ namespace kkli {
 
 		//设置main函数位置
 		void setMainToken(std::string format) {
-			if (OUTPUT_SYMBOL_ACTIONS) {
-				Debug::output("SymbolTable::setMainToken(), current = " + std::to_string(int(current)), format);
-			}
+			DEBUG_SYMBOL_TABLE("SymbolTable::setMainToken(), mainIndex = " + std::to_string(int(current)), format);
 			mainIndex = current;
 		}
 		Token& getMainToken(std::string format) { 
-			if (OUTPUT_SYMBOL_ACTIONS) {
-				Debug::output("SymbolTable::getMainToken() " + std::to_string(int(mainIndex)), format);
-			}
+			DEBUG_SYMBOL_TABLE("SymbolTable::getMainToken() " + std::to_string(int(mainIndex)), format);
 			return table[mainIndex];
 		}
 	};

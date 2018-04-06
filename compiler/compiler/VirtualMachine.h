@@ -56,6 +56,9 @@ namespace kkli {
 			}
 			return vm;
 		}
+
+		//重置所有信息
+		void reset(std::string format);
 		
 		//添加数据、指令、指令的操作数
 		void addDataChar(char elem, std::string format);

@@ -7,12 +7,10 @@ Bklass(0), BdataType(0), Bvalue(0) {}
 
 //保存信息
 void kkli::Token::saveInfo(std::string format) {
-	if (OUTPUT_TOKEN_ACTIONS) {
-		Debug::output(std::string("Token::saveInfo: ")
+	DEBUG_TOKEN(std::string("Token::saveInfo: ")
 			+ "type = " + getTokenTypeName(type)
 			+ "  klass = " + getTokenKlassName(klass)
 			+ "  value = " + std::to_string(value), format);
-	}
 
 	Bklass = klass;
 	BdataType = dataType;
@@ -21,12 +19,10 @@ void kkli::Token::saveInfo(std::string format) {
 
 //恢复信息
 void kkli::Token::restoreInfo(std::string format) {
-	if (OUTPUT_TOKEN_ACTIONS) {
-		Debug::output(std::string("Token::restoreInfo(): ")
+	DEBUG_TOKEN(std::string("Token::restoreInfo(): ")
 			+ "type = " + getTokenTypeName(type)
 			+ "  klass = " + getTokenKlassName(Bklass)
 			+ "  value = " + std::to_string(value), format);
-	}
 
 	klass = Bklass;
 	dataType = BdataType;

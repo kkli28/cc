@@ -10,9 +10,7 @@ kkli::Generator::Generator(std::string sourceFile)
 
 //匹配Token
 void kkli::Generator::match(int type, std::string format) {
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("Generator::match(" + Token::getTokenTypeName(type) + ")", format);
-	}
+	DEBUG_GENERATOR("Generator::match(" + Token::getTokenTypeName(type) + ")", format);
 
 	if (tokenInfo.first == type) {
 		tokenInfo = lexer.next(FORMAT(format));
@@ -23,9 +21,7 @@ void kkli::Generator::match(int type, std::string format) {
 }
 
 void kkli::Generator::gen(std::string format) {
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("Generator::run()", format);
-	}
+	DEBUG_GENERATOR("Generator::run()", format);
 
 	tokenInfo = lexer.next(FORMAT(format));
 	while (tokenInfo.first != END) {
@@ -39,13 +35,9 @@ void kkli::Generator::global_decl(std::string format) {
 	文法：
 	<global_decl> = <enum_decl> | <var_decl> | <func_decl>
 	*/
-
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("Generator::global_decl()", format);
-	}
+	DEBUG_GENERATOR("Generator::global_decl()", format);
 
 	int type;  //全局定义的类型
-	int i;
 	baseType = INT_TYPE;  //基本类型默认为INT_TYPE
 
 	//enum常量定义
@@ -59,7 +51,7 @@ void kkli::Generator::global_decl(std::string format) {
 	}
 	else if (tokenInfo.first == CHAR) {
 		match(CHAR, FORMAT(format));
-		baseType == CHAR_TYPE;
+		baseType = CHAR_TYPE;
 	}
 
 	while (tokenInfo.first != SEMICON && tokenInfo.first != RBRACE) {
@@ -71,10 +63,7 @@ void kkli::Generator::global_decl(std::string format) {
 			type = type + PTR_TYPE;
 		}
 
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("type = " + Token::getDataTypeName(type), FORMAT(format));
-		}
-
+		DEBUG_GENERATOR("type = " + Token::getDataTypeName(type), FORMAT(format));
 		if (tokenInfo.first != ID) {
 			throw Error(lexer.getLine(), "expected token [ID]");
 		}
@@ -114,10 +103,7 @@ void kkli::Generator::global_decl(std::string format) {
 		}
 	}
 
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output(std::string("now tokenInfo.first = ") + (tokenInfo.first == SEMICON ? "SEMICON" : "RBRACE"), FORMAT(format));
-	}
-
+	DEBUG_GENERATOR(std::string("now tokenInfo.first = ") + (tokenInfo.first == SEMICON ? "SEMICON" : "RBRACE"), FORMAT(format));
 	tokenInfo = lexer.next(FORMAT(format));
 }
 
@@ -127,10 +113,7 @@ void kkli::Generator::enum_decl(std::string format) {
     <enum_decl> = 'enum' '{' <id> [ '=' <num> ] 
 	              {',' <id> [ '=' <num> ]}+ '}' ';'
 	*/
-
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("Generator::enum_decl()", format);
-	}
+	DEBUG_GENERATOR("Generator::enum_decl()", format);
 
 	int varIndex = 0;  //enum常量的位置
 	int varValue = 0;  //enum常量的值
@@ -154,12 +137,8 @@ void kkli::Generator::enum_decl(std::string format) {
 			varValue = tokenInfo.second;
 			tokenInfo = lexer.next(FORMAT(format));
 		}
-
-		//Debug：输出当前处理的enum常量的索引及值
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[index] = " + std::to_string(varIndex)
-				+ "  value = " + std::to_string(varValue), FORMAT(format));
-		}
+		DEBUG_GENERATOR("[index] = " + std::to_string(varIndex)
+			+ "  value = " + std::to_string(varValue), FORMAT(format));
 
 		Token& tk = table->getCurrentToken(FORMAT(format));
 		tk.klass = NUMBER;
@@ -182,9 +161,7 @@ void kkli::Generator::enum_decl(std::string format) {
 
 //函数定义
 void kkli::Generator::func_decl(std::string format) {
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("Generator::func_del()", format);
-	}
+	DEBUG_GENERATOR("Generator::func_del()", format);
 
 	match(LPAREN, FORMAT(format));
 	func_param(FORMAT(format));
@@ -193,8 +170,8 @@ void kkli::Generator::func_decl(std::string format) {
 	func_body(FORMAT(format));
 	
 	/*
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("before recover: \n" + table->getSymbolTableInfo());
+	
+		DEBUG_GENERATOR("before recover: \n" + table->getSymbolTableInfo());
 	}
 	*/
 
@@ -207,17 +184,15 @@ void kkli::Generator::func_decl(std::string format) {
 	}
 
 	/*
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("After restore: \n" + table->getSymbolTableInfo());
+	
+		DEBUG_GENERATOR("After restore: \n" + table->getSymbolTableInfo());
 	}
 	*/
 }
 
 //函数参数定义
 void kkli::Generator::func_param(std::string format) {
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("Generator::func_param()", format);
-	}
+	DEBUG_GENERATOR("Generator::func_param()", format);
 
 	int dataType;
 	int params = 0;
@@ -236,10 +211,7 @@ void kkli::Generator::func_param(std::string format) {
 			match(MUL, FORMAT(format));
 			dataType = dataType + PTR_TYPE;
 		}
-
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[param type] = " + Token::getDataTypeName(dataType), FORMAT(format));
-		}
+		DEBUG_GENERATOR("[param type] = " + Token::getDataTypeName(dataType), FORMAT(format));
 
 		if (tokenInfo.first != ID) {
 			throw Error(lexer.getLine(), "bad parameter declaration.");
@@ -255,8 +227,8 @@ void kkli::Generator::func_param(std::string format) {
 		}
 
 		/*
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("before backup: " + table->getSymbolTableInfo());
+		
+			DEBUG_GENERATOR("before backup: " + table->getSymbolTableInfo());
 		}
 		*/
 
@@ -268,8 +240,8 @@ void kkli::Generator::func_param(std::string format) {
 		tk.value = params++;
 		
 		/*
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("after backup: " + table->getSymbolTableInfo());
+		
+			DEBUG_GENERATOR("after backup: " + table->getSymbolTableInfo());
 		}
 		*/
 
@@ -280,22 +252,16 @@ void kkli::Generator::func_param(std::string format) {
 
 	indexOfBP = params + 1;
 
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("[index of bp]: " + std::to_string(indexOfBP), FORMAT(format));
-	}
+	DEBUG_GENERATOR("[index of bp]: " + std::to_string(indexOfBP), FORMAT(format));
 }
 
 //函数体
 void kkli::Generator::func_body(std::string format) {
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("Generator::func_body()", format);
-	}
+	DEBUG_GENERATOR("Generator::func_body()", format);
 
 	int variableIndex = indexOfBP;  //局部变量在栈上相对于bp的位置
 
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("[start variable decl]", FORMAT(format));
-	}
+	DEBUG_GENERATOR("[start variable decl]", FORMAT(format));
 
 	//局部变量定义
 	while (tokenInfo.first == INT || tokenInfo.first == CHAR) {
@@ -321,7 +287,7 @@ void kkli::Generator::func_body(std::string format) {
 
 			match(ID, FORMAT(format));
 
-			if (tokenInfo.first != COMMA || tokenInfo.first != SEMICON) {
+			if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON) {
 				throw Error(lexer.getLine(), "bad local declaration.");
 			}
 
@@ -339,27 +305,20 @@ void kkli::Generator::func_body(std::string format) {
 
 		match(SEMICON, FORMAT(format));
 	}
-
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("[end variable decl]", format);
-	}
+	DEBUG_GENERATOR("[end variable decl]", format);
 
 	//在栈上留下保存变量所需的空间，并进入函数
 	vm->addInst(I_ENT, FORMAT(format));
 	vm->addInstData(variableIndex - indexOfBP, FORMAT(format));  //Tips: 这里可以放入0，然后一直记录变量count，最后回填，实现变量在函数体中间定义。
 
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("[start statement decl]", FORMAT(format));
-	}
+	DEBUG_GENERATOR("[start statement decl]", FORMAT(format));
 
 	//语句定义
 	while (tokenInfo.first != RBRACE) {
 		statement(FORMAT(format));
 	}
 
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("[end statement decl]", FORMAT(format));
-	}
+	DEBUG_GENERATOR("[end statement decl]", FORMAT(format));
 
 	vm->addInst(I_LEV, FORMAT(format));
 }
@@ -372,15 +331,11 @@ void kkli::Generator::statement(std::string format) {
 	//4. return expr;
 	//5. expr;  //expr可空
 
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("Generator::statement()", format);
-	}
+	DEBUG_GENERATOR("Generator::statement()", format);
 	
 	//if语句
 	if (tokenInfo.first == IF) {
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[if]", FORMAT(format));
-		}
+		DEBUG_GENERATOR("[if]", FORMAT(format));
 
 		match(IF, FORMAT(format));
 		match(LPAREN, FORMAT(format));
@@ -394,9 +349,7 @@ void kkli::Generator::statement(std::string format) {
 		vm->addInstData(0, FORMAT(format));  //占据一个位置，用以写入 I_JZ 的跳转位置
 		statement(FORMAT(format));
 		if (tokenInfo.first == ELSE) {
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[else]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[else]", FORMAT(format));
 
 			match(ELSE, FORMAT(format));
 			*branch = int(vm->getNextTextPos() + 2);
@@ -410,9 +363,7 @@ void kkli::Generator::statement(std::string format) {
 
 	//while语句
 	else if (tokenInfo.first == WHILE) {
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[while]", FORMAT(format));
-		}
+		DEBUG_GENERATOR("[while]", FORMAT(format));
 
 		int *branchA, *branchB;  //用于填写语句的分支跳转地址
 		match(WHILE, FORMAT(format));
@@ -433,9 +384,7 @@ void kkli::Generator::statement(std::string format) {
 
 	//{ statement }
 	else if (tokenInfo.first == LBRACE) {
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[{statement}]", FORMAT(format));
-		}
+		DEBUG_GENERATOR("[{statement}]", FORMAT(format));
 
 		match(LBRACE, FORMAT(format));
 		while (tokenInfo.first != RBRACE) {
@@ -448,15 +397,11 @@ void kkli::Generator::statement(std::string format) {
 	else if (tokenInfo.first == RETURN) {
 		match(RETURN, FORMAT(format));
 		if (tokenInfo.first != SEMICON) {
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[return expr]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[return expr]", FORMAT(format));
 			expression(ASSIGN, FORMAT(format));
 		}
 		else {
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[return]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[return]", FORMAT(format));
 		}
 		match(SEMICON, FORMAT(format));
 		vm->addInst(I_LEV, FORMAT(format));
@@ -464,9 +409,7 @@ void kkli::Generator::statement(std::string format) {
 
 	//expr
 	else {
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[expr]", FORMAT(format));
-		}
+		DEBUG_GENERATOR("[expr]", FORMAT(format));
 
 		expression(ASSIGN, FORMAT(format));
 		match(SEMICON, FORMAT(format));
@@ -475,15 +418,10 @@ void kkli::Generator::statement(std::string format) {
 
 //表达式
 void kkli::Generator::expression(int priority, std::string format) {
-
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("Generator::expression(" + std::to_string(priority) + ")", format);
-	}
+	DEBUG_GENERATOR("Generator::expression(" + std::to_string(priority) + ")", format);
 
 	//一元表达式
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("[unary expression]", FORMAT(format));
-	}
+	DEBUG_GENERATOR("[unary expression]", FORMAT(format));
 	if (tokenInfo.first == ERROR) {
 		throw Error(lexer.getLine(), "bad identifier ERROR.");
 	}
@@ -495,9 +433,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 	else if (tokenInfo.first == NUM) {
 		vm->addInst(I_IMM, FORMAT(format));
 		vm->addInstData(tokenInfo.second, FORMAT(format));
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[NUM] " + std::to_string(tokenInfo.second), FORMAT(format));
-		}
+		DEBUG_GENERATOR("[NUM] " + std::to_string(tokenInfo.second), FORMAT(format));
+
 		exprType = INT_TYPE;
 		match(NUM, FORMAT(format));
 	}
@@ -505,13 +442,12 @@ void kkli::Generator::expression(int priority, std::string format) {
 	else if (tokenInfo.first == STRING) {
 		vm->addInst(I_IMM, FORMAT(format));
 		vm->addInstData(tokenInfo.second, FORMAT(format));
-		match(STRING, FORMAT(format));
 
 		vm->addDataChar('\0', FORMAT(format));
 		exprType = PTR_TYPE;
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output(std::string("[STRING] ") + reinterpret_cast<char*>(tokenInfo.second), FORMAT(format));
-		}
+		DEBUG_GENERATOR(std::string("[STRING] ") + reinterpret_cast<char*>(tokenInfo.second), FORMAT(format));
+
+		match(STRING, FORMAT(format));
 	}
 
 	else if (tokenInfo.first == SIZEOF) {
@@ -529,9 +465,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 			match(MUL, FORMAT(format));
 			exprType = exprType + PTR_TYPE;
 		}
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[SIZEOF] " + Token::getDataTypeName(exprType), FORMAT(format));
-		}
+
+		DEBUG_GENERATOR("[SIZEOF] " + Token::getDataTypeName(exprType), FORMAT(format));
 		match(RPAREN, FORMAT(format));
 		vm->addInst(I_IMM, FORMAT(format));
 		vm->addInstData(exprType == CHAR_TYPE ? 1 : 4, FORMAT(format));
@@ -540,11 +475,9 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 	else if (tokenInfo.first == ID) {
 		//三种可能：函数调用、enum变量、全局/局部变量
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[ID]", FORMAT(format));
-		}
-		match(ID, FORMAT(format));
+		DEBUG_GENERATOR("[ID]", FORMAT(format));
 
+		match(ID, FORMAT(format));
 		Token& current = table->getCurrentToken(FORMAT(format));
 
 		//函数调用
@@ -563,17 +496,13 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 			//系统函数
 			if (current.klass == SYS_FUNC) {
-				if (OUTPUT_GENERATOR_ACTIONS) {
-					Debug::output("[SYS_FUNC]", FORMAT(format));
-				}
+				DEBUG_GENERATOR("[SYS_FUNC]", FORMAT(format));
 				vm->addInst(current.value, FORMAT(format));
 			}
 
 			//用户自定义函数
 			else if (current.klass == FUNC) {
-				if (OUTPUT_GENERATOR_ACTIONS) {
-					Debug::output("[CUSTOM_FUNC]", FORMAT(format));
-				}
+				DEBUG_GENERATOR("[CUSTOM_FUNC]", FORMAT(format));
 				vm->addInst(I_CALL, FORMAT(format));
 				vm->addInstData(current.value, FORMAT(format));
 			}
@@ -583,9 +512,7 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 			//清除栈上参数
 			if (args > 0) {
-				if (OUTPUT_GENERATOR_ACTIONS) {
-					Debug::output("[elim " + std::to_string(args) + " params on stack]", FORMAT(format));
-				}
+				DEBUG_GENERATOR("[elim " + std::to_string(args) + " params on stack]", FORMAT(format));
 				vm->addInst(I_ADJ, FORMAT(format));
 				vm->addInstData(args, FORMAT(format));
 			}
@@ -594,9 +521,7 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		//enum变量
 		else if (current.klass == NUMBER) {
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[enum variable]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[enum variable]", FORMAT(format));
 			vm->addInst(I_IMM, FORMAT(format));
 			vm->addInstData(current.value, FORMAT(format));
 			exprType = INT_TYPE;
@@ -605,16 +530,12 @@ void kkli::Generator::expression(int priority, std::string format) {
 		//普通变量
 		else {
 			if (current.klass == LOCAL) {
-				if (OUTPUT_GENERATOR_ACTIONS) {
-					Debug::output("[local variable]", FORMAT(format));
-				}
+				DEBUG_GENERATOR("[local variable]", FORMAT(format));
 				vm->addInst(I_LEA, FORMAT(format));
 				vm->addInstData(indexOfBP - current.value, FORMAT(format));
 			}
 			else if (current.klass == GLOBAL) {
-				if (OUTPUT_GENERATOR_ACTIONS) {
-					Debug::output("[global variable]", FORMAT(format));
-				}
+				DEBUG_GENERATOR("[global variable]", FORMAT(format));
 				vm->addInst(I_IMM, FORMAT(format));
 				vm->addInstData(current.value, FORMAT(format));
 			}
@@ -640,27 +561,21 @@ void kkli::Generator::expression(int priority, std::string format) {
 				castType += PTR_TYPE;
 			}
 			match(RPAREN, FORMAT(format));
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[cast] " + Token::getDataTypeName(castType), FORMAT(format));
-			}
+			DEBUG_GENERATOR("[cast] " + Token::getDataTypeName(castType), FORMAT(format));
 			expression(INC, FORMAT(format));  //需要优先级INC（高一级）
 			exprType = castType;
 		}
 
 		//括号表达式
 		else {
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[(expr)]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[(expr)]", FORMAT(format));
 			expression(ASSIGN, FORMAT(format));
 			match(RPAREN, FORMAT(format));
 		}
 	}
 
 	else if (tokenInfo.first == MUL) {
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[MUL]", FORMAT(format));
-		}
+		DEBUG_GENERATOR("[MUL]", FORMAT(format));
 		//*a，即取某个地址的值
 		match(MUL, FORMAT(format));
 		expression(INC, FORMAT(format));
@@ -677,9 +592,7 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 	else if (tokenInfo.first == AND) {
 		//取地址
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[AND]", FORMAT(format));
-		}
+		DEBUG_GENERATOR("[AND]", FORMAT(format));
 		match(AND, FORMAT(format));
 		expression(INC, FORMAT(format));
 		int inst = vm->getTopInst(FORMAT(format));
@@ -691,15 +604,11 @@ void kkli::Generator::expression(int priority, std::string format) {
 		}
 
 		exprType = exprType + PTR_TYPE;
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("exprType = " + Token::getDataTypeName(exprType), FORMAT(format));
-		}
+		DEBUG_GENERATOR("exprType = " + Token::getDataTypeName(exprType), FORMAT(format));
 	}
 
 	else if (tokenInfo.first == NOT) {
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[NOT]", FORMAT(format));
-		}
+		DEBUG_GENERATOR("[NOT]", FORMAT(format));
 		match(NOT, FORMAT(format));
 		expression(INC, FORMAT(format));
 
@@ -713,9 +622,7 @@ void kkli::Generator::expression(int priority, std::string format) {
 	}
 
 	else if (tokenInfo.first == TILDE) {
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[TILDE]", FORMAT(format));
-		}
+		DEBUG_GENERATOR("[TILDE]", FORMAT(format));
 		match(TILDE, FORMAT(format));
 		expression(INC, FORMAT(format));
 
@@ -729,9 +636,7 @@ void kkli::Generator::expression(int priority, std::string format) {
 	}
 
 	else if (tokenInfo.first == ADD) {
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[ADD]", FORMAT(format));
-		}
+		DEBUG_GENERATOR("[ADD]", FORMAT(format));
 		//+a，啥也不做
 		match(ADD, FORMAT(format));
 		expression(INC, FORMAT(format));
@@ -739,9 +644,7 @@ void kkli::Generator::expression(int priority, std::string format) {
 	}
 
 	else if (tokenInfo.first == SUB) {
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[SUB]", FORMAT(format));
-		}
+		DEBUG_GENERATOR("[SUB]", FORMAT(format));
 		//-a
 		match(SUB, FORMAT(format));
 		if (tokenInfo.first == NUM) {
@@ -760,9 +663,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 	}
 
 	else if (tokenInfo.first == INC || tokenInfo.first == DEC) {
-		if (OUTPUT_GENERATOR_ACTIONS) {
-			Debug::output("[INC/DEC]", FORMAT(format));
-		}
+		DEBUG_GENERATOR("[INC/DEC]", FORMAT(format));
+
 		int tk = tokenInfo.first;
 		match(tk, FORMAT(format));
 		expression(INC, FORMAT(format));
@@ -789,15 +691,12 @@ void kkli::Generator::expression(int priority, std::string format) {
 	}
 
 	//二元表达式
-	if (OUTPUT_GENERATOR_ACTIONS) {
-		Debug::output("[binary expression]", FORMAT(format));
-	}
+	DEBUG_GENERATOR("[binary expression]", FORMAT(format));
 
 	while (tokenInfo.first >= priority) {
 		if (tokenInfo.first == ASSIGN) {
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[ASSIGN]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[ASSIGN]", FORMAT(format));
+
 			int tempType = exprType;
 			match(ASSIGN, FORMAT(format));
 			if (vm->getTopInst(FORMAT(format)) == I_LI || vm->getTopInst(FORMAT(format)) == I_LC) {
@@ -814,9 +713,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == COND) {
 			//expr ? a : b
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[COND]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[COND]", FORMAT(format));
+
 			match(COND, FORMAT(format));
 			vm->addInst(I_JZ, FORMAT(format));
 			int* addr = vm->getNextTextPos();
@@ -838,9 +736,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == LOR) {
 			// ||
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[LOR]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[LOR]", FORMAT(format));
+
 			match(LOR, FORMAT(format));
 			vm->addInst(I_JNZ, FORMAT(format));
 			int* addr = vm->getNextTextPos();
@@ -852,9 +749,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == LAN) {
 			// &&
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[LAN]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[LAN]", FORMAT(format));
+
 			match(LAN, FORMAT(format));
 			vm->addInst(I_JZ, FORMAT(format));
 			int* addr = vm->getNextTextPos();
@@ -866,9 +762,7 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == OR) {
 			// |
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[OR]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[OR]", FORMAT(format));
 
 			match(OR, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
@@ -879,9 +773,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == XOR) {
 			// ^
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[XOR]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[XOR]", FORMAT(format));
+
 			match(XOR, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
 			expression(AND, FORMAT(format));
@@ -891,9 +784,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == AND) {
 			// &
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[AND]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[AND]", FORMAT(format));
+
 			match(AND, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
 			expression(EQ, FORMAT(format));
@@ -903,9 +795,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == EQ) {
 			// ==
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[EQ]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[EQ]", FORMAT(format));
+
 			match(EQ, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
 			expression(NE, FORMAT(format));
@@ -915,9 +806,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == NE) {
 			//!=
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[NE]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[NE]", FORMAT(format));
+
 			match(NE, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
 			expression(LT, FORMAT(format));
@@ -927,9 +817,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == LT) {
 			// <
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[LT]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[LT]", FORMAT(format));
+
 			match(LT, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
 			expression(SHL, FORMAT(format));
@@ -939,9 +828,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == GT) {
 			// >
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[GT]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[GT]", FORMAT(format));
+
 			match(GT, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
 			expression(SHL, FORMAT(format));
@@ -951,9 +839,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == LE) {
 			// <=
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[LE]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[LE]", FORMAT(format));
+
 			match(LE, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
 			expression(SHL, FORMAT(format));
@@ -963,9 +850,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == GE) {
 			// >=
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[GE]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[GE]", FORMAT(format));
+
 			vm->addInst(I_PUSH, FORMAT(format));
 			expression(SHL, FORMAT(format));
 			vm->addInst(I_GE, FORMAT(format));
@@ -974,9 +860,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == SHL) {
 			// <<
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[SHL]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[SHL]", FORMAT(format));
+
 			match(SHL, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
 			expression(ADD, FORMAT(format));
@@ -986,9 +871,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == SHR) {
 			// >>
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[SHR]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[SHR]", FORMAT(format));
+
 			match(SHR, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
 			expression(ADD, FORMAT(format));
@@ -998,9 +882,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == ADD) {
 			// a + b
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[ADD]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[ADD]", FORMAT(format));
+
 			int tempType = exprType;
 			match(ADD, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
@@ -1021,18 +904,17 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == SUB) {
 			// a - b
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[SUB]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[SUB]", FORMAT(format));
+
+			match(SUB, FORMAT(format));
 			int tempType = exprType;
 			vm->addInst(I_PUSH, FORMAT(format));
 			expression(MUL, FORMAT(format));
 
 			//指针相减 p1 - p2
 			if (tempType > PTR_TYPE && tempType == exprType) {
-				if (OUTPUT_GENERATOR_ACTIONS) {
-					Debug::output("[SUB ptr - ptr]", FORMAT(format));
-				}
+				DEBUG_GENERATOR("[SUB ptr - ptr]", FORMAT(format));
+
 				vm->addInst(I_SUB, FORMAT(format));
 				vm->addInst(I_PUSH, FORMAT(format));
 				vm->addInst(I_IMM, FORMAT(format));
@@ -1043,9 +925,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 			//指针移动 p1 - 2
 			else if (tempType > PTR_TYPE) {
-				if (OUTPUT_GENERATOR_ACTIONS) {
-					Debug::output("[SUB ptr - var]", FORMAT(format));
-				}
+				DEBUG_GENERATOR("[SUB ptr - var]", FORMAT(format));
+
 				vm->addInst(I_PUSH, FORMAT(format));
 				vm->addInst(I_IMM, FORMAT(format));
 				vm->addInstData(4, FORMAT(format));
@@ -1056,9 +937,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 			//普通变量相减 a - b
 			else {
-				if (OUTPUT_GENERATOR_ACTIONS) {
-					Debug::output("[SUB var - var]", FORMAT(format));
-				}
+				DEBUG_GENERATOR("[SUB var - var]", FORMAT(format));
+
 				vm->addInst(I_SUB, FORMAT(format));
 				exprType = tempType;
 			}
@@ -1066,9 +946,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == MUL) {
 			// a * b
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[MUL]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[MUL]", FORMAT(format));
+
 			int tempType = exprType;
 			match(MUL, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
@@ -1079,9 +958,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == DIV) {
 			// a / b
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[DIV]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[DIV]", FORMAT(format));
+
 			int tempType = exprType;
 			match(DIV, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
@@ -1092,9 +970,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == MOD) {
 			// a % b
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[MOD]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[MOD]", FORMAT(format));
+
 			int tempType = exprType;
 			match(MOD, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));
@@ -1105,9 +982,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == INC || tokenInfo.first == DEC) {
 			// a++
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[INC]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[INC]", FORMAT(format));
+
 			if (vm->getTopInst(FORMAT(format)) == I_LI) {
 				vm->deleteTopInst(FORMAT(format));
 				vm->addInst(I_PUSH, FORMAT(format));
@@ -1137,9 +1013,8 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == LBRACK) {
 			// a[1]
-			if (OUTPUT_GENERATOR_ACTIONS) {
-				Debug::output("[LBRACK]", FORMAT(format));
-			}
+			DEBUG_GENERATOR("[LBRACK]", FORMAT(format));
+
 			int tempType = exprType;
 			match(LBRACK, FORMAT(format));
 			vm->addInst(I_PUSH, FORMAT(format));

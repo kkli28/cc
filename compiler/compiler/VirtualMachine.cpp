@@ -25,11 +25,22 @@ kkli::VirtualMachine::VirtualMachine() {
 	ax = 0;
 }
 
+//重置所有信息
+void kkli::VirtualMachine::reset(std::string format) {
+	DEBUG_VM("VirtualMachine::reset()", format);
+
+	for (int i = 0; i < SEGMENT_SIZE; ++i) {
+		data[i] = 0;
+		text[i] = 0;
+		stack[i] = 0;
+	}
+	nextData = data;
+	nextText = text;
+}
+
 //添加char型数据
 void kkli::VirtualMachine::addDataChar(char elem, std::string format) {
-	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::addCharData(" + std::to_string(elem) + ")", format);
-	}
+	DEBUG_VM("VirtualMachine::addCharData(" + std::to_string(elem) + ")", format);
 
 	if (nextData == data + SEGMENT_SIZE) throw Error("VirtualMachine::addCharData(): data overflow");
 
@@ -39,22 +50,15 @@ void kkli::VirtualMachine::addDataChar(char elem, std::string format) {
 
 //添加int型数据
 void kkli::VirtualMachine::addDataInt(int elem, std::string format) {
-	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::addIntData(" + std::to_string(elem) + ")", format);
-	}
-
-	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("[before data_align] nextData = "
+	DEBUG_VM("VirtualMachine::addIntData(" + std::to_string(elem) + ")", format);
+	DEBUG_VM("[before data_align] nextData = "
 			+ std::to_string(reinterpret_cast<int>(nextData)) + ".", FORMAT(format));
-	}
 
 	//数据对齐
 	nextData = reinterpret_cast<char*>((reinterpret_cast<int>(data) + 4) & (-4));
 	
-	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("[after data_align] nextData = "
+	DEBUG_VM("[after data_align] nextData = "
 			+ std::to_string(reinterpret_cast<int>(nextData)) + ".", FORMAT(format));
-	}
 
 	if (nextData == data + SEGMENT_SIZE) throw Error("VirtualMachine::addIntData(): data overflow");
 
@@ -64,11 +68,7 @@ void kkli::VirtualMachine::addDataInt(int elem, std::string format) {
 
 //添加指令
 void kkli::VirtualMachine::addInst(int elem, std::string format) {
-
-	//调试
-	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::addInst(" + getInstructionName(elem) + ")", format);
-	}
+	DEBUG_VM("VirtualMachine::addInst(" + getInstructionName(elem) + ")", format);
 
 	if (nextText == text + SEGMENT_SIZE) throw Error("VirtualMachine::addText(): text overflow");
 	*nextText = elem;
@@ -77,9 +77,7 @@ void kkli::VirtualMachine::addInst(int elem, std::string format) {
 
 //添加指令的操作数
 void kkli::VirtualMachine::addInstData(int elem, std::string format) {
-	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::addInstData(" + std::to_string(elem) + ")", format);
-	}
+	DEBUG_VM("VirtualMachine::addInstData(" + std::to_string(elem) + ")", format);
 
 	if (nextText == text + SEGMENT_SIZE) throw Error("VirtualMachine::addText(): text overflow");
 
@@ -89,18 +87,14 @@ void kkli::VirtualMachine::addInstData(int elem, std::string format) {
 
 //获取顶部指令
 int kkli::VirtualMachine::getTopInst(std::string format) {
-	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::getTopInst(): " + getInstructionName(*(nextText - 1)), format);
-	}
+	DEBUG_VM("VirtualMachine::getTopInst(): " + getInstructionName(*(nextText - 1)), format);
 	if (nextText - 1 < text) throw Error("VirtualMachine::getTopInst(): no instruction to get!");
 	return *(nextText - 1);
 }
 
 //删除顶部指令
 void kkli::VirtualMachine::deleteTopInst(std::string format) {
-	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::deleteTopInst(): " + getInstructionName(*(nextText - 1)), format);
-	}
+	DEBUG_VM("VirtualMachine::deleteTopInst(): " + getInstructionName(*(nextText - 1)), format);
 
 	--nextText;
 	if (nextText < text) throw Error("VirtualMachine::deleteTopInst(): no instruction to delete!");
@@ -108,11 +102,7 @@ void kkli::VirtualMachine::deleteTopInst(std::string format) {
 
 //出栈
 int kkli::VirtualMachine::pop(std::string format) {
-
-	//调试
-	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::pop(): " + std::to_string(*sp), format);
-	}
+	DEBUG_VM("VirtualMachine::pop(): " + std::to_string(*sp), format);
 
 	if (sp == stack) throw Error("empty stack!");
 	return *(sp++);
@@ -120,11 +110,7 @@ int kkli::VirtualMachine::pop(std::string format) {
 
 //入栈
 void kkli::VirtualMachine::push(int elem, std::string format) {
-
-	//调试
-	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::push(" + std::to_string(elem) + ")", format);
-	}
+	DEBUG_VM("VirtualMachine::push(" + std::to_string(elem) + ")", format);
 
 	if (sp == stack + SEGMENT_SIZE) throw Error("stack overflow!");
 	*sp = elem;
@@ -133,8 +119,6 @@ void kkli::VirtualMachine::push(int elem, std::string format) {
 
 //获取内存信息
 std::string kkli::VirtualMachine::getInfo() const {
-
-	//拼装虚拟机信息
 	std::string str;
 	str += "\n[VM info]:";
 	str += "[SEGMENT_SIZE]: " + std::to_string(SEGMENT_SIZE) + "\n";
@@ -153,10 +137,8 @@ std::string kkli::VirtualMachine::getInfo() const {
 
 //执行指令
 int kkli::VirtualMachine::run(std::string format) {
-	if (OUTPUT_VM_ACTIONS) {
-		Debug::output("VirtualMachine::run()", format);
-	}
-	
+	DEBUG_VM("VirtualMachine::run()", format);
+
 	int inst;        //指令
 	int cycle = 0;   //执行周期
 
@@ -169,27 +151,28 @@ int kkli::VirtualMachine::run(std::string format) {
 		++pc;
 
 		//输出执行的指令
-		if (OUTPUT_VM_ACTIONS) {
-			std::string debugInfo = "execute: ";
-			debugInfo += getInstructionName(inst);
-			if (inst <= I_ADJ) debugInfo += "  " + std::to_string(*pc);
-			Debug::output(debugInfo, FORMAT(format));
-		}
+		std::string debugInfo = "\n";
+		debugInfo += getInstructionName(inst);
+		if (inst <= I_ADJ) debugInfo += "  " + std::to_string(*pc);
+		DEBUG_VM(debugInfo, format);
 
 		//取立即数
 		if (inst == I_IMM) {
 			ax = *pc;
 			++pc;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//加载char值
 		else if (inst == I_LC) {
 			ax = *(reinterpret_cast<char*>(ax));
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//加载int值
 		else if (inst == I_LI) {
 			ax = *(reinterpret_cast<int*>(ax));
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//存储char值
@@ -197,6 +180,7 @@ int kkli::VirtualMachine::run(std::string format) {
 			char* addr = reinterpret_cast<char*>(*sp);
 			++sp;
 			*addr = ax;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//存储int值
@@ -204,11 +188,13 @@ int kkli::VirtualMachine::run(std::string format) {
 			int* addr = reinterpret_cast<int*>(*sp);
 			++sp;
 			*addr = ax;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//入栈
 		else if (inst == I_PUSH) {
 			*(--sp) = ax;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//无条件跳转
@@ -271,96 +257,112 @@ int kkli::VirtualMachine::run(std::string format) {
 		else if (inst == I_OR) {
 			ax = (*sp | ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//异或运算
 		else if (inst == I_XOR) {
 			ax = (*sp ^ ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//与运算
 		else if (inst == I_AND) {
 			ax = (*sp & ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//相等比较
 		else if (inst == I_EQ) {
 			ax = (*sp == ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//不等比较
 		else if (inst == I_NE) {
 			ax = (*sp != ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//小于比较
 		else if (inst == I_LT) {
 			ax = (*sp < ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
-		
+
 		//小于等于比较
 		else if (inst == I_LE) {
 			ax = (*sp <= ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//大于比较
 		else if (inst == I_GT) {
 			ax = (*sp > ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//大于等于比较
 		else if (inst == I_GE) {
 			ax = (*sp >= ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//左移运算
 		else if (inst == I_SHL) {
 			ax = (*sp << ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//右移运算
 		else if (inst == I_SHR) {
 			ax = (*sp >> ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//相加运算
 		else if (inst == I_ADD) {
 			ax = (*sp + ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//相减运算
 		else if (inst == I_SUB) {
 			ax = (*sp - ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//相乘运算
 		else if (inst == I_MUL) {
 			ax = (*sp * ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//相除运算
 		else if (inst == I_DIV) {
 			ax = (*sp / ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//相模运算
 		else if (inst == I_MOD) {
 			ax = (*sp % ax);
 			++sp;
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//输出
@@ -368,19 +370,30 @@ int kkli::VirtualMachine::run(std::string format) {
 			int* temp = sp + pc[1];
 			ax = printf(reinterpret_cast<char*>(temp[-1]),
 				temp[-2], temp[-3], temp[-4], temp[-5], temp[-6]);
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//动态内存分配
 		else if (inst == I_MALC) {
 			ax = reinterpret_cast<int>(malloc(*sp));
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
+		//Warnning! 因main的返回结果在ax中，因此直接将ax输出
 		//退出程序
+		/*
+		//C4版本
 		else if (inst == I_EXIT) {
 			printf("exit(%d)", *sp);
 			return *sp;
 		}
-		
+		*/
+		//我的版本
+		else if (inst == I_EXIT) {
+			printf("exit(%d)", ax);
+			return ax;
+		}
+
 		//错误的指令
 		else {
 			throw Error("unknown instruction!");
