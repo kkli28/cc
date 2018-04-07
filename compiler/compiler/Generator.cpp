@@ -41,8 +41,9 @@ void kkli::Generator::global_decl(std::string format) {
 	baseType = INT_TYPE;  //基本类型默认为INT_TYPE
 
 	//enum常量定义
-	while (tokenInfo.first == ENUM) {
+	if (tokenInfo.first == ENUM) {
 		enum_decl(FORMAT(format));
+		return;
 	}
 
 	//全局变量或函数定义的类型
@@ -169,10 +170,8 @@ void kkli::Generator::enum_decl(std::string format) {
 void kkli::Generator::func_decl(std::string format) {
 	DEBUG_GENERATOR("Generator::func_del()", format);
 
-	match(LPAREN, FORMAT(format));
+	currentFunc = &(table->getCurrentToken(FORMAT(format)));
 	func_param(FORMAT(format));
-	match(RPAREN, FORMAT(format));
-	match(LBRACE, FORMAT(format));
 	func_body(FORMAT(format));
 	
 	DEBUG_GENERATOR_SYMBOL("\n[======== before restore ========]" + table->getSymbolTableInfo(), FORMAT(format));
@@ -192,6 +191,7 @@ void kkli::Generator::func_decl(std::string format) {
 void kkli::Generator::func_param(std::string format) {
 	DEBUG_GENERATOR("Generator::func_param()", format);
 
+	match(LPAREN, FORMAT(format));
 	int dataType;
 	int params = 0;
 	while (tokenInfo.first != RPAREN) {
@@ -224,6 +224,9 @@ void kkli::Generator::func_param(std::string format) {
 			throw Error(lexer.getLine(), "wrong param declaration!");
 		}
 
+		currentFunc->addArgument(dataType, FORMAT(format));  //记录函数参数的类型
+		DEBUG_GENERATOR("add " + Token::getDataTypeName(exprType) + " argument", FORMAT(format));
+
 		DEBUG_GENERATOR_SYMBOL("\n[======== before backup ========] " + table->getSymbolTableInfo(), "");
 
 		//备份全局变量信息，并填入局部变量信息
@@ -239,8 +242,8 @@ void kkli::Generator::func_param(std::string format) {
 			match(COMMA, FORMAT(format));
 		}
 	}
-
-	indexOfBP = params + 1;
+	match(RPAREN, FORMAT(format));
+	indexOfBP = params + 1;  //pc寄存器的值在bp+1处
 
 	DEBUG_GENERATOR("[index of bp]: " + std::to_string(indexOfBP), FORMAT(format));
 }
@@ -249,6 +252,7 @@ void kkli::Generator::func_param(std::string format) {
 void kkli::Generator::func_body(std::string format) {
 	DEBUG_GENERATOR("Generator::func_body()", format);
 
+	match(LBRACE, FORMAT(format));
 	int variableIndex = indexOfBP;  //局部变量在栈上相对于bp的位置
 
 	DEBUG_GENERATOR("[start variable decl]", FORMAT(format));
@@ -470,22 +474,25 @@ void kkli::Generator::expression(int priority, std::string format) {
 		//三种可能：函数调用、enum变量、全局/局部变量
 		DEBUG_GENERATOR("[ID]", FORMAT(format));
 
-		match(ID, FORMAT(format));
 		Token& current = table->getCurrentToken(FORMAT(format));
+		match(ID, FORMAT(format));
 
 		//函数调用
 		if (tokenInfo.first == LPAREN) {
 			match(LPAREN, FORMAT(format));
-			int args = 0;
+			std::vector<int> dataTypes;  //记录函数调用中的参数类型
+
 			while (tokenInfo.first != RPAREN) {
 				expression(ASSIGN, FORMAT(format));
+				dataTypes.push_back(exprType);
 				vm->addInst(I_PUSH, FORMAT(format));
-				++args;
 				if (tokenInfo.first == COMMA) {
 					match(COMMA, FORMAT(format));
 				}
 			}
 			match(RPAREN, FORMAT(format));
+
+			validFunctionCall(current, dataTypes, FORMAT(format));
 
 			//系统函数
 			if (current.klass == SYS_FUNC) {
@@ -504,10 +511,9 @@ void kkli::Generator::expression(int priority, std::string format) {
 			}
 
 			//清除栈上参数
-			if (args > 0) {
-				DEBUG_GENERATOR("[elim " + std::to_string(args) + " params on stack]", FORMAT(format));
+			if (dataTypes.size() > 0) {
 				vm->addInst(I_ADJ, FORMAT(format));
-				vm->addInstData(args, FORMAT(format));
+				vm->addInstData(dataTypes.size(), FORMAT(format));
 			}
 			exprType = current.dataType;
 		}
@@ -1036,6 +1042,51 @@ void kkli::Generator::expression(int priority, std::string format) {
 		else {
 			throw Error(lexer.getLine(), "compiler error, token = "
 				+ Token::getTokenTypeName(tokenInfo.first));
+		}
+	}
+}
+
+//验证参数的合法性
+void kkli::Generator::validFunctionCall(const Token& funcToken, const std::vector<int>& dataTypes, std::string format) const {
+	DEBUG_GENERATOR("kkli::Generator::ValidateFunctionCall()", format);
+
+	//内置函数，需要单独处理
+	if (funcToken.klass == SYS_FUNC) {
+		if (funcToken.name == "printf") {
+			if (dataTypes.size() < 1) {
+				throw Error(lexer.getLine(), "function '" + funcToken.name + "' need at least 1 argument.");
+			}
+			else if(dataTypes.size() > 6) {
+				throw Error(lexer.getLine(), "function '" + funcToken.name + "' support at most 6 arguments.");
+			}
+			else if (dataTypes[0] < PTR_TYPE) {
+				throw Error(lexer.getLine(), "function '" + funcToken.name + "' need ptr type argument at first argument.");
+			}
+		}
+		else if (funcToken.name == "exit" || funcToken.name == "malloc") {
+			if (dataTypes.size() != 1) {
+				throw Error(lexer.getLine(), "function '" + funcToken.name + "' expect 1 argument.");
+			}
+			else if (dataTypes[0] != INT_TYPE) {
+				Warning::getInstance()->add(lexer.getLine(), "function exit expect int type argument.");
+			}
+		}
+		else {
+			throw Error("no system function names '" + funcToken.name + "'.");
+		}
+		return;
+	}
+
+	//非内置函数
+	int size1 = funcToken.argsDataType.size();
+	int size2 = dataTypes.size();
+	if (size1 != size2) {
+		throw Error(lexer.getLine(), "function '" + funcToken.name + "' expect " + std::to_string(size1) + " arguments.");
+	}
+	for (int i = 0; i < size1; ++i) {
+		if (funcToken.argsDataType[i] != dataTypes[i]) {
+			Warning::getInstance()->add(lexer.getLine(), "function '" + funcToken.name + "' need " +
+				Token::getDataTypeName(funcToken.argsDataType[i]) + " type argument at argument index " + std::to_string(i) + ".");
 		}
 	}
 }

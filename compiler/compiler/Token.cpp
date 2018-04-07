@@ -29,6 +29,12 @@ void kkli::Token::restoreInfo(std::string format) {
 	value = Bvalue;
 }
 
+//添加函数参数类型
+void kkli::Token::addArgument(int dataType, std::string format) {
+	DEBUG_TOKEN("Token::addArgument(" + Token::getDataTypeName(dataType) + ")", format);
+	argsDataType.push_back(dataType);
+}
+
 //获取TokenType类型名称
 std::string kkli::Token::getTokenTypeName(int type) {
 

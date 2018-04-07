@@ -212,14 +212,16 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 				if (curr == 'n') value = '\n';
 				else value = curr;
 			}
-
+			else {
+				value = curr;
+			}
 			curr = get();
 			if (curr != '\'') {
 				throw Error("Line "+std::to_string(line)+". Invalid char type, need \' to finish charactor");
 			}
 			curr = get();
 
-			DEBUG_LEXER_NEXT("[char]", FORMAT(format));
+			DEBUG_LEXER_NEXT("[char] " + std::to_string(value), FORMAT(format));
 			return { NUM, value };
 		}
 

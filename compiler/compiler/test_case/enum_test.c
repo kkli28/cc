@@ -4,7 +4,7 @@ enum {};
 
 int succeed;
 void E(int var, int val){
-    //printf("var = %d, val = %d\n", var, val);
+    printf("var = %d, val = %d", var, val);
     if(var != val){
         printf("[error] %d != %d\n", var, val);
         succeed = 0;
@@ -13,19 +13,14 @@ void E(int var, int val){
 
 int main() {
     succeed = 1;
+    E(a, '\0');
     E(a, 0);
     E(b, 2);
     E(c, 3);
     E(d, 1);
     E(e, 2);
-    E(f, 3);
-    E(g, 10000);
+    E(f,)
     
-    E(h, -1);
-    E(i, -2);
-    E(j, -1);
-    E(k, 0);
-
     if(succeed){
         printf("test [enum] succeed!\n");
     }

@@ -125,7 +125,7 @@ void kkli::VirtualMachine::dataAlignment(std::string format) {
 
 //获取下一个写入数据的位置
 char* kkli::VirtualMachine::getNextDataPos(int dataType, std::string format) {
-	DEBUG_VM("VirtualMachine::getNextDataPos(" + std::to_string(dataType), FORMAT(format));
+	DEBUG_VM("VirtualMachine::getNextDataPos(" + std::to_string(dataType) + ")", FORMAT(format));
 	if (dataType == CHAR_TYPE) {
 		return nextData;
 	}

@@ -78,6 +78,7 @@ namespace kkli {
 		int dataType;      //数据类型
 		int value;         //值
 		int hash;          //hash值，便于标记快速查找
+		std::vector<int> argsDataType;    //函数参数及其类型
 
 		//备份字段
 		int Bklass;
@@ -89,6 +90,7 @@ namespace kkli {
 	public:
 		void saveInfo(std::string format);      //保存信息
 		void restoreInfo(std::string format);   //恢复信息
+		void addArgument(int dataType, std::string format);         //仅是函数时调用，添加函数的一个参数类型
 
 		//获取Token类型名称
 		static std::string getTokenTypeName(int type);
