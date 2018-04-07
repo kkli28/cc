@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "VirtualMachine.h"
+#include "Token.h"
 
 //构造函数
 kkli::VirtualMachine::VirtualMachine() {
@@ -51,17 +52,9 @@ void kkli::VirtualMachine::addDataChar(char elem, std::string format) {
 //添加int型数据
 void kkli::VirtualMachine::addDataInt(int elem, std::string format) {
 	DEBUG_VM("VirtualMachine::addIntData(" + std::to_string(elem) + ")", format);
-	DEBUG_VM("[before data_align] nextData = "
-			+ std::to_string(reinterpret_cast<int>(nextData)) + ".", FORMAT(format));
-
-	//数据对齐
-	nextData = reinterpret_cast<char*>((reinterpret_cast<int>(data) + 4) & (-4));
 	
-	DEBUG_VM("[after data_align] nextData = "
-			+ std::to_string(reinterpret_cast<int>(nextData)) + ".", FORMAT(format));
-
-	if (nextData == data + SEGMENT_SIZE) throw Error("VirtualMachine::addIntData(): data overflow");
-
+	dataAlignment(FORMAT(format));
+	
 	*(reinterpret_cast<int*>(nextData)) = elem;
 	nextData += 4;
 }
@@ -115,6 +108,31 @@ void kkli::VirtualMachine::push(int elem, std::string format) {
 	if (sp == stack + SEGMENT_SIZE) throw Error("stack overflow!");
 	*sp = elem;
 	*(--sp) = elem;
+}
+
+//数据对齐
+void kkli::VirtualMachine::dataAlignment(std::string format) {
+	DEBUG_VM("[before data_align] nextData = "
+		+ std::to_string(reinterpret_cast<int>(nextData)) + ".", FORMAT(format));
+
+	nextData = reinterpret_cast<char*>((reinterpret_cast<int>(nextData) + 4) & (-4));
+
+	DEBUG_VM("[after data_align] nextData = "
+		+ std::to_string(reinterpret_cast<int>(nextData)) + ".", FORMAT(format));
+
+	if (nextData >= data + SEGMENT_SIZE) throw Error("VirtualMachine::addIntData(): data overflow");
+}
+
+//获取下一个写入数据的位置
+char* kkli::VirtualMachine::getNextDataPos(int dataType, std::string format) {
+	DEBUG_VM("VirtualMachine::getNextDataPos(" + std::to_string(dataType), FORMAT(format));
+	if (dataType == CHAR_TYPE) {
+		return nextData;
+	}
+	else {
+		dataAlignment(FORMAT(format));
+		return nextData;
+	}
 }
 
 //获取内存信息

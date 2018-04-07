@@ -35,6 +35,10 @@ kkli::Lexer::Lexer(std::string sourceFile, std::string format) {
 	DEBUG_LEXER_SYMBOL_TABLE(table->getSymbolTableInfo(), FORMAT(format));
 
 	std::ifstream inFile(sourceFile);
+	if (!inFile.good()) {
+		throw Error("can't open file: " + sourceFile);
+	}
+
 	inFile >> std::noskipws;    //²»Ìø¹ý¿Õ°×
 
 	char buff[1000000];
@@ -224,7 +228,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			curr = get();
 
 			//¼ÇÂ¼×Ö·û´®ÆðÊ¼Î»ÖÃ
-			value = reinterpret_cast<int>(vm->getNextDataPos());
+			value = reinterpret_cast<int>(vm->getNextDataPos(CHAR_TYPE, FORMAT(format)));
 
 			while (curr != '"' && curr != END) {
 
@@ -244,7 +248,8 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 				}
 			}
 
-			//TODO: Ä©Î²Ìí¼Ó0£¿
+			//Ä©Î²Ìí¼Ó×Ö·û '\0'
+			vm->addDataChar(0, FORMAT(format));
 
 			if (curr == END) {
 				throw Error("Line " +std::to_string(line)+". Invalid string type, need \" to finish string.");

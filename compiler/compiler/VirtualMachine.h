@@ -34,6 +34,9 @@ namespace kkli {
 		char* nextData;    //下一个存放数据的位置
 		int* nextText;    //下一个存放指令的位置
 
+		//进行数据对齐
+		void dataAlignment(std::string format);
+
 		//程序中经常要用到寄存器，因此将其设置为public
 	public:
 		int* sp;    //sp寄存器
@@ -76,7 +79,7 @@ namespace kkli {
 		int* getStack() { return stack; }
 
 		//获取下一个存放位置
-		char* getNextDataPos() const { return nextData; }
+		char* getNextDataPos(int dataType, std::string format) ;
 		int* getNextTextPos() const { return nextText; }
 
 		//栈操作

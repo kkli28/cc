@@ -94,7 +94,7 @@ void kkli::Generator::global_decl(std::string format) {
 			Token& tk = table->getCurrentToken(FORMAT(format));
 			tk.klass = GLOBAL;
 			tk.dataType = type;
-			tk.value = reinterpret_cast<int>(vm->getNextDataPos());
+			tk.value = reinterpret_cast<int>(vm->getNextDataPos(INT_TYPE, FORMAT(format)));
 			vm->addDataInt(0, FORMAT(format));  //添加一个0，为这个变量占据写入值的位置，避免这个位置被其他变量使用。
 		}
 		
@@ -437,7 +437,6 @@ void kkli::Generator::expression(int priority, std::string format) {
 		vm->addInst(I_IMM, FORMAT(format));
 		vm->addInstData(tokenInfo.second, FORMAT(format));
 
-		vm->addDataChar('\0', FORMAT(format));
 		exprType = PTR_TYPE;
 		DEBUG_GENERATOR(std::string("[STRING] ") + reinterpret_cast<char*>(tokenInfo.second), FORMAT(format));
 
