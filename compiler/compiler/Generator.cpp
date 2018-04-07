@@ -175,25 +175,17 @@ void kkli::Generator::func_decl(std::string format) {
 	match(LBRACE, FORMAT(format));
 	func_body(FORMAT(format));
 	
-	/*
-	
-		DEBUG_GENERATOR("before recover: \n" + table->getSymbolTableInfo());
-	}
-	*/
+	DEBUG_GENERATOR_SYMBOL("\n[======== before restore ========]" + table->getSymbolTableInfo(), FORMAT(format));
 
 	//恢复全局变量
-	std::vector<Token> tb = table->getTable();
+	std::vector<Token>& tb = table->getTable();
 	for (auto& tk : tb) {
 		if (tk.klass == LOCAL) {
 			tk.restoreInfo(FORMAT(format));
 		}
 	}
 
-	/*
-	
-		DEBUG_GENERATOR("After restore: \n" + table->getSymbolTableInfo());
-	}
-	*/
+	DEBUG_GENERATOR_SYMBOL("\n[======== after restore ========] " + table->getSymbolTableInfo(), FORMAT(format));
 }
 
 //函数参数定义
@@ -232,11 +224,7 @@ void kkli::Generator::func_param(std::string format) {
 			throw Error(lexer.getLine(), "wrong param declaration!");
 		}
 
-		/*
-		
-			DEBUG_GENERATOR("before backup: " + table->getSymbolTableInfo());
-		}
-		*/
+		DEBUG_GENERATOR_SYMBOL("\n[======== before backup ========] " + table->getSymbolTableInfo(), "");
 
 		//备份全局变量信息，并填入局部变量信息
 		Token& tk = table->getCurrentToken(FORMAT(format));
@@ -245,12 +233,8 @@ void kkli::Generator::func_param(std::string format) {
 		tk.dataType = dataType;
 		tk.value = params++;
 		
-		/*
+		DEBUG_GENERATOR_SYMBOL("\n[======== after backup ========] " + table->getSymbolTableInfo(), "");
 		
-			DEBUG_GENERATOR("after backup: " + table->getSymbolTableInfo());
-		}
-		*/
-
 		if (tokenInfo.first == COMMA) {
 			match(COMMA, FORMAT(format));
 		}
@@ -297,12 +281,16 @@ void kkli::Generator::func_body(std::string format) {
 				throw Error(lexer.getLine(), "bad local declaration.");
 			}
 
+			DEBUG_GENERATOR_SYMBOL("\n[======== before backup ========] " + table->getSymbolTableInfo(), "");
+
 			//存储局部变量
 			Token& currToken = table->getCurrentToken(FORMAT(format));
 			currToken.saveInfo(FORMAT(format));
 			currToken.klass = LOCAL;
 			currToken.dataType = dataType;
 			currToken.value = ++variableIndex;
+
+			DEBUG_GENERATOR_SYMBOL("\n[======== before backup ========] " + table->getSymbolTableInfo(), "");
 
 			if (tokenInfo.first == COMMA) {
 				match(COMMA, FORMAT(format));
@@ -656,11 +644,13 @@ void kkli::Generator::expression(int priority, std::string format) {
 		if (tokenInfo.first == NUM) {
 			vm->addInst(I_IMM, FORMAT(format));
 			vm->addInstData(-tokenInfo.second, FORMAT(format));
+			match(NUM, FORMAT(format));
 		}
 		else {
 			//-a 等价于 (-1)*a
 			vm->addInst(I_IMM, FORMAT(format));
 			vm->addInstData(-1, FORMAT(format));
+			vm->addInst(I_PUSH, FORMAT(format));
 			expression(INC, FORMAT(format));
 			vm->addInst(I_MUL, FORMAT(format));
 		}
