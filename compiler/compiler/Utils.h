@@ -10,8 +10,7 @@
 namespace kkli {
 
 #define FORMAT(f) (f+"    ")
-#define WARNNING Warnning::getInstance()
-#define DEBUG_TO_FILE false
+#define WARNNING kkli::Warning::getInstance()
 
 	//========================================
 	// Error: 错误类，用于生成程序中异常信息
@@ -51,9 +50,11 @@ namespace kkli {
 		}
 
 		void output()const {
+			std::cout << std::endl;
 			for (auto str : warnings) {
 				std::cout << str << std::endl;
 			}
+			std::cout << std::endl;
 		}
 	};
 
@@ -63,11 +64,11 @@ namespace kkli {
 	class Debug {
 	public:
 		static void output(const std::string& desc, std::string format) {
-			if (DEBUG_TO_FILE) {
-				static std::ofstream outFile("file/debug.txt", std::ios::app);
-				outFile << format << desc << std::endl;
-			}
-			else std::cout << format << desc << std::endl;
+			std::cout << format << desc << std::endl;
+		}
+		static void outputToFile(const std::string& desc, std::string format) {
+			static std::ofstream outFile("file/debug.txt", std::ios::app);
+			outFile << format << desc << std::endl;
 		}
 		static void clear() {
 			static std::ofstream outFile("file/debug.txt", std::ios::ate);

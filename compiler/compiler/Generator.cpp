@@ -38,15 +38,15 @@ void kkli::Generator::global_decl(std::string format) {
 	DEBUG_GENERATOR("Generator::global_decl()", format);
 
 	int type;  //全局定义的类型
-	baseType = INT_TYPE;  //基本类型默认为INT_TYPE
+	baseType = INT_TYPE;
 
-	//enum常量定义
+	//enum定义
 	if (tokenInfo.first == ENUM) {
 		enum_decl(FORMAT(format));
 		return;
 	}
 
-	//全局变量或函数定义的类型
+	//全局变量或函数的定义
 	if (tokenInfo.first == INT) {
 		match(INT, FORMAT(format));
 	}
@@ -303,7 +303,7 @@ void kkli::Generator::func_body(std::string format) {
 
 		match(SEMICON, FORMAT(format));
 	}
-	DEBUG_GENERATOR("[end variable decl]", format);
+	DEBUG_GENERATOR("[end variable decl]", FORMAT(format));
 
 	//在栈上留下保存变量所需的空间，并进入函数
 	vm->addInst(I_ENT, FORMAT(format));

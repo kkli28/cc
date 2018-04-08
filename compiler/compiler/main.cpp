@@ -26,15 +26,16 @@ int main()
 		kkli::Generator gen(sourceFile);
 		gen.gen("");
 
-		cout << "runing..." << endl;
 		kkli::VirtualMachine* vm = kkli::VirtualMachine::getInstance();
 		kkli::Token& tk = kkli::SymbolTable::getInstance()->getMainToken("");
-		
 		vm->pc = reinterpret_cast<int*>(tk.value);
 		vm->deleteTopInst("");
 		vm->deleteTopInst("");
 		vm->addInst(I_EXIT, "");
-		
+
+		WARNNING->output();
+
+		cout << "runing..." << endl;
 		vm->run("");
 	}
 	catch (const kkli::Error& err) {
@@ -43,8 +44,10 @@ int main()
 
 	system("pause");
 	getchar();
-	getchar();
-	getchar();
-	getchar();
+	if (DEBUG_MODE) {
+		getchar();
+		getchar();
+		getchar();
+	}
     return 0;
 }
