@@ -7,62 +7,62 @@ void E(int var, int val){
 }
 
 void func11(int a){
-    printf("func11, a = %d\n", a);
+    //printf("func11, a = %d\n", a);
     E(a, 1);
 }
 void func12(char a){
-    printf("func12, a = %c\n", a);
+    //printf("func12, a = %c\n", a);
     E(a, 'a');
 }
 
 void func21(int a, int b){
-    printf("func21, a = %d, b = %d\n", a, b);
+    //printf("func21, a = %d, b = %d\n", a, b);
     E(a, 1);
     E(b, 2);
 }
 void func22(char a, char b){
-    printf("func22, a = %c, b = %c\n", a, b);
+    //printf("func22, a = %c, b = %c\n", a, b);
     E(a, 'a');
     E(b, 'b');
 }
 void func23(int a, char b){
-    printf("func23, a = %d, b = %c\n", a, b);
+    //printf("func23, a = %d, b = %c\n", a, b);
     E(a, 1);
     E(b, 'b');
 }
 void func24(char a, int b){
-    printf("func24, a = %c, b = %d\n", a, b);
+    //printf("func24, a = %c, b = %d\n", a, b);
     E(a, 'a');
     E(b, 2);
 }
 
 void func31(int a, int b, int c){
-    printf("func31, a = %d, b = %d, c = %d\n", a, b, c);
+    //printf("func31, a = %d, b = %d, c = %d\n", a, b, c);
     E(a, 1);
     E(b, 2);
     E(c, 3);
 }
 void func32(char a, char b, char c){
-    printf("func32, a = %c, b = %c, c = %c\n", a, b, c);
+    //printf("func32, a = %c, b = %c, c = %c\n", a, b, c);
     E(a, 'a');
     E(b, 'b');
     E(c, 'c');
 }
 void func33(int a, char b, int c){
-    printf("func33, a = %d, b = %c, c = %d\n", a, b, c);
+    //printf("func33, a = %d, b = %c, c = %d\n", a, b, c);
     E(a, 1);
     E(b, 'b');
     E(c, 3);
 }
 void func34(char a, int b, char c){
-    printf("func34, a = %c, b = %d, c = %c\n", a, b, c);
+    //printf("func34, a = %c, b = %d, c = %c\n", a, b, c);
     E(a, 'a');
     E(b, 2);
     E(c, 'c');
 }
 
 void func4(int a, int b, int c, int d){
-    printf("func4, a = %d, b = %d, c = %d, d = %d\n", a, b, c, d);
+    //printf("func4, a = %d, b = %d, c = %d, d = %d\n", a, b, c, d);
     E(a, -1);
     E(b, -2);
     E(c, -3);
@@ -70,8 +70,8 @@ void func4(int a, int b, int c, int d){
 }
 
 void func51(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j){
-    printf("func51, a = %d, b = %d, c = %d, d = %d, e = %d, ", a, b, c, d, e);
-    printf("f = %d, g = %d, h = %d, i = %d, j = %d\n", f, g, h, i, j);
+    //printf("func51, a = %d, b = %d, c = %d, d = %d, e = %d, ", a, b, c, d, e);
+    //printf("f = %d, g = %d, h = %d, i = %d, j = %d\n", f, g, h, i, j);
     E(a, -1);
     E(b, 2);
     E(c, -3);
@@ -84,8 +84,8 @@ void func51(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j
     E(j, 0);
 }
 void func52(char a, char b, char c, char d, char e, char f, char g, char h, char i, char j){
-    printf("func52, a = %c, b = %c, c = %c, d = %c, e = %c, ", a, b, c, d, e);
-    printf("f = %c, g = %c, h = %c, i = %c, j = %c\n", f, g, h, i, j);
+    //printf("func52, a = %c, b = %c, c = %c, d = %c, e = %c, ", a, b, c, d, e);
+    //printf("f = %c, g = %c, h = %c, i = %c, j = %c\n", f, g, h, i, j);
     E(a, 'a');
     E(b, 'b');
     E(c, 'c');
@@ -98,8 +98,8 @@ void func52(char a, char b, char c, char d, char e, char f, char g, char h, char
     E(j, 'j');
 }
 void func53(char a, int b, char c, int d, char e, int f, char g, int h ,char i, int j){
-    printf("func53, a = %c, b = %d, c = %c, d = %d, e = %c, ", a, b, c, d, e);
-    printf("f = %d, g = %c, h = %d, i = %c, j = %d\n", f, g, h, i, j);
+    //printf("func53, a = %c, b = %d, c = %c, d = %d, e = %c, ", a, b, c, d, e);
+    //printf("f = %d, g = %c, h = %d, i = %c, j = %d\n", f, g, h, i, j);
     E(a, 'a');
     E(b, 2);
     E(c, 'c');
