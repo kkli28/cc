@@ -24,6 +24,8 @@ kkli::VirtualMachine::VirtualMachine() {
 	bp = sp;
 	pc = text;
 	ax = 0;
+
+	needDataAlignment = false;
 }
 
 //重置所有信息
@@ -43,20 +45,31 @@ void kkli::VirtualMachine::reset(std::string format) {
 void kkli::VirtualMachine::addDataChar(char elem, std::string format) {
 	DEBUG_VM("VirtualMachine::addCharData(" + std::to_string(elem) + ")", format);
 
-	if (nextData == data + SEGMENT_SIZE) throw Error("VirtualMachine::addCharData(): data overflow");
+	if (nextData >= data + SEGMENT_SIZE) throw Error("VirtualMachine::addCharData(): data overflow");
 
 	*(reinterpret_cast<int*>(nextData)) = elem;
 	++nextData;
+
+	//char型数据添加后，不在对齐位置，因此后续有对齐需求时，必须进行对齐
+	needDataAlignment = true;
 }
 
 //添加int型数据
 void kkli::VirtualMachine::addDataInt(int elem, std::string format) {
 	DEBUG_VM("VirtualMachine::addIntData(" + std::to_string(elem) + ")", format);
 	
-	dataAlignment(FORMAT(format));
+	if (needDataAlignment) {
+		dataAlignment(FORMAT(format));
+	}
 	
+	if (nextData >= data + SEGMENT_SIZE) {
+		throw Error("VirtualMachine::addDataInt(): data overflow.");
+	}
 	*(reinterpret_cast<int*>(nextData)) = elem;
 	nextData += 4;
+
+	//int型数据添加后，自动是在对齐位置，如果后续有对齐需求，则无需再进行对齐
+	needDataAlignment = false;
 }
 
 //添加指令
@@ -114,23 +127,24 @@ void kkli::VirtualMachine::push(int elem, std::string format) {
 void kkli::VirtualMachine::dataAlignment(std::string format) {
 	DEBUG_VM("[before data_align] nextData = "
 		+ std::to_string(reinterpret_cast<int>(nextData)) + ".", FORMAT(format));
-
+	
 	nextData = reinterpret_cast<char*>((reinterpret_cast<int>(nextData) + 4) & (-4));
 
 	DEBUG_VM("[after data_align] nextData = "
 		+ std::to_string(reinterpret_cast<int>(nextData)) + ".", FORMAT(format));
 
 	if (nextData >= data + SEGMENT_SIZE) throw Error("VirtualMachine::addIntData(): data overflow");
+	needDataAlignment = false;
 }
 
 //获取下一个写入数据的位置
 char* kkli::VirtualMachine::getNextDataPos(int dataType, std::string format) {
-	DEBUG_VM("VirtualMachine::getNextDataPos(" + std::to_string(dataType) + ")", FORMAT(format));
+	DEBUG_VM("VirtualMachine::getNextDataPos(" + Token::getDataTypeName(dataType) + ")", FORMAT(format));
 	if (dataType == CHAR_TYPE) {
 		return nextData;
 	}
 	else {
-		dataAlignment(FORMAT(format));
+		if (needDataAlignment) dataAlignment(FORMAT(format));
 		return nextData;
 	}
 }

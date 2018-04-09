@@ -7,27 +7,27 @@
 #include <tchar.h>
 
 //是否启用调试信息
-#define DEBUG_MODE false
+#define DEBUG_MODE true
 
 //VM调试信息
 #define OUTPUT_VM_ACTIONS (DEBUG_MODE && true)
-#define OUTPUT_VM_EXECUTE_ACTIONS (OUTPUT_VM_ACTIONS && false)
+#define OUTPUT_VM_EXECUTE_ACTIONS (OUTPUT_VM_ACTIONS && true)
 
 //Token调试信息
-#define OUTPUT_TOKEN_ACTIONS (DEBUG_MODE && false)
+#define OUTPUT_TOKEN_ACTIONS (DEBUG_MODE && true)
 
 //Symbol调试信息
-#define OUTPUT_SYMBOL_TABLE_ACTIONS (DEBUG_MODE && false)
+#define OUTPUT_SYMBOL_TABLE_ACTIONS (DEBUG_MODE && true)
 
 //Lexer调试信息
 #define OUTPUT_LEXER_ACTIONS (DEBUG_MODE && true)
-#define OUTPUT_LEXER_SOURCE_INFO (OUTPUT_LEXER_ACTIONS && false)
-#define OUTPUT_LEXER_SYMBOL_INFO (OUTPUT_LEXER_ACTIONS && false)
+#define OUTPUT_LEXER_SOURCE_INFO (OUTPUT_LEXER_ACTIONS && true)
+#define OUTPUT_LEXER_SYMBOL_INFO (OUTPUT_LEXER_ACTIONS && true)
 #define OUTPUT_LEXER_NEXT_INFO (OUTPUT_LEXER_ACTIONS && true)
 
 //Generator调试信息
 #define OUTPUT_GENERATOR_ACTIONS (DEBUG_MODE && true)
-#define OUTPUT_GENERATOR_SYMBOL_INFO (OUTPUT_GENERATOR_ACTIONS && false)
+#define OUTPUT_GENERATOR_SYMBOL_INFO (OUTPUT_GENERATOR_ACTIONS && true)
 
 //简化调试语句
 #define DEBUG_VM(arg1, arg2) if(OUTPUT_VM_ACTIONS){ Debug::output(arg1, arg2); }

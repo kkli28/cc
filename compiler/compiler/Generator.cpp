@@ -89,22 +89,44 @@ void kkli::Generator::global_decl(std::string format) {
 			func_decl(FORMAT(format));
 		}
 
-		//全局变量声明之后必须为分隔符（逗号或分号）
-		else if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON) {
-			throw Error(lexer.getLine(), "wrong variables declaration.");
-		}
-
-		//Tips: 处理后续符号为ASSIGN的情况，将初始值写入tk.value，以实现变量声明时初始化。
+		//全局变量
 		else {
+			//声明或定义后必须为分隔符
+			if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON && tokenInfo.first != ASSIGN) {
+				throw Error(lexer.getLine(), "wrong variables declaration.");
+			}
+
 			Token& tk = table->getCurrentToken(FORMAT(format));
 			tk.klass = GLOBAL;
 			tk.dataType = type;
 			tk.value = reinterpret_cast<int>(vm->getNextDataPos(INT_TYPE, FORMAT(format)));
 			vm->addDataInt(0, FORMAT(format));  //添加一个0，为这个变量占据写入值的位置，避免这个位置被其他变量使用。
-		}
-		
-		if (tokenInfo.first == COMMA) {
-			match(COMMA, FORMAT(format));
+
+			//变量初始化
+			if (tokenInfo.first == ASSIGN) {
+
+				//将全局变量的地址入栈，以便使用SI/SC存储表达式的值
+				vm->addInst(I_IMM, FORMAT(format));
+				vm->addInstData(tk.value, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+
+				match(ASSIGN, FORMAT(format));
+				expression(ASSIGN, FORMAT(format));
+				if (tk.dataType != exprType) {
+					WARNING->add(lexer.getLine(), Token::getDataTypeName(tk.dataType) + " type variable " + tk.name
+						+ " got " + Token::getDataTypeName(exprType) + " type expression.");
+				}
+				if (tk.dataType == CHAR_TYPE) {
+					vm->addInst(I_SC, FORMAT(format));
+				}
+				else {
+					vm->addInst(I_SI, FORMAT(format));
+				}
+			}
+
+			if (tokenInfo.first == COMMA) {
+				match(COMMA, FORMAT(format));
+			}
 		}
 	}
 

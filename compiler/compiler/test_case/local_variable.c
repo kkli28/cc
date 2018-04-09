@@ -13,16 +13,19 @@ void func(){
     printf("define b\n");
     int c;
     printf("define c\n");
-    a= 1;
+    a = 1;
+    printf("a = %d\n", a);
     b = 2;
-     c= -1;
-     printf("a = %d\n", a);
-     printf("b = %d\n", b);
-     int d;
-     printf("define d\n");
-     d=-2;
-     printf("c = %d\n", c);
-     printf("d = %d\n", d);
+    printf("b = %d\n", b);
+    c= -1;
+    printf("c = %d\n", c);
+    printf("a + b + c = %d\n", a + b + c);
+    int d;
+    printf("define d\n");
+    d=-2;
+    printf("d = %d", d);
+    printf("a + b + c + d = %d\n", a + b + c + d);
+    printf("a - b - c - d = %d\n", a - b - c - d);
 }
 
 int main(){

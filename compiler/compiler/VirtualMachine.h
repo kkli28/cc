@@ -33,6 +33,7 @@ namespace kkli {
 		int* stack;       //栈
 		char* nextData;    //下一个存放数据的位置
 		int* nextText;    //下一个存放指令的位置
+		bool needDataAlignment;  //是否需要数据对其
 
 		//进行数据对齐
 		void dataAlignment(std::string format);

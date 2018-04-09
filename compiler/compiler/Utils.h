@@ -10,7 +10,7 @@
 namespace kkli {
 
 #define FORMAT(f) (f+"    ")
-#define WARNNING kkli::Warning::getInstance()
+#define WARNING kkli::Warning::getInstance()
 
 	//========================================
 	// Error: 错误类，用于生成程序中异常信息
