@@ -54,6 +54,9 @@ void kkli::Generator::global_decl(std::string format) {
 		match(CHAR, FORMAT(format));
 		baseType = CHAR_TYPE;
 	}
+	else {
+		throw Error(lexer.getLine(), "bad type [" + Token::getTokenTypeName(tokenInfo.first) + "]");
+	}
 
 	while (tokenInfo.first != SEMICON && tokenInfo.first != RBRACE) {
 		type = baseType;
@@ -66,6 +69,7 @@ void kkli::Generator::global_decl(std::string format) {
 
 		DEBUG_GENERATOR("type = " + Token::getDataTypeName(type), FORMAT(format));
 		if (tokenInfo.first != ID) {
+			std::cout << "tokenInfo.first: " << Token::getTokenTypeName(tokenInfo.first) << std::endl;
 			throw Error(lexer.getLine(), "expected token [ID]");
 		}
 
@@ -105,7 +109,7 @@ void kkli::Generator::global_decl(std::string format) {
 	}
 
 	DEBUG_GENERATOR(std::string("now tokenInfo.first = ") + (tokenInfo.first == SEMICON ? "SEMICON" : "RBRACE"), FORMAT(format));
-	tokenInfo = lexer.next(FORMAT(format));
+	tokenInfo = lexer.next(FORMAT(format));  //不能用match!!!
 }
 
 //enum定义
@@ -253,71 +257,64 @@ void kkli::Generator::func_body(std::string format) {
 	DEBUG_GENERATOR("Generator::func_body()", format);
 
 	match(LBRACE, FORMAT(format));
-	int variableIndex = indexOfBP;  //局部变量在栈上相对于bp的位置
-
-	DEBUG_GENERATOR("[start variable decl]", FORMAT(format));
-
-	//局部变量定义
-	while (tokenInfo.first == INT || tokenInfo.first == CHAR) {
-		baseType = (tokenInfo.first == INT) ? INT_TYPE : CHAR_TYPE;
-		match(tokenInfo.first, FORMAT(format));
-
-		while (tokenInfo.first != SEMICON) {
-			int dataType = baseType;
-
-			//多级指针
-			while (tokenInfo.first == MUL) {
-				match(MUL, FORMAT(format));
-				dataType += PTR_TYPE;
-			}
-
-			if (tokenInfo.first != ID) {
-				throw Error(lexer.getLine(), "bad local declaration.");
-			}
-
-			if (table->getCurrentToken(FORMAT(format)).klass == LOCAL) {
-				throw Error(lexer.getLine(), "duplicate local declaration.");
-			}
-
-			match(ID, FORMAT(format));
-
-			if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON) {
-				throw Error(lexer.getLine(), "bad local declaration.");
-			}
-
-			DEBUG_GENERATOR_SYMBOL("\n[======== before backup ========] " + table->getSymbolTableInfo(), "");
-
-			//存储局部变量
-			Token& currToken = table->getCurrentToken(FORMAT(format));
-			currToken.saveInfo(FORMAT(format));
-			currToken.klass = LOCAL;
-			currToken.dataType = dataType;
-			currToken.value = ++variableIndex;
-
-			DEBUG_GENERATOR_SYMBOL("\n[======== before backup ========] " + table->getSymbolTableInfo(), "");
-
-			if (tokenInfo.first == COMMA) {
-				match(COMMA, FORMAT(format));
-			}
-		}
-
-		match(SEMICON, FORMAT(format));
-	}
-	DEBUG_GENERATOR("[end variable decl]", FORMAT(format));
-
-	//在栈上留下保存变量所需的空间，并进入函数
+	
 	vm->addInst(I_ENT, FORMAT(format));
-	vm->addInstData(variableIndex - indexOfBP, FORMAT(format));  //Tips: 这里可以放入0，然后一直记录变量count，最后回填，实现变量在函数体中间定义。
+	int* entCount = vm->getNextTextPos();  //记录存储变量个数的位置
+	vm->addInstData(0, FORMAT(format));
 
-	DEBUG_GENERATOR("[start statement decl]", FORMAT(format));
-
-	//语句定义
+	int variableIndex = indexOfBP;
 	while (tokenInfo.first != RBRACE) {
-		statement(FORMAT(format));
+		if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
+			baseType = (tokenInfo.first == INT) ? INT_TYPE : CHAR_TYPE;
+			match(tokenInfo.first, FORMAT(format));
+
+			while (tokenInfo.first != SEMICON) {
+				int dataType = baseType;
+
+				//多级指针
+				while (tokenInfo.first == MUL) {
+					match(MUL, FORMAT(format));
+					dataType += PTR_TYPE;
+				}
+
+				if (tokenInfo.first != ID) {
+					throw Error(lexer.getLine(), "bad local declaration.");
+				}
+
+				if (table->getCurrentToken(FORMAT(format)).klass == LOCAL) {
+					throw Error(lexer.getLine(), "duplicate local declaration.");
+				}
+
+				match(ID, FORMAT(format));
+
+				if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON) {
+					throw Error(lexer.getLine(), "bad local declaration.");
+				}
+
+				DEBUG_GENERATOR_SYMBOL("\n[======== before backup ========] " + table->getSymbolTableInfo(), "");
+
+				//存储局部变量
+				Token& currToken = table->getCurrentToken(FORMAT(format));
+				currToken.saveInfo(FORMAT(format));
+				currToken.klass = LOCAL;
+				currToken.dataType = dataType;
+				currToken.value = ++variableIndex;
+
+				DEBUG_GENERATOR_SYMBOL("\n[======== before backup ========] " + table->getSymbolTableInfo(), "");
+
+				if (tokenInfo.first == COMMA) {
+					match(COMMA, FORMAT(format));
+				}
+			}
+
+			match(SEMICON, FORMAT(format));
+		}
+		else {
+			statement(FORMAT(format));
+		}
 	}
-
-	DEBUG_GENERATOR("[end statement decl]", FORMAT(format));
-
+	
+	*entCount = variableIndex - indexOfBP;  //回填变量个数
 	vm->addInst(I_LEV, FORMAT(format));
 }
 
