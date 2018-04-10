@@ -7,7 +7,7 @@
 #include <tchar.h>
 
 //是否启用调试信息
-#define DEBUG_MODE true
+#define DEBUG_MODE false
 
 //VM调试信息
 #define OUTPUT_VM_ACTIONS (DEBUG_MODE && true)

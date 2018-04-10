@@ -103,25 +103,35 @@ void kkli::Generator::global_decl(std::string format) {
 			vm->addDataInt(0, FORMAT(format));  //添加一个0，为这个变量占据写入值的位置，避免这个位置被其他变量使用。
 
 			//变量初始化
+			//TODO: 需要仔细检查
 			if (tokenInfo.first == ASSIGN) {
 
-				//将全局变量的地址入栈，以便使用SI/SC存储表达式的值
-				vm->addInst(I_IMM, FORMAT(format));
-				vm->addInstData(tk.value, FORMAT(format));
-				vm->addInst(I_PUSH, FORMAT(format));
-
 				match(ASSIGN, FORMAT(format));
-				expression(ASSIGN, FORMAT(format));
-				if (tk.dataType != exprType) {
-					WARNING->add(lexer.getLine(), Token::getDataTypeName(tk.dataType) + " type variable " + tk.name
-						+ " got " + Token::getDataTypeName(exprType) + " type expression.");
+				int factor = 1;
+				//int a = +1;  int a = -1;
+				if (tokenInfo.first == SUB || tokenInfo.first == ADD) {
+					tokenInfo = lexer.next(FORMAT(format));
+					factor = (tokenInfo.first == SUB ? -1 : 1);
+					if (tokenInfo.first != NUM) {
+						throw Error(lexer.getLine(), "bad variable definition.");
+					}
 				}
-				if (tk.dataType == CHAR_TYPE) {
-					vm->addInst(I_SC, FORMAT(format));
+				if (tokenInfo.first == NUM) {
+					if (tk.dataType >= PTR_TYPE) {
+						WARNING->add(lexer.getLine(), "assign a number to a pointer.");
+					}
+					*reinterpret_cast<int*>(tk.value) = factor*tokenInfo.second;
+				}
+				else if (tokenInfo.first == STRING) {
+					if (tk.dataType != CHAR_TYPE + PTR_TYPE) {
+						WARNING->add(lexer.getLine(), Token::getDataTypeName(tk.dataType) + " type variable " + tk.name + " get STRING type value.");
+					}
+					*reinterpret_cast<int*>(tk.value) = factor*tokenInfo.second;
 				}
 				else {
-					vm->addInst(I_SI, FORMAT(format));
+					throw Error(lexer.getLine(), "bad variable definition.");
 				}
+				tokenInfo = lexer.next(FORMAT(format));
 			}
 
 			if (tokenInfo.first == COMMA) {
