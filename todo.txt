@@ -10,7 +10,6 @@ x 5. 增加Warnning类型检查
   8. 注意expression中的level，某些错误可能是错误的优先级导致的。
   9. 表达式的类型需要注意，不能仅仅由左操作数来确定类型。
   10. 测试printf、exit、malloc等内置函数
-  11. 区分char型和number型，不能简单地将char型看做number型
+  11. 区分字符型和数字型，不能简单地将字符型看做数字型
   12. 支持各种C语言常用函数putchar，getchar，scanf等函数
-  13. 解决全局变量定义的问题
-  14. 写match()来替代tokenInfo = lexer.next(FORMAT(format));
+  13. 解决全局变量定义的问题（只允许常量进行初始化）
