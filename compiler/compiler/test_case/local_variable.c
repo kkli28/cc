@@ -23,7 +23,7 @@ void func(){
     int d;
     printf("define d\n");
     d=-2;
-    printf("d = %d", d);
+    printf("d = %d\n", d);
     printf("a + b + c + d = %d\n", a + b + c + d);
     printf("a - b - c - d = %d\n", a - b - c - d);
 }

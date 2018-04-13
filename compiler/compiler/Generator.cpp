@@ -85,7 +85,7 @@ void kkli::Generator::global_decl(std::string format) {
 			Token& tk = table->getCurrentToken(FORMAT(format));
 			tk.klass = FUNC;
 			tk.dataType = type;
-			tk.value = reinterpret_cast<int>(vm->getNextTextPos());
+			tk.value = reinterpret_cast<int>(vm->getNextTextPos());  //函数的位置：其第一条指令的位置
 			func_decl(FORMAT(format));
 		}
 
@@ -518,9 +518,13 @@ void kkli::Generator::expression(int priority, std::string format) {
 				if (tokenInfo.first == COMMA) {
 					match(COMMA, FORMAT(format));
 				}
+				else if (tokenInfo.first != RPAREN) {
+					throw Error(lexer.getLine(), "bad function call!");
+				}
 			}
 			match(RPAREN, FORMAT(format));
 
+			//验证函数调用的合法性
 			validFunctionCall(current, dataTypes, FORMAT(format));
 
 			//系统函数
@@ -1114,8 +1118,9 @@ void kkli::Generator::validFunctionCall(const Token& funcToken, const std::vecto
 	}
 	for (int i = 0; i < size1; ++i) {
 		if (funcToken.argsDataType[i] != dataTypes[i]) {
-			Warning::getInstance()->add(lexer.getLine(), "function '" + funcToken.name + "' need " +
-				Token::getDataTypeName(funcToken.argsDataType[i]) + " type argument at argument index " + std::to_string(i) + ".");
+			WARNING->add(lexer.getLine(), "function '" + funcToken.name + "' need " +
+				Token::getDataTypeName(funcToken.argsDataType[i]) + " type argument at argument index " + std::to_string(i) + ", but get "+
+			Token::getDataTypeName(dataTypes[i])+ " type.");
 		}
 	}
 }
