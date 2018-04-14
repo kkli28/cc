@@ -24,7 +24,7 @@ namespace kkli {
 		Error(int line, std::string i) {
 			info = "Line: " + std::to_string(line) + ". " + i;
 		}
-		std::string what()const { return "\n[Error] " + info + "\n"; }
+		virtual std::string what() const { return "\n[Error] " + info + "\n"; }
 	};
 
 	//========================================

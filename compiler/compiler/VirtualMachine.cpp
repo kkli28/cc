@@ -177,17 +177,16 @@ int kkli::VirtualMachine::run(std::string format) {
 	//循环执行指令，直到遇到退出指令或未知指令
 	while (1) {
 		++cycle;
-
+		
 		//取指令
 		inst = *pc;
 		++pc;
 
 		//输出执行的指令
-		std::string debugInfo = "\n";
-		debugInfo += getInstructionName(inst);
+		std::string debugInfo = getInstructionName(inst);
 		if (inst <= I_ADJ) debugInfo += "  " + std::to_string(*pc);
 		DEBUG_VM(debugInfo, format);
-
+		
 		//取立即数
 		if (inst == I_IMM) {
 			ax = *pc;

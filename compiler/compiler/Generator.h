@@ -20,7 +20,7 @@ namespace kkli {
 		SymbolTable* table;
 		VirtualMachine* vm;
 		std::pair<int, int> tokenInfo;
-		Token* currentFunc;    //当前函数的Token，用于记录该函数的参数个数及类型
+		int currFuncIndex;
 
 		//当前处理的定义的类型
 		int baseType;

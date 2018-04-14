@@ -32,6 +32,9 @@ void kkli::Token::restoreInfo(std::string format) {
 //添加函数参数类型
 void kkli::Token::addArgument(int dataType, std::string format) {
 	DEBUG_TOKEN("Token::addArgument(" + Token::getDataTypeName(dataType) + ")", format);
+	if (klass != FUNC) {
+		throw Error("Token::addArgument(" + getDataTypeName(dataType) + ": " + name + " this is not a function.");
+	}
 	argsDataType.push_back(dataType);
 }
 

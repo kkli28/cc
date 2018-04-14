@@ -41,9 +41,20 @@ namespace kkli {
 		//判断是否存在符号
 		bool has(int hash, std::string name, std::string format);
 
-		//获取当前符号
+		//获取当前符号（注意！若之后再有push_back，则token的引用将可能不再生效）
 		Token& getCurrentToken(std::string format) { 
 			return table[current]; 
+		}
+		int getCurrent(std::string format) {  //只获取current应该是更好的选项
+			return current;
+		}
+
+		//获取Token
+		Token& getToken(int index) {
+			if (index < 0 || index >= table.size()) {
+				throw Error("SymbolTable::getToken(" + std::to_string(index) + "), invalid index, table size is " + std::to_string(table.size()) + ".");
+			}
+			return table[index];
 		}
 
 		//获取符号表信息

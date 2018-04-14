@@ -22,9 +22,6 @@ int main()
 	}
 
 	try {
-		cout << "please check that the platform is x86 not x64" << endl;
-
-		cout << "code generating..." << endl;
 		kkli::Generator gen(sourceFile);
 		gen.gen("");
 
@@ -37,10 +34,7 @@ int main()
 
 		WARNING->output();
 
-		cout << "runing..." << endl;
 		vm->run("");
-
-		cout << "please check that the platform is x86 not x64" << endl;
 	}
 	catch (const kkli::Error& err) {
 		cout << err.what() << endl;

@@ -206,7 +206,7 @@ void kkli::Generator::enum_decl(std::string format) {
 void kkli::Generator::func_decl(std::string format) {
 	DEBUG_GENERATOR("Generator::func_del()", format);
 
-	currentFunc = &(table->getCurrentToken(FORMAT(format)));
+	currFuncIndex = table->getCurrent(FORMAT(format));
 	func_param(FORMAT(format));
 	func_body(FORMAT(format));
 	
@@ -260,8 +260,8 @@ void kkli::Generator::func_param(std::string format) {
 			throw Error(lexer.getLine(), "wrong param declaration!");
 		}
 
-		currentFunc->addArgument(dataType, FORMAT(format));  //记录函数参数的类型
-		DEBUG_GENERATOR("add " + Token::getDataTypeName(exprType) + " argument", FORMAT(format));
+		table->getToken(currFuncIndex).addArgument(dataType, FORMAT(format));  //记录函数参数的类型
+		DEBUG_GENERATOR("add " + Token::getDataTypeName(dataType) + " argument", FORMAT(format));
 
 		DEBUG_GENERATOR_SYMBOL("\n[======== before backup ========] " + table->getSymbolTableInfo(), "");
 
@@ -296,11 +296,13 @@ void kkli::Generator::func_body(std::string format) {
 
 	int variableIndex = indexOfBP;
 	while (tokenInfo.first != RBRACE) {
+
+		//局部变量
 		if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
 			baseType = (tokenInfo.first == INT) ? INT_TYPE : CHAR_TYPE;
 			match(tokenInfo.first, FORMAT(format));
 
-			while (tokenInfo.first != SEMICON) {
+			do {
 				int dataType = baseType;
 
 				//多级指针
@@ -319,7 +321,7 @@ void kkli::Generator::func_body(std::string format) {
 
 				match(ID, FORMAT(format));
 
-				if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON) {
+				if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON && tokenInfo.first != ASSIGN) {
 					throw Error(lexer.getLine(), "bad local declaration.");
 				}
 
@@ -337,10 +339,12 @@ void kkli::Generator::func_body(std::string format) {
 				if (tokenInfo.first == COMMA) {
 					match(COMMA, FORMAT(format));
 				}
-			}
+			} while (tokenInfo.first != SEMICON);
 
 			match(SEMICON, FORMAT(format));
 		}
+
+		//语句
 		else {
 			statement(FORMAT(format));
 		}
@@ -449,634 +453,642 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 	//一元表达式
 	DEBUG_GENERATOR("[unary expression]", FORMAT(format));
-	if (tokenInfo.first == ERROR) {
-		throw Error(lexer.getLine(), "bad identifier ERROR.");
-	}
-
-	else if (tokenInfo.first == END) {
-		throw Error(lexer.getLine(), "unexpected token EOF of expression.");
-	}
-
-	else if (tokenInfo.first == NUM) {
-		vm->addInst(I_IMM, FORMAT(format));
-		vm->addInstData(tokenInfo.second, FORMAT(format));
-		DEBUG_GENERATOR("[NUM] " + std::to_string(tokenInfo.second), FORMAT(format));
-
-		exprType = INT_TYPE;
-		match(NUM, FORMAT(format));
-	}
-
-	else if (tokenInfo.first == STRING) {
-		vm->addInst(I_IMM, FORMAT(format));
-		vm->addInstData(tokenInfo.second, FORMAT(format));
-
-		exprType = PTR_TYPE;
-		DEBUG_GENERATOR(std::string("[STRING] ") + reinterpret_cast<char*>(tokenInfo.second), FORMAT(format));
-
-		match(STRING, FORMAT(format));
-	}
-
-	else if (tokenInfo.first == SIZEOF) {
-		match(SIZEOF, FORMAT(format));
-		match(LPAREN, FORMAT(format));
-		exprType = INT_TYPE;
-		if (tokenInfo.first == INT) {
-			match(INT, FORMAT(format));
-		}
-		else if (tokenInfo.first == CHAR) {
-			match(CHAR, FORMAT(format));
-			exprType = CHAR_TYPE;
-		}
-		while (tokenInfo.first == MUL) {
-			match(MUL, FORMAT(format));
-			exprType = exprType + PTR_TYPE;
+	do {
+		if (tokenInfo.first == ERROR) {
+			throw Error(lexer.getLine(), "bad identifier ERROR.");
 		}
 
-		DEBUG_GENERATOR("[SIZEOF] " + Token::getDataTypeName(exprType), FORMAT(format));
-		match(RPAREN, FORMAT(format));
-		vm->addInst(I_IMM, FORMAT(format));
-		vm->addInstData(exprType == CHAR_TYPE ? 1 : 4, FORMAT(format));
-		exprType = INT;
-	}
-
-	else if (tokenInfo.first == ID) {
-		//三种可能：函数调用、enum变量、全局/局部变量
-		DEBUG_GENERATOR("[ID]", FORMAT(format));
-
-		Token& current = table->getCurrentToken(FORMAT(format));
-		match(ID, FORMAT(format));
-
-		//函数调用
-		if (tokenInfo.first == LPAREN) {
-			match(LPAREN, FORMAT(format));
-			std::vector<int> dataTypes;  //记录函数调用中的参数类型
-
-			while (tokenInfo.first != RPAREN) {
-				expression(ASSIGN, FORMAT(format));
-				dataTypes.push_back(exprType);
-				vm->addInst(I_PUSH, FORMAT(format));
-				if (tokenInfo.first == COMMA) {
-					match(COMMA, FORMAT(format));
-				}
-				else if (tokenInfo.first != RPAREN) {
-					throw Error(lexer.getLine(), "bad function call!");
-				}
-			}
-			match(RPAREN, FORMAT(format));
-
-			//验证函数调用的合法性
-			validFunctionCall(current, dataTypes, FORMAT(format));
-
-			//系统函数
-			if (current.klass == SYS_FUNC) {
-				DEBUG_GENERATOR("[SYS_FUNC]", FORMAT(format));
-				vm->addInst(current.value, FORMAT(format));
-			}
-
-			//用户自定义函数
-			else if (current.klass == FUNC) {
-				DEBUG_GENERATOR("[CUSTOM_FUNC]", FORMAT(format));
-				vm->addInst(I_CALL, FORMAT(format));
-				vm->addInstData(current.value, FORMAT(format));
-			}
-			else {
-				throw Error(lexer.getLine(), "bad function call.");
-			}
-
-			//清除栈上参数
-			if (dataTypes.size() > 0) {
-				vm->addInst(I_ADJ, FORMAT(format));
-				vm->addInstData(dataTypes.size(), FORMAT(format));
-			}
-			exprType = current.dataType;
+		else if (tokenInfo.first == END) {
+			throw Error(lexer.getLine(), "unexpected token EOF of expression.");
 		}
 
-		//enum变量
-		else if (current.klass == NUMBER) {
-			DEBUG_GENERATOR("[enum variable]", FORMAT(format));
+		else if (tokenInfo.first == NUM) {
 			vm->addInst(I_IMM, FORMAT(format));
-			vm->addInstData(current.value, FORMAT(format));
+			vm->addInstData(tokenInfo.second, FORMAT(format));
+			DEBUG_GENERATOR("[NUM] " + std::to_string(tokenInfo.second), FORMAT(format));
+
 			exprType = INT_TYPE;
-		}
-
-		//普通变量
-		else {
-			if (current.klass == LOCAL) {
-				DEBUG_GENERATOR("[local variable]", FORMAT(format));
-				vm->addInst(I_LEA, FORMAT(format));
-				vm->addInstData(indexOfBP - current.value, FORMAT(format));
-			}
-			else if (current.klass == GLOBAL) {
-				DEBUG_GENERATOR("[global variable]", FORMAT(format));
-				vm->addInst(I_IMM, FORMAT(format));
-				vm->addInstData(current.value, FORMAT(format));
-			}
-			else {
-				throw Error(lexer.getLine(), "undefined variable.");
-			}
-
-			//默认操作是加载值（右值），如果后续是赋值，则抹掉I_LC/I_LI，只用其地址
-			exprType = current.dataType;
-			vm->addInst(exprType == CHAR_TYPE ? I_LC : I_LI, FORMAT(format));
-		}
-	}
-
-	else if (tokenInfo.first == LPAREN) {
-		match(LPAREN, FORMAT(format));
-
-		//强制类型转换
-		if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
-			int castType = (tokenInfo.first == CHAR) ? CHAR_TYPE : INT_TYPE;
-			match(tokenInfo.first, FORMAT(format));
-			while (tokenInfo.first == MUL) {
-				match(MUL, FORMAT(format));
-				castType += PTR_TYPE;
-			}
-			match(RPAREN, FORMAT(format));
-			DEBUG_GENERATOR("[cast] " + Token::getDataTypeName(castType), FORMAT(format));
-			expression(INC, FORMAT(format));  //需要优先级INC（高一级）
-			exprType = castType;
-		}
-
-		//括号表达式
-		else {
-			DEBUG_GENERATOR("[(expr)]", FORMAT(format));
-			expression(ASSIGN, FORMAT(format));
-			match(RPAREN, FORMAT(format));
-		}
-	}
-
-	else if (tokenInfo.first == MUL) {
-		DEBUG_GENERATOR("[MUL]", FORMAT(format));
-		//*a，即取某个地址的值
-		match(MUL, FORMAT(format));
-		expression(INC, FORMAT(format));
-		if (exprType >= PTR_TYPE) {
-			exprType -= PTR_TYPE;
-		}
-		else {
-			throw Error(lexer.getLine(), "bad dereference.");
-		}
-
-		//除了取一个char外，取int和取地址都是取int（默认int和指针字节数相同）
-		vm->addInst(exprType == CHAR_TYPE ? I_LC : I_LI, FORMAT(format));
-	}
-
-	else if (tokenInfo.first == AND) {
-		//取地址
-		DEBUG_GENERATOR("[AND]", FORMAT(format));
-		match(AND, FORMAT(format));
-		expression(INC, FORMAT(format));
-		int inst = vm->getTopInst(FORMAT(format));
-		if (inst == I_LC || inst == I_LI) {
-			vm->deleteTopInst(FORMAT(format));
-		}
-		else {
-			throw Error(lexer.getLine(), "bad address of.");
-		}
-
-		exprType = exprType + PTR_TYPE;
-		DEBUG_GENERATOR("exprType = " + Token::getDataTypeName(exprType), FORMAT(format));
-	}
-
-	else if (tokenInfo.first == NOT) {
-		DEBUG_GENERATOR("[NOT]", FORMAT(format));
-		match(NOT, FORMAT(format));
-		expression(INC, FORMAT(format));
-
-		//!expr 等价于 expr == 0
-		vm->addInst(I_PUSH, FORMAT(format));
-		vm->addInst(I_IMM, FORMAT(format));
-		vm->addInstData(0, FORMAT(format));
-		vm->addInst(I_EQ, FORMAT(format));
-
-		exprType = INT_TYPE;
-	}
-
-	else if (tokenInfo.first == TILDE) {
-		DEBUG_GENERATOR("[TILDE]", FORMAT(format));
-		match(TILDE, FORMAT(format));
-		expression(INC, FORMAT(format));
-
-		//~a 等价于 a^(-1)
-		vm->addInst(I_PUSH, FORMAT(format));
-		vm->addInst(I_IMM, FORMAT(format));
-		vm->addInstData(-1, FORMAT(format));
-		vm->addInst(I_XOR, FORMAT(format));
-
-		exprType = INT_TYPE;
-	}
-
-	else if (tokenInfo.first == ADD) {
-		DEBUG_GENERATOR("[ADD]", FORMAT(format));
-		//+a，啥也不做
-		match(ADD, FORMAT(format));
-		expression(INC, FORMAT(format));
-		exprType = INT_TYPE;
-	}
-
-	else if (tokenInfo.first == SUB) {
-		DEBUG_GENERATOR("[SUB]", FORMAT(format));
-		//-a
-		match(SUB, FORMAT(format));
-		if (tokenInfo.first == NUM) {
-			vm->addInst(I_IMM, FORMAT(format));
-			vm->addInstData(-tokenInfo.second, FORMAT(format));
 			match(NUM, FORMAT(format));
 		}
-		else {
-			//-a 等价于 (-1)*a
+
+		else if (tokenInfo.first == STRING) {
 			vm->addInst(I_IMM, FORMAT(format));
-			vm->addInstData(-1, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(INC, FORMAT(format));
-			vm->addInst(I_MUL, FORMAT(format));
+			vm->addInstData(tokenInfo.second, FORMAT(format));
+
+			exprType = PTR_TYPE;
+			DEBUG_GENERATOR(std::string("[STRING] ") + reinterpret_cast<char*>(tokenInfo.second), FORMAT(format));
+
+			match(STRING, FORMAT(format));
 		}
 
-		exprType = INT_TYPE;
-	}
-
-	else if (tokenInfo.first == INC || tokenInfo.first == DEC) {
-		DEBUG_GENERATOR("[INC/DEC]", FORMAT(format));
-
-		int tk = tokenInfo.first;
-		match(tk, FORMAT(format));
-		expression(INC, FORMAT(format));
-		if (vm->getTopInst(FORMAT(format)) == I_LC) {
-			vm->addInst(I_PUSH, FORMAT(format));
-			vm->addInst(I_LC, FORMAT(format));
-		}
-		else if (vm->getTopInst(FORMAT(format)) == I_LI) {
-			vm->addInst(I_PUSH, FORMAT(format));
-			vm->addInst(I_LI, FORMAT(format));
-		}
-		else {
-			throw Error(lexer.getLine(), "bad lvalue of pre-increment.");
-		}
-		vm->addInst(I_PUSH, FORMAT(format));
-		vm->addInst(I_IMM, FORMAT(format));
-		vm->addInstData(exprType > PTR_TYPE ? 4 : 1, FORMAT(format));
-		vm->addInst(tk == INC ? I_ADD : I_SUB, FORMAT(format));
-		vm->addInst(exprType == CHAR_TYPE ? I_SC : I_SI, FORMAT(format));
-	}
-
-	else {
-		throw Error(lexer.getLine(), "bad expression.");
-	}
-
-	//二元表达式
-	DEBUG_GENERATOR("[binary expression]", FORMAT(format));
-
-	while (tokenInfo.first >= priority) {
-		if (tokenInfo.first == ASSIGN) {
-			DEBUG_GENERATOR("[ASSIGN]", FORMAT(format));
-
-			int tempType = exprType;
-			match(ASSIGN, FORMAT(format));
-			if (vm->getTopInst(FORMAT(format)) == I_LI || vm->getTopInst(FORMAT(format)) == I_LC) {
-				vm->deleteTopInst(FORMAT(format));
-				vm->addInst(I_PUSH, FORMAT(format));
+		else if (tokenInfo.first == SIZEOF) {
+			match(SIZEOF, FORMAT(format));
+			match(LPAREN, FORMAT(format));
+			exprType = INT_TYPE;
+			if (tokenInfo.first == INT) {
+				match(INT, FORMAT(format));
 			}
-			else {
-				throw Error(lexer.getLine(), "bad lvalue in assignment.");
+			else if (tokenInfo.first == CHAR) {
+				match(CHAR, FORMAT(format));
+				exprType = CHAR_TYPE;
 			}
-			expression(ASSIGN, FORMAT(format));
-			exprType = tempType;
-			vm->addInst(exprType == CHAR_TYPE ? I_SC : I_SI, FORMAT(format));
-		}
-
-		else if (tokenInfo.first == COND) {
-			//expr ? a : b
-			DEBUG_GENERATOR("[COND]", FORMAT(format));
-
-			match(COND, FORMAT(format));
-			vm->addInst(I_JZ, FORMAT(format));
-			int* addr = vm->getNextTextPos();
-			vm->addInstData(0, FORMAT(format));      //占据一个位置用于写入跳转地址
-			expression(ASSIGN, FORMAT(format));
-			if (tokenInfo.first == COLON) {
-				match(COLON, FORMAT(format));
+			while (tokenInfo.first == MUL) {
+				match(MUL, FORMAT(format));
+				exprType = exprType + PTR_TYPE;
 			}
-			else {
-				throw Error(lexer.getLine(), "missing colon in conditional.");
+
+			DEBUG_GENERATOR("[SIZEOF] " + Token::getDataTypeName(exprType), FORMAT(format));
+			match(RPAREN, FORMAT(format));
+			vm->addInst(I_IMM, FORMAT(format));
+			vm->addInstData(exprType == CHAR_TYPE ? 1 : 4, FORMAT(format));
+			exprType = INT;
+		}
+
+		else if (tokenInfo.first == ID) {
+			//三种可能：函数调用、enum变量、全局/局部变量
+			DEBUG_GENERATOR("[ID]", FORMAT(format));
+
+			Token& current = table->getCurrentToken(FORMAT(format));
+			match(ID, FORMAT(format));
+
+			//函数调用
+			if (tokenInfo.first == LPAREN) {
+				match(LPAREN, FORMAT(format));
+				std::vector<int> dataTypes;  //记录函数调用中的参数类型
+
+				while (tokenInfo.first != RPAREN) {
+					expression(ASSIGN, FORMAT(format));
+					dataTypes.push_back(exprType);
+					vm->addInst(I_PUSH, FORMAT(format));
+					if (tokenInfo.first == COMMA) {
+						match(COMMA, FORMAT(format));
+					}
+					else if (tokenInfo.first != RPAREN) {
+						throw Error(lexer.getLine(), "bad function call!");
+					}
+				}
+				match(RPAREN, FORMAT(format));
+
+				//验证函数调用的合法性
+				validFunctionCall(current, dataTypes, FORMAT(format));
+
+				//系统函数
+				if (current.klass == SYS_FUNC) {
+					DEBUG_GENERATOR("[SYS_FUNC]", FORMAT(format));
+					vm->addInst(current.value, FORMAT(format));
+				}
+
+				//用户自定义函数
+				else if (current.klass == FUNC) {
+					DEBUG_GENERATOR("[CUSTOM_FUNC]", FORMAT(format));
+					vm->addInst(I_CALL, FORMAT(format));
+					vm->addInstData(current.value, FORMAT(format));
+				}
+				else {
+					throw Error(lexer.getLine(), "bad function call.");
+				}
+
+				//清除栈上参数
+				if (dataTypes.size() > 0) {
+					vm->addInst(I_ADJ, FORMAT(format));
+					vm->addInstData(dataTypes.size(), FORMAT(format));
+				}
+				exprType = current.dataType;
 			}
-			*addr = reinterpret_cast<int>(vm->getNextTextPos() + 2);
-			vm->addInst(I_JMP, FORMAT(format));
-			addr = vm->getNextTextPos();
-			vm->addInstData(0, FORMAT(format));     //占据一个位置用于写入跳转地址
-			expression(COND, FORMAT(format));
-			*addr = reinterpret_cast<int>(vm->getNextTextPos());
-		}
 
-		else if (tokenInfo.first == LOR) {
-			// ||
-			DEBUG_GENERATOR("[LOR]", FORMAT(format));
-
-			match(LOR, FORMAT(format));
-			vm->addInst(I_JNZ, FORMAT(format));
-			int* addr = vm->getNextTextPos();
-			vm->addInstData(0, FORMAT(format));
-			expression(LAN, FORMAT(format));
-			*addr = reinterpret_cast<int>(vm->getNextTextPos());
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == LAN) {
-			// &&
-			DEBUG_GENERATOR("[LAN]", FORMAT(format));
-
-			match(LAN, FORMAT(format));
-			vm->addInst(I_JZ, FORMAT(format));
-			int* addr = vm->getNextTextPos();
-			vm->addInstData(0, FORMAT(format));
-			expression(OR, FORMAT(format));
-			*addr = reinterpret_cast<int>(vm->getNextTextPos());
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == OR) {
-			// |
-			DEBUG_GENERATOR("[OR]", FORMAT(format));
-
-			match(OR, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(XOR, FORMAT(format));
-			vm->addInst(I_OR, FORMAT(format));
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == XOR) {
-			// ^
-			DEBUG_GENERATOR("[XOR]", FORMAT(format));
-
-			match(XOR, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(AND, FORMAT(format));
-			vm->addInst(I_XOR, FORMAT(format));
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == AND) {
-			// &
-			DEBUG_GENERATOR("[AND]", FORMAT(format));
-
-			match(AND, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(EQ, FORMAT(format));
-			vm->addInst(I_AND, FORMAT(format));
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == EQ) {
-			// ==
-			DEBUG_GENERATOR("[EQ]", FORMAT(format));
-
-			match(EQ, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(NE, FORMAT(format));
-			vm->addInst(I_EQ, FORMAT(format));
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == NE) {
-			//!=
-			DEBUG_GENERATOR("[NE]", FORMAT(format));
-
-			match(NE, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(LT, FORMAT(format));
-			vm->addInst(I_NE, FORMAT(format));
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == LT) {
-			// <
-			DEBUG_GENERATOR("[LT]", FORMAT(format));
-
-			match(LT, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(SHL, FORMAT(format));
-			vm->addInst(I_LT, FORMAT(format));
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == GT) {
-			// >
-			DEBUG_GENERATOR("[GT]", FORMAT(format));
-
-			match(GT, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(SHL, FORMAT(format));
-			vm->addInst(I_GT, FORMAT(format));
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == LE) {
-			// <=
-			DEBUG_GENERATOR("[LE]", FORMAT(format));
-
-			match(LE, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(SHL, FORMAT(format));
-			vm->addInst(I_LE, FORMAT(format));
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == GE) {
-			// >=
-			DEBUG_GENERATOR("[GE]", FORMAT(format));
-
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(SHL, FORMAT(format));
-			vm->addInst(I_GE, FORMAT(format));
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == SHL) {
-			// <<
-			DEBUG_GENERATOR("[SHL]", FORMAT(format));
-
-			match(SHL, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(ADD, FORMAT(format));
-			vm->addInst(I_SHL, FORMAT(format));
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == SHR) {
-			// >>
-			DEBUG_GENERATOR("[SHR]", FORMAT(format));
-
-			match(SHR, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(ADD, FORMAT(format));
-			vm->addInst(I_SHR, FORMAT(format));
-			exprType = INT_TYPE;
-		}
-
-		else if (tokenInfo.first == ADD) {
-			// a + b
-			DEBUG_GENERATOR("[ADD]", FORMAT(format));
-
-			int tempType = exprType;
-			match(ADD, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(MUL, FORMAT(format));
-			exprType = tempType;  //结果类型以左操作数为准
-			//问题：当 'a' + 1000 时会溢出吗？因为char型最大255
-
-
-			//非char*型指针，则加数乘以4再加到指针上
-			if (exprType > PTR_TYPE) {
-				vm->addInst(I_PUSH, FORMAT(format));
+			//enum变量
+			else if (current.klass == NUMBER) {
+				DEBUG_GENERATOR("[enum variable]", FORMAT(format));
 				vm->addInst(I_IMM, FORMAT(format));
-				vm->addInstData(4, FORMAT(format));
-				vm->addInst(MUL, FORMAT(format));
-			}
-			vm->addInst(I_ADD, FORMAT(format));
-		}
-
-		else if (tokenInfo.first == SUB) {
-			// a - b
-			DEBUG_GENERATOR("[SUB]", FORMAT(format));
-
-			match(SUB, FORMAT(format));
-			int tempType = exprType;
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(MUL, FORMAT(format));
-
-			//指针相减 p1 - p2
-			if (tempType > PTR_TYPE && tempType == exprType) {
-				DEBUG_GENERATOR("[SUB ptr - ptr]", FORMAT(format));
-
-				vm->addInst(I_SUB, FORMAT(format));
-				vm->addInst(I_PUSH, FORMAT(format));
-				vm->addInst(I_IMM, FORMAT(format));
-				vm->addInstData(4, FORMAT(format));
-				vm->addInst(I_DIV, FORMAT(format));
+				vm->addInstData(current.value, FORMAT(format));
 				exprType = INT_TYPE;
 			}
 
-			//指针移动 p1 - 2
-			else if (tempType > PTR_TYPE) {
-				DEBUG_GENERATOR("[SUB ptr - var]", FORMAT(format));
+			//普通变量
+			else {
+				if (current.klass == LOCAL) {
+					DEBUG_GENERATOR("[local variable]", FORMAT(format));
+					vm->addInst(I_LEA, FORMAT(format));
+					vm->addInstData(indexOfBP - current.value, FORMAT(format));
+				}
+				else if (current.klass == GLOBAL) {
+					DEBUG_GENERATOR("[global variable]", FORMAT(format));
+					vm->addInst(I_IMM, FORMAT(format));
+					vm->addInstData(current.value, FORMAT(format));
+				}
+				else {
+					throw Error(lexer.getLine(), "undefined variable.");
+				}
 
-				vm->addInst(I_PUSH, FORMAT(format));
-				vm->addInst(I_IMM, FORMAT(format));
-				vm->addInstData(4, FORMAT(format));
-				vm->addInst(I_MUL, FORMAT(format));
-				vm->addInst(MUL, FORMAT(format));
-				exprType = tempType;
+				//默认操作是加载值（右值），如果后续是赋值，则抹掉I_LC/I_LI，只用其地址
+				exprType = current.dataType;
+				vm->addInst(exprType == CHAR_TYPE ? I_LC : I_LI, FORMAT(format));
+			}
+		}
+
+		else if (tokenInfo.first == LPAREN) {
+			match(LPAREN, FORMAT(format));
+
+			//强制类型转换
+			if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
+				int castType = (tokenInfo.first == CHAR) ? CHAR_TYPE : INT_TYPE;
+				match(tokenInfo.first, FORMAT(format));
+				while (tokenInfo.first == MUL) {
+					match(MUL, FORMAT(format));
+					castType += PTR_TYPE;
+				}
+				match(RPAREN, FORMAT(format));
+				DEBUG_GENERATOR("[cast] " + Token::getDataTypeName(castType), FORMAT(format));
+				expression(INC, FORMAT(format));  //需要优先级INC（高一级）
+				exprType = castType;
 			}
 
-			//普通变量相减 a - b
+			//括号表达式
 			else {
-				DEBUG_GENERATOR("[SUB var - var]", FORMAT(format));
-
-				vm->addInst(I_SUB, FORMAT(format));
-				exprType = tempType;
+				DEBUG_GENERATOR("[(expr)]", FORMAT(format));
+				expression(ASSIGN, FORMAT(format));
+				match(RPAREN, FORMAT(format));
 			}
 		}
 
 		else if (tokenInfo.first == MUL) {
-			// a * b
 			DEBUG_GENERATOR("[MUL]", FORMAT(format));
-
-			int tempType = exprType;
+			//*a，即取某个地址的值
 			match(MUL, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
 			expression(INC, FORMAT(format));
-			vm->addInst(I_MUL, FORMAT(format));
-			exprType = tempType;
+			if (exprType >= PTR_TYPE) {
+				exprType -= PTR_TYPE;
+			}
+			else {
+				throw Error(lexer.getLine(), "bad dereference.");
+			}
+
+			//除了取一个char外，取int和取地址都是取int（默认int和指针字节数相同）
+			vm->addInst(exprType == CHAR_TYPE ? I_LC : I_LI, FORMAT(format));
 		}
 
-		else if (tokenInfo.first == DIV) {
-			// a / b
-			DEBUG_GENERATOR("[DIV]", FORMAT(format));
-
-			int tempType = exprType;
-			match(DIV, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
+		else if (tokenInfo.first == AND) {
+			//取地址
+			DEBUG_GENERATOR("[AND]", FORMAT(format));
+			match(AND, FORMAT(format));
 			expression(INC, FORMAT(format));
-			vm->addInst(I_DIV, FORMAT(format));
-			exprType = tempType;
+			int inst = vm->getTopInst(FORMAT(format));
+			if (inst == I_LC || inst == I_LI) {
+				vm->deleteTopInst(FORMAT(format));
+			}
+			else {
+				throw Error(lexer.getLine(), "bad address of.");
+			}
+
+			exprType = exprType + PTR_TYPE;
+			DEBUG_GENERATOR("exprType = " + Token::getDataTypeName(exprType), FORMAT(format));
 		}
 
-		else if (tokenInfo.first == MOD) {
-			// a % b
-			DEBUG_GENERATOR("[MOD]", FORMAT(format));
-
-			int tempType = exprType;
-			match(MOD, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
+		else if (tokenInfo.first == NOT) {
+			DEBUG_GENERATOR("[NOT]", FORMAT(format));
+			match(NOT, FORMAT(format));
 			expression(INC, FORMAT(format));
-			vm->addInst(I_MOD, FORMAT(format));
-			exprType = tempType;
+
+			//!expr 等价于 expr == 0
+			vm->addInst(I_PUSH, FORMAT(format));
+			vm->addInst(I_IMM, FORMAT(format));
+			vm->addInstData(0, FORMAT(format));
+			vm->addInst(I_EQ, FORMAT(format));
+
+			exprType = INT_TYPE;
+		}
+
+		else if (tokenInfo.first == TILDE) {
+			DEBUG_GENERATOR("[TILDE]", FORMAT(format));
+			match(TILDE, FORMAT(format));
+			expression(INC, FORMAT(format));
+
+			//~a 等价于 a^(-1)
+			vm->addInst(I_PUSH, FORMAT(format));
+			vm->addInst(I_IMM, FORMAT(format));
+			vm->addInstData(-1, FORMAT(format));
+			vm->addInst(I_XOR, FORMAT(format));
+
+			exprType = INT_TYPE;
+		}
+
+		else if (tokenInfo.first == ADD) {
+			DEBUG_GENERATOR("[ADD]", FORMAT(format));
+			//+a，啥也不做
+			match(ADD, FORMAT(format));
+			expression(INC, FORMAT(format));
+			exprType = INT_TYPE;
+		}
+
+		else if (tokenInfo.first == SUB) {
+			DEBUG_GENERATOR("[SUB]", FORMAT(format));
+			//-a
+			match(SUB, FORMAT(format));
+			if (tokenInfo.first == NUM) {
+				vm->addInst(I_IMM, FORMAT(format));
+				vm->addInstData(-tokenInfo.second, FORMAT(format));
+				match(NUM, FORMAT(format));
+			}
+			else {
+				//-a 等价于 (-1)*a
+				vm->addInst(I_IMM, FORMAT(format));
+				vm->addInstData(-1, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(INC, FORMAT(format));
+				vm->addInst(I_MUL, FORMAT(format));
+			}
+
+			exprType = INT_TYPE;
 		}
 
 		else if (tokenInfo.first == INC || tokenInfo.first == DEC) {
-			// a++
-			DEBUG_GENERATOR("[INC]", FORMAT(format));
+			DEBUG_GENERATOR("[INC/DEC]", FORMAT(format));
 
-			if (vm->getTopInst(FORMAT(format)) == I_LI) {
-				vm->deleteTopInst(FORMAT(format));
-				vm->addInst(I_PUSH, FORMAT(format));
-				vm->addInst(I_LI, FORMAT(format));
-			}
-			else if (vm->getTopInst(FORMAT(format)) == I_LC) {
+			//++
+			int tk = tokenInfo.first;
+			match(tk, FORMAT(format));
+			expression(INC, FORMAT(format));
+			if (vm->getTopInst(FORMAT(format)) == I_LC) {
 				vm->deleteTopInst(FORMAT(format));
 				vm->addInst(I_PUSH, FORMAT(format));
 				vm->addInst(I_LC, FORMAT(format));
 			}
-			else {
-				throw Error(lexer.getLine(), "bad value in increment.");
+			else if (vm->getTopInst(FORMAT(format)) == I_LI) {
+				vm->deleteTopInst(FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				vm->addInst(I_LI, FORMAT(format));
 			}
-
-			//先++a，存储，再用a-1参与计算
+			else {
+				throw Error(lexer.getLine(), "bad lvalue of pre-increment.");
+			}
 			vm->addInst(I_PUSH, FORMAT(format));
+
+			//++pointer，则应该是pointer = int(pointer)+4，否则为++var，既var = var+1
 			vm->addInst(I_IMM, FORMAT(format));
 			vm->addInstData(exprType > PTR_TYPE ? 4 : 1, FORMAT(format));
-			vm->addInst(tokenInfo.first == INC ? I_ADD : I_SUB, FORMAT(format));
+			vm->addInst(tk == INC ? I_ADD : I_SUB, FORMAT(format));
 			vm->addInst(exprType == CHAR_TYPE ? I_SC : I_SI, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			vm->addInst(I_IMM, FORMAT(format));
-			vm->addInst(exprType > PTR_TYPE ? 4 : 1, FORMAT(format));
-			vm->addInst(tokenInfo.first == INC ? I_SUB : I_ADD, FORMAT(format));
-			match(INC, FORMAT(format));
-		}
-
-		else if (tokenInfo.first == LBRACK) {
-			// a[1]
-			DEBUG_GENERATOR("[LBRACK]", FORMAT(format));
-
-			int tempType = exprType;
-			match(LBRACK, FORMAT(format));
-			vm->addInst(I_PUSH, FORMAT(format));
-			expression(ASSIGN, FORMAT(format));
-			match(RBRACK, FORMAT(format));
-
-			//非char*型指针
-			if (tempType > PTR_TYPE) {
-				vm->addInst(I_PUSH, FORMAT(format));
-				vm->addInst(I_IMM, FORMAT(format));
-				vm->addInstData(4, FORMAT(format));
-				vm->addInst(I_MUL, FORMAT(format));
-			}
-			//对变量执行[]操作，错误
-			else if (tempType < PTR_TYPE) {
-				throw Error(lexer.getLine(), "pointer type expected.");
-			}
-
-			exprType = tempType - PTR_TYPE;
-			vm->addInst(I_ADD, FORMAT(format));
-			vm->addInst(exprType == CHAR ? I_LC : I_LI, FORMAT(format));
 		}
 
 		else {
-			throw Error(lexer.getLine(), "compiler error, token = "
-				+ Token::getTokenTypeName(tokenInfo.first));
+			throw Error(lexer.getLine(), "bad expression.");
 		}
-	}
+	} while (false);
+
+	//二元表达式
+	DEBUG_GENERATOR("[binary expression]", FORMAT(format));
+	do {
+		while (tokenInfo.first >= priority) {
+			if (tokenInfo.first == ASSIGN) {
+				DEBUG_GENERATOR("[ASSIGN]", FORMAT(format));
+
+				int tempType = exprType;
+				match(ASSIGN, FORMAT(format));
+				if (vm->getTopInst(FORMAT(format)) == I_LI || vm->getTopInst(FORMAT(format)) == I_LC) {
+					vm->deleteTopInst(FORMAT(format));
+					vm->addInst(I_PUSH, FORMAT(format));
+				}
+				else {
+					throw Error(lexer.getLine(), "bad lvalue in assignment.");
+				}
+				expression(ASSIGN, FORMAT(format));
+				exprType = tempType;
+				vm->addInst(exprType == CHAR_TYPE ? I_SC : I_SI, FORMAT(format));
+			}
+
+			else if (tokenInfo.first == COND) {
+				//expr ? a : b
+				DEBUG_GENERATOR("[COND]", FORMAT(format));
+
+				match(COND, FORMAT(format));
+				vm->addInst(I_JZ, FORMAT(format));
+				int* addr = vm->getNextTextPos();
+				vm->addInstData(0, FORMAT(format));      //占据一个位置用于写入跳转地址
+				expression(ASSIGN, FORMAT(format));
+				if (tokenInfo.first == COLON) {
+					match(COLON, FORMAT(format));
+				}
+				else {
+					throw Error(lexer.getLine(), "missing colon in conditional.");
+				}
+				*addr = reinterpret_cast<int>(vm->getNextTextPos() + 2);
+				vm->addInst(I_JMP, FORMAT(format));
+				addr = vm->getNextTextPos();
+				vm->addInstData(0, FORMAT(format));     //占据一个位置用于写入跳转地址
+				expression(COND, FORMAT(format));
+				*addr = reinterpret_cast<int>(vm->getNextTextPos());
+			}
+
+			else if (tokenInfo.first == LOR) {
+				// ||
+				DEBUG_GENERATOR("[LOR]", FORMAT(format));
+
+				match(LOR, FORMAT(format));
+				vm->addInst(I_JNZ, FORMAT(format));
+				int* addr = vm->getNextTextPos();
+				vm->addInstData(0, FORMAT(format));
+				expression(LAN, FORMAT(format));
+				*addr = reinterpret_cast<int>(vm->getNextTextPos());
+				exprType = INT_TYPE;
+			}
+
+			else if (tokenInfo.first == LAN) {
+				// &&
+				DEBUG_GENERATOR("[LAN]", FORMAT(format));
+
+				match(LAN, FORMAT(format));
+				vm->addInst(I_JZ, FORMAT(format));
+				int* addr = vm->getNextTextPos();
+				vm->addInstData(0, FORMAT(format));
+				expression(OR, FORMAT(format));
+				*addr = reinterpret_cast<int>(vm->getNextTextPos());
+				exprType = INT_TYPE;
+			}
+
+			else if (tokenInfo.first == OR) {
+				// |
+				DEBUG_GENERATOR("[OR]", FORMAT(format));
+
+				match(OR, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(XOR, FORMAT(format));
+				vm->addInst(I_OR, FORMAT(format));
+				exprType = INT_TYPE;
+			}
+
+			else if (tokenInfo.first == XOR) {
+				// ^
+				DEBUG_GENERATOR("[XOR]", FORMAT(format));
+
+				match(XOR, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(AND, FORMAT(format));
+				vm->addInst(I_XOR, FORMAT(format));
+				exprType = INT_TYPE;
+			}
+
+			else if (tokenInfo.first == AND) {
+				// &
+				DEBUG_GENERATOR("[AND]", FORMAT(format));
+
+				match(AND, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(EQ, FORMAT(format));
+				vm->addInst(I_AND, FORMAT(format));
+				exprType = INT_TYPE;
+			}
+
+			else if (tokenInfo.first == EQ) {
+				// ==
+				DEBUG_GENERATOR("[EQ]", FORMAT(format));
+
+				match(EQ, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(NE, FORMAT(format));
+				vm->addInst(I_EQ, FORMAT(format));
+				exprType = INT_TYPE;
+			}
+
+			else if (tokenInfo.first == NE) {
+				//!=
+				DEBUG_GENERATOR("[NE]", FORMAT(format));
+
+				match(NE, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(LT, FORMAT(format));
+				vm->addInst(I_NE, FORMAT(format));
+				exprType = INT_TYPE;
+			}
+
+			else if (tokenInfo.first == LT) {
+				// <
+				DEBUG_GENERATOR("[LT]", FORMAT(format));
+
+				match(LT, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(SHL, FORMAT(format));
+				vm->addInst(I_LT, FORMAT(format));
+				exprType = INT_TYPE;
+			}
+
+			else if (tokenInfo.first == GT) {
+				// >
+				DEBUG_GENERATOR("[GT]", FORMAT(format));
+
+				match(GT, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(SHL, FORMAT(format));
+				vm->addInst(I_GT, FORMAT(format));
+				exprType = INT_TYPE;
+			}
+
+			else if (tokenInfo.first == LE) {
+				// <=
+				DEBUG_GENERATOR("[LE]", FORMAT(format));
+
+				match(LE, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(SHL, FORMAT(format));
+				vm->addInst(I_LE, FORMAT(format));
+				exprType = INT_TYPE;
+			}
+
+			else if (tokenInfo.first == GE) {
+				// >=
+				DEBUG_GENERATOR("[GE]", FORMAT(format));
+
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(SHL, FORMAT(format));
+				vm->addInst(I_GE, FORMAT(format));
+				exprType = INT_TYPE;
+			}
+
+			else if (tokenInfo.first == SHL) {
+				// <<
+				DEBUG_GENERATOR("[SHL]", FORMAT(format));
+
+				match(SHL, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(ADD, FORMAT(format));
+				vm->addInst(I_SHL, FORMAT(format));
+				exprType = INT_TYPE;
+			}
+
+			else if (tokenInfo.first == SHR) {
+				// >>
+				DEBUG_GENERATOR("[SHR]", FORMAT(format));
+
+				match(SHR, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(ADD, FORMAT(format));
+				vm->addInst(I_SHR, FORMAT(format));
+				exprType = INT_TYPE;
+			}
+
+			else if (tokenInfo.first == ADD) {
+				// a + b
+				DEBUG_GENERATOR("[ADD]", FORMAT(format));
+
+				int tempType = exprType;
+				match(ADD, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(MUL, FORMAT(format));
+				exprType = tempType;  //结果类型以左操作数为准
+				//问题：当 'a' + 1000 时会溢出吗？因为char型最大255
+
+
+				//非char*型指针，则加数乘以4再加到指针上
+				if (exprType > PTR_TYPE) {
+					vm->addInst(I_PUSH, FORMAT(format));
+					vm->addInst(I_IMM, FORMAT(format));
+					vm->addInstData(4, FORMAT(format));
+					vm->addInst(MUL, FORMAT(format));
+				}
+				vm->addInst(I_ADD, FORMAT(format));
+			}
+
+			else if (tokenInfo.first == SUB) {
+				// a - b
+				DEBUG_GENERATOR("[SUB]", FORMAT(format));
+
+				match(SUB, FORMAT(format));
+				int tempType = exprType;
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(MUL, FORMAT(format));
+
+				//指针相减 p1 - p2
+				if (tempType > PTR_TYPE && tempType == exprType) {
+					DEBUG_GENERATOR("[SUB ptr - ptr]", FORMAT(format));
+
+					vm->addInst(I_SUB, FORMAT(format));
+					vm->addInst(I_PUSH, FORMAT(format));
+					vm->addInst(I_IMM, FORMAT(format));
+					vm->addInstData(4, FORMAT(format));
+					vm->addInst(I_DIV, FORMAT(format));
+					exprType = INT_TYPE;
+				}
+
+				//指针移动 p1 - 2
+				else if (tempType > PTR_TYPE) {
+					DEBUG_GENERATOR("[SUB ptr - var]", FORMAT(format));
+
+					vm->addInst(I_PUSH, FORMAT(format));
+					vm->addInst(I_IMM, FORMAT(format));
+					vm->addInstData(4, FORMAT(format));
+					vm->addInst(I_MUL, FORMAT(format));
+					vm->addInst(MUL, FORMAT(format));
+					exprType = tempType;
+				}
+
+				//普通变量相减 a - b
+				else {
+					DEBUG_GENERATOR("[SUB var - var]", FORMAT(format));
+
+					vm->addInst(I_SUB, FORMAT(format));
+					exprType = tempType;
+				}
+			}
+
+			else if (tokenInfo.first == MUL) {
+				// a * b
+				DEBUG_GENERATOR("[MUL]", FORMAT(format));
+
+				int tempType = exprType;
+				match(MUL, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(INC, FORMAT(format));
+				vm->addInst(I_MUL, FORMAT(format));
+				exprType = tempType;
+			}
+
+			else if (tokenInfo.first == DIV) {
+				// a / b
+				DEBUG_GENERATOR("[DIV]", FORMAT(format));
+
+				int tempType = exprType;
+				match(DIV, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(INC, FORMAT(format));
+				vm->addInst(I_DIV, FORMAT(format));
+				exprType = tempType;
+			}
+
+			else if (tokenInfo.first == MOD) {
+				// a % b
+				DEBUG_GENERATOR("[MOD]", FORMAT(format));
+
+				int tempType = exprType;
+				match(MOD, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(INC, FORMAT(format));
+				vm->addInst(I_MOD, FORMAT(format));
+				exprType = tempType;
+			}
+
+			else if (tokenInfo.first == INC || tokenInfo.first == DEC) {
+				// a++
+				DEBUG_GENERATOR("[INC]", FORMAT(format));
+
+				if (vm->getTopInst(FORMAT(format)) == I_LI) {
+					vm->deleteTopInst(FORMAT(format));
+					vm->addInst(I_PUSH, FORMAT(format));
+					vm->addInst(I_LI, FORMAT(format));
+				}
+				else if (vm->getTopInst(FORMAT(format)) == I_LC) {
+					vm->deleteTopInst(FORMAT(format));
+					vm->addInst(I_PUSH, FORMAT(format));
+					vm->addInst(I_LC, FORMAT(format));
+				}
+				else {
+					throw Error(lexer.getLine(), "bad value in increment.");
+				}
+
+				//先++a，存储，再用a-1参与计算
+				vm->addInst(I_PUSH, FORMAT(format));
+				vm->addInst(I_IMM, FORMAT(format));
+				vm->addInstData(exprType > PTR_TYPE ? 4 : 1, FORMAT(format));
+				vm->addInst(tokenInfo.first == INC ? I_ADD : I_SUB, FORMAT(format));
+				vm->addInst(exprType == CHAR_TYPE ? I_SC : I_SI, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				vm->addInst(I_IMM, FORMAT(format));
+				vm->addInst(exprType > PTR_TYPE ? 4 : 1, FORMAT(format));
+				vm->addInst(tokenInfo.first == INC ? I_SUB : I_ADD, FORMAT(format));
+				match(INC, FORMAT(format));
+			}
+
+			else if (tokenInfo.first == LBRACK) {
+				// a[1]
+				DEBUG_GENERATOR("[LBRACK]", FORMAT(format));
+
+				int tempType = exprType;
+				match(LBRACK, FORMAT(format));
+				vm->addInst(I_PUSH, FORMAT(format));
+				expression(ASSIGN, FORMAT(format));
+				match(RBRACK, FORMAT(format));
+
+				//非char*型指针
+				if (tempType > PTR_TYPE) {
+					vm->addInst(I_PUSH, FORMAT(format));
+					vm->addInst(I_IMM, FORMAT(format));
+					vm->addInstData(4, FORMAT(format));
+					vm->addInst(I_MUL, FORMAT(format));
+				}
+				//对变量执行[]操作，错误
+				else if (tempType < PTR_TYPE) {
+					throw Error(lexer.getLine(), "pointer type expected.");
+				}
+
+				exprType = tempType - PTR_TYPE;
+				vm->addInst(I_ADD, FORMAT(format));
+				vm->addInst(exprType == CHAR ? I_LC : I_LI, FORMAT(format));
+			}
+
+			else {
+				throw Error(lexer.getLine(), "compiler error, token = "
+					+ Token::getTokenTypeName(tokenInfo.first));
+			}
+		}
+	} while (false);
 }
 
 //验证参数的合法性
