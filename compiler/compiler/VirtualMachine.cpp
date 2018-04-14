@@ -186,6 +186,9 @@ int kkli::VirtualMachine::run(std::string format) {
 		std::string debugInfo = getInstructionName(inst);
 		if (inst <= I_ADJ) debugInfo += "  " + std::to_string(*pc);
 		DEBUG_VM(debugInfo, format);
+
+		//TEST
+		//std::cout << debugInfo << std::endl;
 		
 		//È¡Á¢¼´Êý
 		if (inst == I_IMM) {
