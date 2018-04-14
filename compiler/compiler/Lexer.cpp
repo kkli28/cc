@@ -4,8 +4,16 @@
 //构造函数
 kkli::Lexer::Lexer(std::string sourceFile, std::string format) {
 	DEBUG_LEXER("Lexer::lexer(" + sourceFile + ")", format);
-	DEBUG_LEXER("[add builtin] begin", FORMAT(format));
 
+	//判断文件是否可读取
+	std::ifstream inFile(sourceFile);
+	if (!inFile.good()) {
+		throw Error("can't open file: " + sourceFile);
+	}
+	inFile >> std::noskipws;    //不跳过空白
+
+	//处理内建符号
+	DEBUG_LEXER("[add builtin] begin", FORMAT(format));
 	source = "char else enum if int return sizeof while printf malloc exit void main";
 	source.push_back(END);
 	
@@ -33,13 +41,7 @@ kkli::Lexer::Lexer(std::string sourceFile, std::string format) {
 
 	DEBUG_LEXER("[add builtin] end", FORMAT(format));
 	DEBUG_LEXER_SYMBOL_TABLE(table->getSymbolTableInfo(), FORMAT(format));
-
-	std::ifstream inFile(sourceFile);
-	if (!inFile.good()) {
-		throw Error("can't open file: " + sourceFile);
-	}
-
-	inFile >> std::noskipws;    //不跳过空白
+	//内建符号处理完毕
 
 	char buff[1000000];
 	int i = 0;

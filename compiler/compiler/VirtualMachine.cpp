@@ -188,7 +188,7 @@ int kkli::VirtualMachine::run(std::string format) {
 		DEBUG_VM(debugInfo, format);
 
 		//TEST
-		//std::cout << debugInfo << std::endl;
+		std::cout << debugInfo << std::endl;
 		
 		//取立即数
 		if (inst == I_IMM) {
@@ -413,16 +413,7 @@ int kkli::VirtualMachine::run(std::string format) {
 			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
-		//Warnning! 因main的返回结果在ax中，因此直接将ax输出
 		//退出程序
-		/*
-		//C4版本
-		else if (inst == I_EXIT) {
-			printf("exit(%d)", *sp);
-			return *sp;
-		}
-		*/
-		//我的版本
 		else if (inst == I_EXIT) {
 			printf("exit(%d)\n", ax);
 			return ax;
@@ -430,7 +421,7 @@ int kkli::VirtualMachine::run(std::string format) {
 
 		//错误的指令
 		else {
-			throw Error("unknown instruction!");
+			throw Error("VirtualMachine::run(): unknown instruction!");
 		}
 
 		//std::cout << getInfo() << std::endl;;

@@ -21,8 +21,8 @@ namespace kkli {
 	class SymbolTable {
 	private:
 		std::vector<Token> table;
-		int current;
-		int mainIndex;  //main函数Token的索引
+		size_t current;
+		size_t mainIndex;  //main函数Token的索引
 
 	public:
 
@@ -50,7 +50,7 @@ namespace kkli {
 		}
 
 		//获取Token
-		Token& getToken(int index) {
+		Token& getToken(size_t index) {
 			if (index < 0 || index >= table.size()) {
 				throw Error("SymbolTable::getToken(" + std::to_string(index) + "), invalid index, table size is " + std::to_string(table.size()) + ".");
 			}

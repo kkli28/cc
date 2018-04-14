@@ -20,7 +20,7 @@ namespace kkli {
 		SymbolTable* table;
 		VirtualMachine* vm;
 		std::pair<int, int> tokenInfo;
-		int currFuncIndex;
+		size_t currFuncIndex;
 
 		//当前处理的定义的类型
 		int baseType;

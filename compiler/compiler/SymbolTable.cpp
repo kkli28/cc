@@ -6,7 +6,7 @@ bool kkli::SymbolTable::has(int hash, std::string name, std::string format) {
 	DEBUG_SYMBOL_TABLE("SymbolTable::has(" + name + ")", format);
 
 	current = 0;
-	int size = table.size();
+	auto size = table.size();
 
 	while (current < size) {
 

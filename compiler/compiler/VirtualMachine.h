@@ -25,7 +25,7 @@ namespace kkli {
 			"I_PRTF", "I_MALC", "I_EXIT" //内置函数
 		};
 		//内存中各段的大小
-		const int SEGMENT_SIZE = 256 * 1024;
+		const int SEGMENT_SIZE = 2560 * 1024;
 
 	private:
 		char* data;       //数据段

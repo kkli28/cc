@@ -12,7 +12,7 @@ EBNF文法描述：
 <program> = {<global_decl>}+
 
 全局定义：
-<global_decl> = <enum_decl> | <var_decl> | <func_decl>
+<global_decl> = <enum_decl> | <var_decl> | <arr_decl> | <func_decl>
 
 enum定义：
 <enum_decl> = 'enum' '{' <id> [ '=' <num> ] {',' <id> [ '=' <num> ]}+ '}' ';'
@@ -20,16 +20,16 @@ enum定义：
 变量定义：
 <var_decl> = <type> {'*'}+ <id> {',' {'*'}+ <id>}+ ';'
 
+数组定义：
+<arr_decl> = <type> {'*'}+ <id> '[' <num> ']' ';'
+
 函数定义：
 <func_decl> = <type> {'*'}+ <id> '(' <param_decl> ')' '{' <body_decl> '}'
 
 函数参数定义：
 <param_decl> = <null> | <type> {'*'}+ <id> {',' <type> {'*'}+ <id>}+
 
-//TODO: 是否支持变量随处定义，而非必须在函数体首部定义
-函数体定义1：
-<body_decl> = {<var_decl>}+ {<statement>}+
-函数体定义2：
+函数体定义2
 <body_decl> = {<var_decl> | <statement>}+
 
 语句定义：
