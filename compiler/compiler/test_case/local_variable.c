@@ -6,30 +6,25 @@ void E(int var, int val){
     }
 }
 
-void func(){
-    int a;
-    printf("define a\n");
-    int b;
-    printf("define b\n");
-    int c;
-    printf("define c\n");
-    a = 1;
-    printf("a = %d\n", a);
-    b = 2;
-    printf("b = %d\n", b);
-    c= -1;
-    printf("c = %d\n", c);
-    printf("a + b + c = %d\n", a + b + c);
-    int d;
-    printf("define d\n");
-    d=-2;
-    printf("d = %d\n", d);
-    printf("a + b + c + d = %d\n", a + b + c + d);
-    printf("a - b - c - d = %d\n", a - b - c - d);
-}
-
 int main(){
-    func();
-    printf("test [local variable] succeed!\n");
+    succeed = 1;
+    int a;
+    a = 1;
+    int b;
+    b = 2;
+    int c;
+    c= -1;
+    int d;
+    d=-2;
+    E(a, 1);
+    E(b, 2);
+    E(c, -1);
+    E(d, -2);
+    if(succeed){
+        printf("test [local variable] succeed!\n");
+    }
+    else{
+        printf("test [local variable] failed!\n");
+    }
     return 0;
 }

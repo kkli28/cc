@@ -45,7 +45,7 @@ void kkli::VirtualMachine::reset(std::string format) {
 void kkli::VirtualMachine::addDataChar(char elem, std::string format) {
 	DEBUG_VM("VirtualMachine::addCharData(" + std::to_string(elem) + ")", format);
 
-	if (nextData >= data + SEGMENT_SIZE) throw Error("VirtualMachine::addCharData(): data overflow");
+	if (nextData > data + SEGMENT_SIZE) throw Error("VirtualMachine::addCharData(): data overflow");
 
 	*(reinterpret_cast<int*>(nextData)) = elem;
 	++nextData;
@@ -62,21 +62,71 @@ void kkli::VirtualMachine::addDataInt(int elem, std::string format) {
 		dataAlignment(FORMAT(format));
 	}
 	
-	if (nextData >= data + SEGMENT_SIZE) {
+	if (nextData > data + SEGMENT_SIZE) {
 		throw Error("VirtualMachine::addDataInt(): data overflow.");
 	}
 	*(reinterpret_cast<int*>(nextData)) = elem;
 	nextData += 4;
+}
 
-	//int型数据添加后，自动是在对齐位置，如果后续有对齐需求，则无需再进行对齐
-	needDataAlignment = false;
+//添加char型数组
+void kkli::VirtualMachine::addDataCharArray(int count, const std::vector<char>& values, std::string format) {
+	DEBUG_VM("VirtualMachine::addDataArray(" + std::to_string(count) + ")", format);
+
+	if (count <= 0) {
+		throw Error("VirtualMachine::addDataCharAray(" + std::to_string(count) + ": invalid count.");
+	}
+
+	if (values.size() > count) {
+		throw Error("VirtualMachine::addDataCharArray(): too many values for array.");
+	}
+
+	if (nextData + count > data + SEGMENT_SIZE) {
+		throw Error("VirtualMachine::addDataCharArray(" + std::to_string(count) + "): data overflow.");
+	}
+
+	char* dataPtr = nextData;
+	for (int i = 0; i < values.size(); ++i) {
+		*dataPtr = values[i];
+		++dataPtr;
+	}
+	nextData += count;
+	needDataAlignment = true;
+}
+
+//添加int型数组
+void kkli::VirtualMachine::addDataIntArray(int count, const std::vector<int>& values, std::string format) {
+	DEBUG_VM("VirtualMachine::addDataIntArray(" + std::to_string(count) + ")", format);
+
+	if (count <= 0) {
+		throw Error("VirtualMachine::addDataIntArray(" + std::to_string(count) + ")");
+	}
+
+	if (values.size() > count) {
+		throw Error("VirtualMachine::adDataIntArray(): too many values for array.");
+	}
+
+	if (needDataAlignment) {
+		dataAlignment(FORMAT(format));
+	}
+
+	if (nextData + count * 4 > data + SEGMENT_SIZE) {
+		throw Error("VirtualMachine::addDataIntArray(" + std::to_string(count) + "): data overflow.");
+	}
+
+	int* dataPtr = reinterpret_cast<int*>(nextData);
+	for (int i = 0; i < values.size(); ++i) {
+		*dataPtr = values[i];
+		++dataPtr;
+	}
+	nextData += count * 4;
 }
 
 //添加指令
 void kkli::VirtualMachine::addInst(int elem, std::string format) {
 	DEBUG_VM("VirtualMachine::addInst(" + getInstructionName(elem) + ")", format);
 
-	if (nextText == text + SEGMENT_SIZE) throw Error("VirtualMachine::addText(): text overflow");
+	if (nextText >= text + SEGMENT_SIZE) throw Error("VirtualMachine::addInst("+std::to_string(elem)+"): text overflow");
 	*nextText = elem;
 	++nextText;
 }
@@ -85,8 +135,7 @@ void kkli::VirtualMachine::addInst(int elem, std::string format) {
 void kkli::VirtualMachine::addInstData(int elem, std::string format) {
 	DEBUG_VM("VirtualMachine::addInstData(" + std::to_string(elem) + ")", format);
 
-	if (nextText == text + SEGMENT_SIZE) throw Error("VirtualMachine::addText(): text overflow");
-
+	if (nextText >= text + SEGMENT_SIZE) throw Error("VirtualMachine::addInstData(" + std::to_string(elem) + "): text overflow.");
 	*nextText = elem;
 	++nextText;
 }
@@ -94,7 +143,7 @@ void kkli::VirtualMachine::addInstData(int elem, std::string format) {
 //获取顶部指令
 int kkli::VirtualMachine::getTopInst(std::string format) {
 	DEBUG_VM("VirtualMachine::getTopInst(): " + getInstructionName(*(nextText - 1)), format);
-	if (nextText - 1 < text) throw Error("VirtualMachine::getTopInst(): no instruction to get!");
+	if (nextText <= text) throw Error("VirtualMachine::getTopInst(): no instruction to get!");
 	return *(nextText - 1);
 }
 
@@ -104,23 +153,6 @@ void kkli::VirtualMachine::deleteTopInst(std::string format) {
 
 	--nextText;
 	if (nextText < text) throw Error("VirtualMachine::deleteTopInst(): no instruction to delete!");
-}
-
-//出栈
-int kkli::VirtualMachine::pop(std::string format) {
-	DEBUG_VM("VirtualMachine::pop(): " + std::to_string(*sp), format);
-
-	if (sp == stack) throw Error("empty stack!");
-	return *(sp++);
-}
-
-//入栈
-void kkli::VirtualMachine::push(int elem, std::string format) {
-	DEBUG_VM("VirtualMachine::push(" + std::to_string(elem) + ")", format);
-
-	if (sp == stack + SEGMENT_SIZE) throw Error("stack overflow!");
-	*sp = elem;
-	*(--sp) = elem;
 }
 
 //数据对齐
@@ -133,7 +165,7 @@ void kkli::VirtualMachine::dataAlignment(std::string format) {
 	DEBUG_VM("[after data_align] nextData = "
 		+ std::to_string(reinterpret_cast<int>(nextData)) + ".", FORMAT(format));
 
-	if (nextData >= data + SEGMENT_SIZE) throw Error("VirtualMachine::addIntData(): data overflow");
+	if (nextData > data + SEGMENT_SIZE) throw Error("VirtualMachine::addIntData(): data overflow");
 	needDataAlignment = false;
 }
 
@@ -149,7 +181,7 @@ char* kkli::VirtualMachine::getNextDataPos(int dataType, std::string format) {
 	}
 }
 
-//获取内存信息
+//获取信息
 std::string kkli::VirtualMachine::getInfo() const {
 	std::string str;
 	str += "\n[VM info]:";
@@ -183,12 +215,12 @@ int kkli::VirtualMachine::run(std::string format) {
 		++pc;
 
 		//输出执行的指令
-		std::string debugInfo = getInstructionName(inst);
-		if (inst <= I_ADJ) debugInfo += "  " + std::to_string(*pc);
-		DEBUG_VM(debugInfo, format);
+		std::string instInfo = getInstructionName(inst);
+		if (inst <= I_ADJ) instInfo += "  " + std::to_string(*pc);
+		DEBUG_VM(instInfo, format);
 
 		//TEST
-		std::cout << debugInfo << std::endl;
+		//std::cout << instInfo << std::endl;
 		
 		//取立即数
 		if (inst == I_IMM) {

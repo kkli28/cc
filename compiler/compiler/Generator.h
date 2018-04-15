@@ -43,6 +43,12 @@ namespace kkli {
 		//函数定义
 		void func_decl(std::string format);
 
+		//全局变量定义
+		void global_var_decl(int dataType, std::string format);
+
+		//全局数组定义
+		void global_arr_decl(int dataType, std::string format);
+
 		//函数参数
 		void func_param(std::string format);
 

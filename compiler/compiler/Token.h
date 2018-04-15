@@ -22,8 +22,11 @@ namespace kkli {
 		//用户定义标识符
 		ID = 128,
 
-		//数字
+		//数字值
 		NUM,
+
+		//字符值
+		//CHARACTOR,
 
 		//关键字
 		CHAR, ELSE, ENUM, IF, INT, RETURN, SIZEOF, WHILE,
@@ -46,7 +49,7 @@ namespace kkli {
 
 	//标记种类
 	enum {
-		NUMBER = 1,//数字
+		NUMBER = 1,//值（立即数）类型
 		FUNC,      //函数
 		SYS_FUNC,  //系统内部函数
 		GLOBAL,    //全局变量

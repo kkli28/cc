@@ -18,10 +18,10 @@ enum定义：
 <enum_decl> = 'enum' '{' <id> [ '=' <num> ] {',' <id> [ '=' <num> ]}+ '}' ';'
 
 变量定义：
-<var_decl> = <type> {'*'}+ <id> {',' {'*'}+ <id>}+ ';'
+<var_decl> = <type> {'*'}+ <id> ['=' <num>] {',' {'*'}+ <id> ['=' <num>]}+ ';'
 
 数组定义：
-<arr_decl> = <type> {'*'}+ <id> '[' <num> ']' ';'
+<arr_decl> = <type> {'*'}+ <id> '[' <num> ']' ['{' {<num>, [',' <num>]+'}'] ';'
 
 函数定义：
 <func_decl> = <type> {'*'}+ <id> '(' <param_decl> ')' '{' <body_decl> '}'

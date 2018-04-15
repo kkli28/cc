@@ -67,6 +67,8 @@ namespace kkli {
 		//添加数据、指令、指令的操作数
 		void addDataChar(char elem, std::string format);
 		void addDataInt(int elem, std::string format);
+		void addDataCharArray(int count, const std::vector<char>& values, std::string format);
+		void addDataIntArray(int count, const std::vector<int>& values, std::string format);
 		void addInst(int elem, std::string format);
 		void addInstData(int elem, std::string format);
 		
@@ -82,10 +84,6 @@ namespace kkli {
 		//获取下一个存放位置
 		char* getNextDataPos(int dataType, std::string format) ;
 		int* getNextTextPos() const { return nextText; }
-
-		//栈操作
-		int pop(std::string format);
-		void push(int elem, std::string format);
 
 		//执行指令
 		int run(std::string format);

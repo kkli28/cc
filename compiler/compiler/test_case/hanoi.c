@@ -19,6 +19,6 @@ void main(){
     A= 'A';
     B= 'B';
     C= 'C';
-    hanoi(12, A, B, C);
+    hanoi(3, A, B, C);
     return 0;
 }

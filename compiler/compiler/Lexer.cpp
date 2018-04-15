@@ -212,6 +212,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 				}
 
 				if (curr == 'n') value = '\n';
+				else if (curr == '0') value = '\0';
 				else value = curr;
 			}
 			else {
@@ -523,6 +524,5 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 	}
 
 	//É¨Ãè½áÊø
-	//TODO: ¸Ä³ÉEOF?
 	return { END, 0 };
 }

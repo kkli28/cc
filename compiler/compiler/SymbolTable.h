@@ -45,7 +45,7 @@ namespace kkli {
 		Token& getCurrentToken(std::string format) { 
 			return table[current]; 
 		}
-		int getCurrent(std::string format) {  //只获取current应该是更好的选项
+		size_t getCurrent(std::string format) {  //只获取current应该是更好的选项
 			return current;
 		}
 

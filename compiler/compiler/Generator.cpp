@@ -89,50 +89,18 @@ void kkli::Generator::global_decl(std::string format) {
 			func_decl(FORMAT(format));
 		}
 
-		//全局变量
+		//数组定义
+		else if (tokenInfo.first == LBRACK) {
+			global_arr_decl(type, FORMAT(format));
+
+			if (tokenInfo.first == COMMA) {
+				match(COMMA, FORMAT(format));
+			}
+		}
+
+		//全局变量定义
 		else {
-			//声明或定义后必须为分隔符
-			if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON && tokenInfo.first != ASSIGN) {
-				throw Error(lexer.getLine(), "wrong variables declaration.");
-			}
-
-			Token& tk = table->getCurrentToken(FORMAT(format));
-			tk.klass = GLOBAL;
-			tk.dataType = type;
-			tk.value = reinterpret_cast<int>(vm->getNextDataPos(INT_TYPE, FORMAT(format)));
-			vm->addDataInt(0, FORMAT(format));  //添加一个0，为这个变量占据写入值的位置，避免这个位置被其他变量使用。
-
-			//变量初始化
-			//TODO: 需要仔细检查
-			if (tokenInfo.first == ASSIGN) {
-
-				match(ASSIGN, FORMAT(format));
-				int factor = 1;
-				//int a = +1;  int a = -1;
-				if (tokenInfo.first == SUB || tokenInfo.first == ADD) {
-					tokenInfo = lexer.next(FORMAT(format));
-					factor = (tokenInfo.first == SUB ? -1 : 1);
-					if (tokenInfo.first != NUM) {
-						throw Error(lexer.getLine(), "bad variable definition.");
-					}
-				}
-				if (tokenInfo.first == NUM) {
-					if (tk.dataType >= PTR_TYPE) {
-						WARNING->add(lexer.getLine(), "assign a number to a pointer.");
-					}
-					*reinterpret_cast<int*>(tk.value) = factor*tokenInfo.second;
-				}
-				else if (tokenInfo.first == STRING) {
-					if (tk.dataType != CHAR_TYPE + PTR_TYPE) {
-						WARNING->add(lexer.getLine(), Token::getDataTypeName(tk.dataType) + " type variable " + tk.name + " get STRING type value.");
-					}
-					*reinterpret_cast<int*>(tk.value) = factor*tokenInfo.second;
-				}
-				else {
-					throw Error(lexer.getLine(), "bad variable definition.");
-				}
-				tokenInfo = lexer.next(FORMAT(format));
-			}
+			global_var_decl(type, FORMAT(format));
 
 			if (tokenInfo.first == COMMA) {
 				match(COMMA, FORMAT(format));
@@ -141,7 +109,143 @@ void kkli::Generator::global_decl(std::string format) {
 	}
 
 	DEBUG_GENERATOR(std::string("now tokenInfo.first = ") + (tokenInfo.first == SEMICON ? "SEMICON" : "RBRACE"), FORMAT(format));
-	tokenInfo = lexer.next(FORMAT(format));  //不能用match!!!
+	tokenInfo = lexer.next(FORMAT(format));  //可能是SEMICON或RBRACE，不能用match
+}
+
+//全局变量定义
+void kkli::Generator::global_var_decl(int type, std::string format) {
+	//<type> {'*'}+ <id> ['=' <num>] {',' {'*'}+ <id> ['=' <num>]}+ ';'
+	//                   ^         ^
+	//                   |---------|
+
+	//声明或定义后必须为分隔符
+	if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON && tokenInfo.first != ASSIGN) {
+		throw Error(lexer.getLine(), "wrong variables declaration.");
+	}
+
+	Token& tk = table->getCurrentToken(FORMAT(format));
+	tk.klass = GLOBAL;
+	tk.dataType = type;
+	tk.value = reinterpret_cast<int>(vm->getNextDataPos(INT_TYPE, FORMAT(format)));
+	vm->addDataInt(0, FORMAT(format));
+
+	//变量初始化
+	if (tokenInfo.first == ASSIGN) {
+		match(ASSIGN, FORMAT(format));
+
+		//int a = +1;  int a = -1;
+		int factor = 1;
+		if (tokenInfo.first == SUB || tokenInfo.first == ADD) {
+			tokenInfo = lexer.next(FORMAT(format));
+			factor = (tokenInfo.first == SUB ? -1 : 1);
+			if (tokenInfo.first != NUM) {
+				throw Error(lexer.getLine(), "bad variable definition.");
+			}
+		}
+
+		//数值型
+		if (tokenInfo.first == NUM) {
+			if (tk.dataType >= PTR_TYPE) {
+				WARNING->add(lexer.getLine(), "assign a number to a pointer.");
+			}
+			*reinterpret_cast<int*>(tk.value) = factor*tokenInfo.second;  //写入初始值
+		}
+
+		//字符串型
+		else if (tokenInfo.first == STRING) {
+			if (tk.dataType != PTR_TYPE) {
+				WARNING->add(lexer.getLine(), Token::getDataTypeName(tk.dataType) + " type variable " + tk.name + " get STRING type value.");
+			}
+			*reinterpret_cast<int*>(tk.value) = factor*tokenInfo.second;
+		}
+		else {
+			throw Error(lexer.getLine(), "bad variable definition.");
+		}
+		tokenInfo = lexer.next(FORMAT(format));
+	}
+}
+
+//全局数组定义
+void kkli::Generator::global_arr_decl(int type, std::string format) {
+	//<type> { '*' }+ <id> '[' <num> ']' [ '=' '{' {<num>, [',' <num>]+'}' ] ';'
+	//                      ^                                        ^
+	//                      |----------------------------------------|
+	Token& tk = table->getCurrentToken(FORMAT(format));
+	tk.klass = GLOBAL;
+	tk.dataType = type + PTR_TYPE;
+
+	//注意，int arr[10]; 中arr本身需要一个4字节空间用于存储其值
+	//arr的值放在数组10个元素之前，如 (low addr) | arr | elem1 | elem2 | ... | elem10 | (high addr)
+	tk.value = reinterpret_cast<int>(vm->getNextDataPos(type, FORMAT(format)));
+	vm->addDataInt(0, FORMAT(format));
+	*reinterpret_cast<int*>(tk.value) = reinterpret_cast<int>(vm->getNextDataPos(type, FORMAT(format)));
+
+	match(LBRACK, FORMAT(format));
+	if (tokenInfo.first != NUM) {
+		throw Error(lexer.getLine(), "Generator::global_decl(): wrong array definition.");
+	}
+
+	int arraySize = tokenInfo.second;
+	match(NUM, FORMAT(format));
+	match(RBRACK, FORMAT(format));
+
+	std::vector<int> values;
+
+	//数组初始化
+	if (tokenInfo.first == ASSIGN) {
+		match(ASSIGN, FORMAT(format));
+		match(LBRACE, FORMAT(format));
+
+		while (tokenInfo.first != RBRACE) {
+			if (tokenInfo.first != NUM && tokenInfo.first != STRING) {
+				throw Error(lexer.getLine(), "VirtualMachine::global_arr_decl(): need number in array definition.");
+			}
+
+			//TODO: 类型检测
+			values.push_back(tokenInfo.second);
+			tokenInfo = lexer.next(FORMAT(format));
+			if (tokenInfo.first == COMMA) {
+				match(COMMA, FORMAT(format));
+
+				//逗号之后必须有值，不能出现 int a[4] = {1, 2, 3, }; 这种情况，3后面缺少值型数据
+				if (tokenInfo.first != NUM && tokenInfo.first != STRING) {
+					throw Error(lexer.getLine(), "Generator::global_arr_decl(): wrong array definition.");
+				}
+			}
+			else if (tokenInfo.first != RBRACE) {
+				throw Error(lexer.getLine(), "Generator::local_arr_decl(): wrong array definition.");
+			}
+		}
+		if (values.size() > arraySize) {
+			throw Error(lexer.getLine(), "Generator::global_arr_decl(): too many values for array definition.");
+		}
+
+		//char型（1字节）数组
+		if (type == CHAR_TYPE) {
+			std::vector<char> vals;
+			for (int i = 0; i < values.size(); ++i) {
+				vals.push_back(values[i]);
+			}
+			vm->addDataCharArray(arraySize, vals, FORMAT(format));
+		}
+
+		//int型（4字节）数组
+		else {
+			vm->addDataIntArray(arraySize, values, FORMAT(format));
+		}
+
+		match(RBRACE, FORMAT(format));
+	}
+
+	//数组声明
+	else {
+		if (type == CHAR_TYPE) {
+			vm->addDataCharArray(arraySize, {}, FORMAT(format));
+		}
+		else {
+			vm->addDataIntArray(arraySize, {}, FORMAT(format));
+		}
+	}
 }
 
 //enum定义
@@ -529,9 +633,6 @@ void kkli::Generator::expression(int priority, std::string format) {
 				}
 				match(RPAREN, FORMAT(format));
 
-				//验证函数调用的合法性
-				validFunctionCall(current, dataTypes, FORMAT(format));
-
 				//系统函数
 				if (current.klass == SYS_FUNC) {
 					DEBUG_GENERATOR("[SYS_FUNC]", FORMAT(format));
@@ -545,8 +646,12 @@ void kkli::Generator::expression(int priority, std::string format) {
 					vm->addInstData(current.value, FORMAT(format));
 				}
 				else {
-					throw Error(lexer.getLine(), "bad function call.");
+					throw Error(lexer.getLine(), "function " + current.name + " not defined.");
 				}
+
+				//验证函数调用的合法性
+				//不放在match(RPAREN)后是因为，若函数没有定义，则需要上方的Error来给出 bad function call 的错误
+				validFunctionCall(current, dataTypes, FORMAT(format));
 
 				//清除栈上参数
 				if (dataTypes.size() > 0) {
@@ -580,7 +685,7 @@ void kkli::Generator::expression(int priority, std::string format) {
 					throw Error(lexer.getLine(), "undefined variable.");
 				}
 
-				//默认操作是加载值（右值），如果后续是赋值，则抹掉I_LC/I_LI，只用其地址
+				//默认操作是加载值（右值），后续是赋值，则抹掉I_LC/I_LI，只用其地址
 				exprType = current.dataType;
 				vm->addInst(exprType == CHAR_TYPE ? I_LC : I_LI, FORMAT(format));
 			}
@@ -1062,6 +1167,7 @@ void kkli::Generator::expression(int priority, std::string format) {
 
 				int tempType = exprType;
 				match(LBRACK, FORMAT(format));
+
 				vm->addInst(I_PUSH, FORMAT(format));
 				expression(ASSIGN, FORMAT(format));
 				match(RBRACK, FORMAT(format));
