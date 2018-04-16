@@ -89,18 +89,16 @@ void kkli::Generator::global_decl(std::string format) {
 			func_decl(FORMAT(format));
 		}
 
-		//数组定义
-		else if (tokenInfo.first == LBRACK) {
-			global_arr_decl(type, FORMAT(format));
-
-			if (tokenInfo.first == COMMA) {
-				match(COMMA, FORMAT(format));
-			}
-		}
-
-		//全局变量定义
 		else {
-			global_var_decl(type, FORMAT(format));
+			//全局数组定义
+			if (tokenInfo.first == LBRACK) {
+				global_arr_decl(type, FORMAT(format));
+			}
+
+			//全局变量定义
+			else {
+				global_var_decl(type, FORMAT(format));
+			}
 
 			if (tokenInfo.first == COMMA) {
 				match(COMMA, FORMAT(format));
