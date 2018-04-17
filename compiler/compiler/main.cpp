@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
-#include "Generator.h"
-#include "SymbolTable.h"
+#include "Compiler.h"
+#include "Test.h"
 
 using namespace std;
 
@@ -9,11 +9,16 @@ int main()
 {
 	//每次都清空Debug信息
 	kkli::Debug::clear();
-
+	
+	bool isTestMode = false;
 	string sourceFile;
 	while (true) {
 		cin >> sourceFile;
-		if (cin.bad()) {
+		if (sourceFile == "TEST") {
+			isTestMode = true;
+			break;
+		}
+		else if (cin.bad()) {
 			cin.clear();
 			cin.ignore(numeric_limits<std::streamsize>::max(), '\n');
 			cout << "can't open: " << sourceFile << ", please input again." << endl;
@@ -22,19 +27,13 @@ int main()
 	}
 
 	try {
-		kkli::Generator gen(sourceFile);
-		gen.gen("");
-
-		kkli::VirtualMachine* vm = kkli::VirtualMachine::getInstance();
-		kkli::Token& tk = kkli::SymbolTable::getInstance()->getMainToken("");
-		vm->pc = reinterpret_cast<int*>(tk.value);
-		vm->deleteTopInst("");
-		vm->deleteTopInst("");
-		vm->addInst(I_EXIT, "");
-
-		WARNING->output();
-
-		vm->run("");
+		if (isTestMode) {
+			kkli::Test::getInstance()->run();
+		}
+		else {
+			kkli::Compiler compiler(sourceFile);
+			compiler.run();
+		}
 	}
 	catch (const kkli::Error& err) {
 		cout << err.what() << endl;

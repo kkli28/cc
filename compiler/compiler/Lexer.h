@@ -18,13 +18,15 @@ namespace kkli {
 		std::string source;  //源代码
 		int index;           //当前扫描的位置
 		int line;            //行号
+		SymbolTable* table;  //符号表
+		VirtualMachine* vm;  //虚拟机
 
 	private:
 		//获取下一个字符
 		inline char get() { return source[++index]; }
 
 	public:
-		Lexer(std::string sourceFile, std::string format);
+		Lexer(std::string sourceFile, SymbolTable* tb, VirtualMachine* v);
 
 		//获取下一个词法单元
 		std::pair<int, int> next(std::string format);

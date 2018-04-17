@@ -45,25 +45,10 @@ namespace kkli {
 		int* pc;    //pc寄存器
 		int ax;     //ax寄存器（栈顶缓存）
 
-		//禁止构造、复制、赋值
-		VirtualMachine(const VirtualMachine& rhs) = delete;
-		const VirtualMachine& operator=(const VirtualMachine& rhs) = delete;
-		VirtualMachine();
-		
 	public:
 
-		//单例
-		static VirtualMachine* getInstance() {
-			static VirtualMachine* vm = nullptr;
-			if (vm == nullptr) {
-				vm = new VirtualMachine();
-			}
-			return vm;
-		}
+		VirtualMachine();
 
-		//重置所有信息
-		void reset(std::string format);
-		
 		//添加数据、指令、指令的操作数
 		void addDataChar(char elem, std::string format);
 		void addDataInt(int elem, std::string format);
@@ -86,7 +71,7 @@ namespace kkli {
 		int* getNextTextPos() const { return nextText; }
 
 		//执行指令
-		int run(std::string format);
+		int run();
 
 		//获取虚拟机信息
 		std::string getInfo() const;
@@ -95,7 +80,11 @@ namespace kkli {
 		const std::vector<std::string>& getInstructionInfo() const { return INSTRUCTION_NAME; }
 
 		//获取指令名称
-		std::string getInstructionName(int i) const { return INSTRUCTION_NAME[i]; }
+		std::string getInstructionName(int i) const { 
+			if (i < 0) return "WRONG_INSTRUCTION";
+			else if (i >= INSTRUCTION_SIZE) return "INSTRUCTION_DATA";
+			return INSTRUCTION_NAME[i]; 
+		}
 	};
 }
 

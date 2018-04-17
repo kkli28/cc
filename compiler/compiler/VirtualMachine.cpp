@@ -28,19 +28,6 @@ kkli::VirtualMachine::VirtualMachine() {
 	needDataAlignment = false;
 }
 
-//重置所有信息
-void kkli::VirtualMachine::reset(std::string format) {
-	DEBUG_VM("VirtualMachine::reset()", format);
-
-	for (int i = 0; i < SEGMENT_SIZE; ++i) {
-		data[i] = 0;
-		text[i] = 0;
-		stack[i] = 0;
-	}
-	nextData = data;
-	nextText = text;
-}
-
 //添加char型数据
 void kkli::VirtualMachine::addDataChar(char elem, std::string format) {
 	DEBUG_VM("VirtualMachine::addCharData(" + std::to_string(elem) + ")", format);
@@ -200,8 +187,10 @@ std::string kkli::VirtualMachine::getInfo() const {
 }
 
 //执行指令
-int kkli::VirtualMachine::run(std::string format) {
-	DEBUG_VM("VirtualMachine::run()", format);
+int kkli::VirtualMachine::run() {
+	DEBUG_VM("VirtualMachine::run()", "");
+
+	std::string format = "";
 
 	int inst;        //指令
 	int cycle = 0;   //执行周期
@@ -286,7 +275,7 @@ int kkli::VirtualMachine::run(std::string format) {
 			pc = reinterpret_cast<int*>(*pc);
 		}
 
-		//进入函数之前
+		//进入函数后
 		else if (inst == I_ENT) {
 			*(--sp) = reinterpret_cast<int>(bp);
 			bp = sp;
@@ -455,7 +444,5 @@ int kkli::VirtualMachine::run(std::string format) {
 		else {
 			throw Error("VirtualMachine::run(): unknown instruction!");
 		}
-
-		//std::cout << getInfo() << std::endl;;
 	}
 }

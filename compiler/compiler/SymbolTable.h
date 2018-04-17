@@ -25,18 +25,7 @@ namespace kkli {
 		size_t mainIndex;  //main函数Token的索引
 
 	public:
-
-		//单例
-		static SymbolTable* getInstance() {
-			static SymbolTable* table = nullptr;
-			if (table == nullptr) {
-				table = new SymbolTable();
-			}
-			return table;
-		}
-
-		//重置所有信息
-		void reset(std::string format);
+		SymbolTable() :current(-1), mainIndex(-1) {}
 
 		//判断是否存在符号
 		bool has(int hash, std::string name, std::string format);

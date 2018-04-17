@@ -1,8 +1,8 @@
-#ifndef __GENERATOR_H__
-#define __GENERATOR_H__
+#ifndef __COMPILER_H__
+#define __COMPILER_H__
 
 /*
-文件描述：语法制导的翻译，采用递归下降的语法分析技术，并实现代码生成。
+文件描述：编译器
 */
 
 #include "stdafx.h"
@@ -12,11 +12,11 @@
 namespace kkli {
 
 	//========================================
-	// Generator: 代码生成器
+	// Compiler: 编译器
 	//========================================
-	class Generator {
+	class Compiler {
 	private:
-		Lexer lexer;
+		Lexer* lexer;
 		SymbolTable* table;
 		VirtualMachine* vm;
 		std::pair<int, int> tokenInfo;
@@ -65,8 +65,14 @@ namespace kkli {
 		void validFunctionCall(const Token& funcToken, const std::vector<int>& dataTypes, std::string format) const;
 
 	public:
-		Generator(std::string sourceFile);
-		void gen(std::string format);
+		Compiler(std::string sourceFile);
+		~Compiler() {
+			delete lexer;
+			delete table;
+			delete vm;
+		}
+
+		void run();
 	};
 }
 

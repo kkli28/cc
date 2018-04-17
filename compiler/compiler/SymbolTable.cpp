@@ -27,14 +27,6 @@ bool kkli::SymbolTable::has(int hash, std::string name, std::string format) {
 	return false;
 }
 
-//重置所有信息
-void kkli::SymbolTable::reset(std::string format) {
-	DEBUG_SYMBOL_TABLE("SymbolTable::reset()", format);
-	table.clear();
-	current = 0;
-	mainIndex = 0;
-}
-
 //获取符号表的信息
 std::string kkli::SymbolTable::getSymbolTableInfo() const {
 	std::string result = "\n[SymbolTable info]:\n";

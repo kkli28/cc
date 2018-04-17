@@ -2,8 +2,12 @@
 #include "Lexer.h"
 
 //构造函数
-kkli::Lexer::Lexer(std::string sourceFile, std::string format) {
-	DEBUG_LEXER("Lexer::lexer(" + sourceFile + ")", format);
+kkli::Lexer::Lexer(std::string sourceFile, SymbolTable* tb, VirtualMachine* v) {
+	table = tb;
+	vm = v;
+
+	DEBUG_LEXER("Lexer::lexer(" + sourceFile + ")", "");
+	std::string format = "";
 
 	//判断文件是否可读取
 	std::ifstream inFile(sourceFile);
@@ -17,7 +21,6 @@ kkli::Lexer::Lexer(std::string sourceFile, std::string format) {
 	source = "char else enum if int return sizeof while printf malloc exit void main";
 	source.push_back(END);
 	
-	SymbolTable* table = SymbolTable::getInstance();
 	int type = CHAR;
 	while (type <= WHILE) {
 		next(FORMAT(format));
@@ -64,9 +67,6 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 	DEBUG_LEXER("Lexer::next()", format);
 	
 	int value = 0;
-	SymbolTable* table = SymbolTable::getInstance();
-	VirtualMachine* vm = VirtualMachine::getInstance();
-
 	char curr = source[index];
 	while (curr != END) {
 
