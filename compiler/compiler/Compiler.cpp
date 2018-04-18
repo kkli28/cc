@@ -442,7 +442,7 @@ void kkli::Compiler::func_body(std::string format) {
 
 				match(ID, FORMAT(format));
 
-				if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON && tokenInfo.first != ASSIGN) {
+				if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON) {
 					throw Error(lexer->getLine(), "bad local declaration.");
 				}
 
@@ -455,7 +455,7 @@ void kkli::Compiler::func_body(std::string format) {
 				currToken.dataType = dataType;
 				currToken.value = ++variableIndex;
 
-				DEBUG_COMPILER_SYMBOL("\n[======== before backup ========] " + table->getSymbolTableInfo(), "");
+				DEBUG_COMPILER_SYMBOL("\n[======== after backup ========] " + table->getSymbolTableInfo(), "");
 
 				if (tokenInfo.first == COMMA) {
 					match(COMMA, FORMAT(format));
