@@ -10,7 +10,7 @@
 #define ENABLE_WARNING true
 
 //是否开启输出执行的语句
-#define ENABLE_OUTPUT_EXECUTE_INSTRUCTION true
+#define ENABLE_OUTPUT_EXECUTE_INSTRUCTION false
 
 //是否启用调试信息
 #define DEBUG_MODE false
