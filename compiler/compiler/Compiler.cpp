@@ -442,7 +442,7 @@ void kkli::Compiler::func_body(std::string format) {
 
 				match(ID, FORMAT(format));
 
-				if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON) {
+				if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON && tokenInfo.first != ASSIGN) {
 					throw Error(lexer->getLine(), "bad local declaration.");
 				}
 
@@ -456,6 +456,16 @@ void kkli::Compiler::func_body(std::string format) {
 				currToken.value = ++variableIndex;
 
 				DEBUG_COMPILER_SYMBOL("\n[======== after backup ========] " + table->getSymbolTableInfo(), "");
+
+				//int a = b + c; 被视为 int a; a = b + c; 进行翻译，可避免复杂的局部变量初始化逻辑
+				//因局部变量存放在栈上，但是编译时栈不可知，因此这么写可避免实现复杂的局部变量初始化逻辑
+				//这么做有bug，就是 int a = a + b + c; 是合法的，其为 int a; a = a + b + c; 结果是 b + c，因a被初始化为0
+				//TODO: 处理数组的初始化
+				if (tokenInfo.first == ASSIGN) {
+					lexer->rollBack(FORMAT(format));
+					tokenInfo = lexer->next(FORMAT(format));
+					break;
+				}
 
 				if (tokenInfo.first == COMMA) {
 					match(COMMA, FORMAT(format));

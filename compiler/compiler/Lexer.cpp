@@ -6,6 +6,8 @@ kkli::Lexer::Lexer(std::string sourceFile, SymbolTable* tb, VirtualMachine* v) {
 	table = tb;
 	vm = v;
 
+	index = 0;
+
 	DEBUG_LEXER("Lexer::lexer(" + sourceFile + ")", "");
 	std::string format = "";
 
@@ -58,8 +60,26 @@ kkli::Lexer::Lexer(std::string sourceFile, SymbolTable* tb, VirtualMachine* v) {
 
 	DEBUG_LEXER_SOURCE("\n[source--begin]:\n" + source + "\n[source--end]\n", FORMAT(format));
 
+	prevPrevIndex = 0;
+	prevIndex = 0;
 	index = 0;
 	line = 1;
+}
+
+//更新索引
+void kkli::Lexer::updateIndex(std::string format) {
+	DEBUG_LEXER("Lexer::updateIndex()", format);
+	prevPrevIndex = prevIndex;
+	prevIndex = index;
+}
+
+//回退，为了局部变量定义
+void kkli::Lexer::rollBack(std::string format) {
+	DEBUG_LEXER("Lexer::rollBack()", format);
+	index = prevPrevIndex - 1;
+	prevPrevIndex = index;
+	prevIndex = index;
+	source[index] = ';';
 }
 
 //next
@@ -68,6 +88,8 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 	
 	int value = 0;
 	char curr = source[index];
+
+	updateIndex(FORMAT(format));
 	while (curr != END) {
 
 		//换行符

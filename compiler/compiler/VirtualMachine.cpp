@@ -209,7 +209,9 @@ int kkli::VirtualMachine::run() {
 		DEBUG_VM(instInfo, format);
 
 		//TEST
-		//std::cout << instInfo << std::endl;
+		if (ENABLE_OUTPUT_EXECUTE_INSTRUCTION) {
+			std::cout << instInfo << std::endl;
+		}
 		
 		//È¡Á¢¼´Êý
 		if (inst == I_IMM) {
