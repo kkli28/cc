@@ -58,7 +58,7 @@ namespace kkli {
 	enum {
 		CHAR_TYPE,     //char型
 		INT_TYPE,      //int型
-		PTR_TYPE       //指针类型
+		PTR_TYPE,      //指针类型
 	};
 	
 	//========================================

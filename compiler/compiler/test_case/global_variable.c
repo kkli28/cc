@@ -46,7 +46,7 @@ int d = 4, *e = 0xffffff, **f = 0x0000ff;
 char g = 'a';
 char h = 'a', i = 'b', *j = 0123456;
 
-int main(){
+int main() {
     EI(a, 1);
     EI(b, 2);
     EI(c, 3);
@@ -57,11 +57,12 @@ int main(){
     EC(h, 'a');
     EC(i, 'b');
     ECP(j, (char*)0123456);
+
     if(succeed){
-        printf("test [global_variable] succeed!\n");
+        printf(">>>> succeed! <<<<\n");
     }
     else{
-        printf("test [global_variable] failed!\n");
+        printf("#### failed! ####\n");
     }
     return 0;
 }

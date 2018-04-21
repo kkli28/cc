@@ -20,5 +20,12 @@ void main(){
     B= 'B';
     C= 'C';
     hanoi(3, A, B, C);
+    
+    if(1){
+        printf(">>>> succeed! <<<<\n");
+    }
+    else{
+        printf("#### failed! ####\n");
+    }
     return 0;
 }

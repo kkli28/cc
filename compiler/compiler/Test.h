@@ -11,16 +11,16 @@ namespace kkli {
 	//========================================
 	class Test {
 	private:
-		std::vector<std::string> testFiles;
+		std::vector<std::pair<std::string, std::string>> testFiles;
 
 		Test() {
-			testFiles.push_back("test_case/array.c");
-			testFiles.push_back("test_case/enum.c");
-			testFiles.push_back("test_case/func_param.c");
-			testFiles.push_back("test_case/global_variable.c");
-			testFiles.push_back("test_case/hanoi.c");
-			testFiles.push_back("test_case/local_variable.c");
-			testFiles.push_back("test_case/sort.c");
+			testFiles.push_back({ "test_case/array.c", "array" });
+			testFiles.push_back({ "test_case/enum.c", "enum" });
+			testFiles.push_back({ "test_case/func_param.c", "func_param" });
+			testFiles.push_back({ "test_case/global_variable.c", "global_variable" });
+			testFiles.push_back({ "test_case/hanoi.c", "hanoi" });
+			testFiles.push_back({ "test_case/local_variable.c", "local_variable" });
+			testFiles.push_back({ "test_case/sort.c", "sort" });
 		}
 
 	public:
@@ -34,7 +34,8 @@ namespace kkli {
 
 		void run() const {
 			for (auto file : testFiles) {
-				Compiler compiler(file);
+				std::cout << "\n======== test: " << file.second << " ========\n" << std::endl;
+				Compiler compiler(file.first);
 				compiler.run();
 			}
 		}

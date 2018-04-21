@@ -52,6 +52,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <xutility>
+#include <algorithm>
 
 //普通头文件
 #include "Utils.h"

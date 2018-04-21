@@ -36,11 +36,12 @@ int main(){
     EC(cd, 'B');
     int e = 1;
     EI(e, 1);
+
     if(succeed){
-        printf("test [local variable] succeed!\n");
+        printf(">>>> succeed! <<<<\n");
     }
     else{
-        printf("test [local variable] failed!\n");
+        printf("#### failed! ####\n");
     }
     return 0;
 }

@@ -13,6 +13,7 @@ public:
     int dataType;    //数据类型
     int value;       //值
     int hash;        //hash值
+    std::vector<int> args;  //函数的参数类型
 
     int Bklass;      //种类的备份
     int BdataType;   //数据类型的备份

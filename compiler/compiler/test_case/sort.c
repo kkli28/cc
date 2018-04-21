@@ -38,11 +38,12 @@ int main(){
     E(arr[7], 8);
     E(arr[8], 9);
     E(arr[9], 10);
+
     if(succeed){
-        printf("test [sort] succeed!\n");
+        printf(">>>> succeed! <<<<\n");
     }
     else{
-        printf("test [sort] failed!\n");
+        printf("#### failed! ####\n");
     }
     return 0;
 }

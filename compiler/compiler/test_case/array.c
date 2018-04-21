@@ -25,7 +25,6 @@ int arr6[2];
 char arr7[4];
 
 int main(){
-
     EI(arr1[0], 1);
     EI(arr1[1], 2);
     EI(arr1[2], 3);
@@ -88,10 +87,10 @@ int main(){
     EC(arr7[1], '\0');
 
     if(succeed){
-        printf("test [array] succeed!\n");
+        printf(">>>> succeed! <<<<\n");
     }
     else{
-        printf("test [array] failed!\n");
+        printf("#### failed! ####\n");
     }
     return 0;
 }

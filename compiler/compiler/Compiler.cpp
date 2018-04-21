@@ -181,8 +181,20 @@ void kkli::Compiler::global_var_decl(int type, std::string format) {
 			if (tk.dataType != PTR_TYPE) {
 				WARNING->add(lexer->getLine(), Token::getDataTypeName(tk.dataType) + " type variable " + tk.name + " get string type value.");
 			}
-			*reinterpret_cast<int*>(tk.value) = factor*tokenInfo.second;
+			*reinterpret_cast<int*>(tk.value) = tokenInfo.second;
 		}
+
+		//已定义全局变量，则可直接取其值
+		else if (tokenInfo.first == ID) {
+			Token& current = table->getCurrentToken(FORMAT(format));
+			if (current.klass == GLOBAL) {
+				*reinterpret_cast<int*>(tk.value) = factor*current.value;
+			}
+			else {
+				throw Error(lexer->getLine(), "variable " + current.name + " not defined!");
+			}
+		}
+
 		else {
 			throw Error(lexer->getLine(), "bad variable definition.");
 		}
@@ -282,7 +294,7 @@ void kkli::Compiler::global_arr_decl(int type, std::string format) {
 				throw Error(lexer->getLine(), "Compiler::local_arr_decl(): wrong array definition.");
 			}
 		}
-		if (values.size() > arraySize) {
+		if (int(values.size()) > arraySize) {
 			throw Error(lexer->getLine(), "Compiler::global_arr_decl(): too many values for array definition.");
 		}
 
@@ -1122,9 +1134,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				match(ADD, FORMAT(format));
 				vm->addInst(I_PUSH, FORMAT(format));
 				expression(MUL, FORMAT(format));
-				exprType = tempType;  //结果类型以左操作数为准
-				//问题：当 'a' + 1000 时会溢出吗？因为char型最大255
-
+				exprType = std::max(tempType, exprType);
 
 				//非char*型指针，则加数乘以4再加到指针上
 				if (exprType > PTR_TYPE) {
@@ -1187,7 +1197,9 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				vm->addInst(I_PUSH, FORMAT(format));
 				expression(INC, FORMAT(format));
 				vm->addInst(I_MUL, FORMAT(format));
-				exprType = tempType;
+
+				//TODO: 检查类型合法性！！！
+				exprType = std::max(tempType, exprType);
 			}
 
 			else if (tokenInfo.first == DIV) {
@@ -1199,7 +1211,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				vm->addInst(I_PUSH, FORMAT(format));
 				expression(INC, FORMAT(format));
 				vm->addInst(I_DIV, FORMAT(format));
-				exprType = tempType;
+				exprType = std::max(tempType, exprType);
 			}
 
 			else if (tokenInfo.first == MOD) {

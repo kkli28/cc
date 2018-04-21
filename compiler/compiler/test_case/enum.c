@@ -13,7 +13,6 @@ enum {h = -1, i = -2, j, k};
 enum {};
 
 int main() {
-    succeed = 1;
     E(a, 0);
     E(b, 2);
     E(c, 3);
@@ -28,10 +27,10 @@ int main() {
     E(k, 0);
 
     if(succeed){
-        printf("test [enum] succeed!\n");
+        printf(">>>> succeed! <<<<\n");
     }
     else{
-        printf("test [enum] failed!\n");
+        printf("#### failed! ####\n");
     }
     return 0;
 }

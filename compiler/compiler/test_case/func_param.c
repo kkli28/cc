@@ -182,11 +182,12 @@ int main(){
     func51(a, b, c, d, e, f, g, h, i, j);
     func52(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj);
     func53('a', 2, 'c', 4, 'e', 6, 'g', 8, 'i', 10);
+
     if(succeed){
-        printf("test [func_call] succeed!\n");
+        printf(">>>> succeed! <<<<\n");
     }
     else{
-        printf("test [func_call] faild!\n");
+        printf("#### failed! ####\n");
     }
     return 0;
 }
