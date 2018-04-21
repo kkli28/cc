@@ -22,11 +22,9 @@ namespace kkli {
 		//用户定义标识符
 		ID = 128,
 
-		//数字值
-		NUM,
-
-		//字符值
-		//CHARACTOR,
+		//整型值、字符型值
+		NUM_INT,
+		NUM_CHAR,
 
 		//关键字
 		CHAR, ELSE, ENUM, IF, INT, RETURN, SIZEOF, WHILE,
@@ -76,12 +74,13 @@ namespace kkli {
 	public:
 		//主字段
 		int type;          //类型
-		int klass;         //种类
 		std::string name;  //名字
-		int dataType;      //数据类型
-		int value;         //值
 		int hash;          //hash值，便于标记快速查找
 		std::vector<int> argsDataType;    //函数参数及其类型
+
+		int klass;         //种类
+		int dataType;      //数据类型
+		int value;         //值
 
 		//备份字段
 		int Bklass;

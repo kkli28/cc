@@ -33,6 +33,7 @@ namespace kkli {
 
 	private:
 		void match(int type, std::string format);
+		void matchAny(std::string format);
 
 		//全局定义
 		void global_decl(std::string format);

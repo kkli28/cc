@@ -1,15 +1,16 @@
-enum {a, b=2, c, d=1, e, f, g=10000};
-enum {h = -1, i = -2, j, k};
-enum {};
-
-int succeed;
+int succeed = 1;
+int count = 0;
 void E(int var, int val){
-    //printf("var = %d, val = %d\n", var, val);
+    ++count;
     if(var != val){
-        printf("[error] %d != %d\n", var, val);
+        printf("\n%d [error] %d != %d\n", count, var, val);
         succeed = 0;
     }
 }
+
+enum {a, b=2, c, d=1, e, f, g=10000};
+enum {h = -1, i = -2, j, k};
+enum {};
 
 int main() {
     succeed = 1;

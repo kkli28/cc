@@ -182,7 +182,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 				}
 			}
 
-			return { NUM, value };
+			return { NUM_INT, value };
 		}
 
 		//×¢ÊÍ »ò ³ýºÅ
@@ -247,7 +247,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			curr = get();
 
 			DEBUG_LEXER_NEXT("[char] " + std::to_string(value), FORMAT(format));
-			return { NUM, value };
+			return { NUM_CHAR, value };
 		}
 
 		//×Ö·û´®
@@ -284,6 +284,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			curr = get();
 
 			DEBUG_LEXER_NEXT("[string]", FORMAT(format));
+
 			return { STRING, value };
 		}
 

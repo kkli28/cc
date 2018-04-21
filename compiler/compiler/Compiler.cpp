@@ -20,10 +20,18 @@ void kkli::Compiler::match(int type, std::string format) {
 	}
 }
 
+//匹配任意Token
+void kkli::Compiler::matchAny(std::string format) {
+	DEBUG_COMPILER("Compiler::matchAny()", format);
+	tokenInfo = lexer->next(FORMAT(format));
+}
+
 void kkli::Compiler::run() {
 	DEBUG_COMPILER("Compiler::run()", "");
 
-	tokenInfo = lexer->next("");
+	WARNING->clear();
+
+	matchAny("");
 	while (tokenInfo.first != END) {
 		global_decl("");
 	}
@@ -153,40 +161,40 @@ void kkli::Compiler::global_var_decl(int type, std::string format) {
 		//int a = +1;  int a = -1;
 		int factor = 1;
 		if (tokenInfo.first == SUB || tokenInfo.first == ADD) {
-			tokenInfo = lexer->next(FORMAT(format));
-			factor = (tokenInfo.first == SUB ? -1 : 1);
-			if (tokenInfo.first != NUM) {
-				throw Error(lexer->getLine(), "bad variable definition.");
-			}
+			if (tokenInfo.first == SUB) factor = -1;
+			matchAny(FORMAT(format));
 		}
 
 		//数值型
-		if (tokenInfo.first == NUM) {
+		if (tokenInfo.first == NUM_INT || tokenInfo.first == NUM_CHAR) {
 			if (tk.dataType >= PTR_TYPE) {
-				WARNING->add(lexer->getLine(), "assign a number to a pointer.");
+				WARNING->add(lexer->getLine(), std::string("pointer type variable") + tk.name + " get " + (tokenInfo.first == NUM_INT ? "int" : "char") + " type value.");
 			}
 			*reinterpret_cast<int*>(tk.value) = factor*tokenInfo.second;  //写入初始值
 		}
 
 		//字符串型
 		else if (tokenInfo.first == STRING) {
+			if (factor == -1) {
+				throw Error(lexer->getLine(), "use '-' before string type value.");
+			}
 			if (tk.dataType != PTR_TYPE) {
-				WARNING->add(lexer->getLine(), Token::getDataTypeName(tk.dataType) + " type variable " + tk.name + " get STRING type value.");
+				WARNING->add(lexer->getLine(), Token::getDataTypeName(tk.dataType) + " type variable " + tk.name + " get string type value.");
 			}
 			*reinterpret_cast<int*>(tk.value) = factor*tokenInfo.second;
 		}
 		else {
 			throw Error(lexer->getLine(), "bad variable definition.");
 		}
-		tokenInfo = lexer->next(FORMAT(format));
+		matchAny("");
 	}
 }
 
 //全局数组定义
 void kkli::Compiler::global_arr_decl(int type, std::string format) {
 	//<type> { '*' }+ <id> '[' <num> ']' [ '=' '{' {<num>, [',' <num>]+'}' ] ';'
-	//                      ^                                        ^
-	//                      |----------------------------------------|
+	//                      ^                                           ^
+	//                      |-------------------------------------------|
 	Token& tk = table->getCurrentToken(FORMAT(format));
 	tk.klass = GLOBAL;
 	tk.dataType = type + PTR_TYPE;
@@ -198,34 +206,75 @@ void kkli::Compiler::global_arr_decl(int type, std::string format) {
 	*reinterpret_cast<int*>(tk.value) = reinterpret_cast<int>(vm->getNextDataPos(type, FORMAT(format)));
 
 	match(LBRACK, FORMAT(format));
-	if (tokenInfo.first != NUM) {
-		throw Error(lexer->getLine(), "Compiler::global_decl(): wrong array definition.");
+	if (tokenInfo.first != NUM_INT) {
+		throw Error(lexer->getLine(), "Compiler::global_decl(): wrong array declaration.");
 	}
 
 	int arraySize = tokenInfo.second;
-	match(NUM, FORMAT(format));
-	match(RBRACK, FORMAT(format));
+	int maxSize = (type == CHAR_TYPE ? 
+		VirtualMachine::MAX_CHAR_ARRAY_SIZE : VirtualMachine::MAX_INT_ARRAY_SIZE);
+	if (arraySize < 1 || arraySize > maxSize) {
+		throw Error(lexer->getLine(), "Compiler::global_decl(): valid array size range is 1 to " + std::to_string(maxSize));
+	}
 
-	std::vector<int> values;
+	//预插入arraySize个数据，避免该地方被其他数据占据
+	if (type == CHAR_TYPE) {
+		vm->addDataDefaultChars(arraySize, FORMAT(format));
+	}
+	else {
+		vm->addDataDefaultInts(arraySize, FORMAT(format));
+	}
+
+	matchAny(FORMAT(format));
+	match(RBRACK, FORMAT(format));
 
 	//数组初始化
 	if (tokenInfo.first == ASSIGN) {
 		match(ASSIGN, FORMAT(format));
 		match(LBRACE, FORMAT(format));
 
+		int index = 0;
+		std::vector<int> values;
 		while (tokenInfo.first != RBRACE) {
-			if (tokenInfo.first != NUM && tokenInfo.first != STRING) {
-				throw Error(lexer->getLine(), "VirtualMachine::global_arr_decl(): need number in array definition.");
+			++index;
+			bool negative = false;
+			//-1
+			if (tokenInfo.first == ADD || tokenInfo.first == SUB) {
+				if (tokenInfo.first == SUB) negative = true;
+				matchAny(FORMAT(format));
+			}
+			if (tokenInfo.first != NUM_INT && tokenInfo.first != NUM_CHAR && tokenInfo.first != STRING) {
+				throw Error(lexer->getLine(), "VirtualMachine::global_arr_decl(): wrong value in array definition.");
 			}
 
-			//TODO: 类型检测
+			if (negative) {
+				tokenInfo.second = -tokenInfo.second;
+				//-'A'，警告
+				if (tokenInfo.first == NUM_CHAR) {
+					WARNING->add(lexer->getLine(), std::string("use '-' before char type value"));
+				}
+				//-"abcd"，错误
+				else if (tokenInfo.first == STRING) {
+					throw Error(lexer->getLine(), "VirtualMachine::global_arr_decl(): use '-' before string type value.");
+				}
+			}
 			values.push_back(tokenInfo.second);
-			tokenInfo = lexer->next(FORMAT(format));
+
+			//类型检查
+			int tp = CHAR_TYPE;
+			if (tokenInfo.first == NUM_INT) tp = INT_TYPE;
+			else if (tokenInfo.first == STRING) tp = PTR_TYPE;
+			if(tp != type){
+				WARNING->add(lexer->getLine(), std::string("expect ") + Token::getDataTypeName(type) + " type value at index " + std::to_string(index));
+			}
+
+			matchAny(FORMAT(format));
 			if (tokenInfo.first == COMMA) {
 				match(COMMA, FORMAT(format));
 
 				//逗号之后必须有值，不能出现 int a[4] = {1, 2, 3, }; 这种情况，3后面缺少值型数据
-				if (tokenInfo.first != NUM && tokenInfo.first != STRING) {
+				int tf = tokenInfo.first;
+				if (tf != ADD && tf != SUB && tf != NUM_INT && tf != NUM_CHAR && tf != STRING) {
 					throw Error(lexer->getLine(), "Compiler::global_arr_decl(): wrong array definition.");
 				}
 			}
@@ -237,31 +286,20 @@ void kkli::Compiler::global_arr_decl(int type, std::string format) {
 			throw Error(lexer->getLine(), "Compiler::global_arr_decl(): too many values for array definition.");
 		}
 
-		//char型（1字节）数组
+		//对数组元素赋值
+		char* addr = reinterpret_cast<char*>(*reinterpret_cast<int*>(tk.value));
 		if (type == CHAR_TYPE) {
 			std::vector<char> vals;
-			for (int i = 0; i < values.size(); ++i) {
-				vals.push_back(values[i]);
+			for (auto v : values) {
+				vals.push_back(v);
 			}
-			vm->addDataCharArray(arraySize, vals, FORMAT(format));
+			vm->setChars(addr, std::move(vals), FORMAT(format));
 		}
-
-		//int型（4字节）数组
 		else {
-			vm->addDataIntArray(arraySize, values, FORMAT(format));
+			vm->setInts(addr, std::move(values), FORMAT(format));
 		}
 
 		match(RBRACE, FORMAT(format));
-	}
-
-	//数组声明
-	else {
-		if (type == CHAR_TYPE) {
-			vm->addDataCharArray(arraySize, {}, FORMAT(format));
-		}
-		else {
-			vm->addDataIntArray(arraySize, {}, FORMAT(format));
-		}
 	}
 }
 
@@ -287,19 +325,19 @@ void kkli::Compiler::enum_decl(std::string format) {
 			match(ASSIGN, FORMAT(format));
 
 			//允许正负数 +1, -1 等
-			bool negtive = false;
+			bool negative = false;
 			if (tokenInfo.first == SUB) {
 				match(SUB, FORMAT(format));
-				negtive = true;
+				negative = true;
 			}
 			else if (tokenInfo.first == ADD) {
 				match(ADD, FORMAT(format));
 			}
-			if (tokenInfo.first != NUM) {
+			if (tokenInfo.first != NUM_INT && tokenInfo.first != NUM_CHAR) {
 				throw Error(lexer->getLine(), "expected token [NUM]");
 			}
-			varValue = negtive ? -tokenInfo.second : tokenInfo.second;
-			match(NUM, FORMAT(format));
+			varValue = negative ? -tokenInfo.second : tokenInfo.second;
+			matchAny(FORMAT(format));
 		}
 		DEBUG_COMPILER("[index] = " + std::to_string(varIndex)
 			+ "  value = " + std::to_string(varValue), FORMAT(format));
@@ -514,13 +552,13 @@ void kkli::Compiler::statement(std::string format) {
 			DEBUG_COMPILER("[else]", FORMAT(format));
 
 			match(ELSE, FORMAT(format));
-			*branch = int(vm->getNextTextPos() + 2);
+			*branch = reinterpret_cast<int>(vm->getNextTextPos() + 2);
 			vm->addInst(I_JMP, FORMAT(format));
 			branch = vm->getNextTextPos();
 			vm->addInstData(0, FORMAT(format));  //占据一个位置
 			statement(FORMAT(format));
 		}
-		*branch = int(vm->getNextTextPos());
+		*branch = reinterpret_cast<int>(vm->getNextTextPos());
 	}
 
 	//while语句
@@ -540,8 +578,8 @@ void kkli::Compiler::statement(std::string format) {
 
 		statement(FORMAT(format));
 		vm->addInst(I_JMP, FORMAT(format));
-		vm->addInstData(int(branchA), FORMAT(format));
-		*branchB = int(vm->getNextTextPos());
+		vm->addInstData(reinterpret_cast<int>(branchA), FORMAT(format));
+		*branchB = reinterpret_cast<int>(vm->getNextTextPos());
 	}
 
 	//{ statement }
@@ -593,15 +631,22 @@ void kkli::Compiler::expression(int priority, std::string format) {
 			throw Error(lexer->getLine(), "unexpected token EOF of expression.");
 		}
 
-		else if (tokenInfo.first == NUM) {
+		else if (tokenInfo.first == NUM_CHAR) {
 			vm->addInst(I_IMM, FORMAT(format));
 			vm->addInstData(tokenInfo.second, FORMAT(format));
-			DEBUG_COMPILER("[NUM] " + std::to_string(tokenInfo.second), FORMAT(format));
+			DEBUG_COMPILER("[NUM_CHAR] " + std::to_string(tokenInfo.second), FORMAT(format));
+
+			exprType = CHAR_TYPE;
+			match(NUM_CHAR, FORMAT(format));
+		}
+		else if (tokenInfo.first == NUM_INT) {
+			vm->addInst(I_IMM, FORMAT(format));
+			vm->addInstData(tokenInfo.second, FORMAT(format));
+			DEBUG_COMPILER("[NUM_CHAR] " + std::to_string(tokenInfo.second), FORMAT(format));
 
 			exprType = INT_TYPE;
-			match(NUM, FORMAT(format));
+			match(NUM_INT, FORMAT(format));
 		}
-
 		else if (tokenInfo.first == STRING) {
 			vm->addInst(I_IMM, FORMAT(format));
 			vm->addInstData(tokenInfo.second, FORMAT(format));
@@ -653,9 +698,8 @@ void kkli::Compiler::expression(int priority, std::string format) {
 					vm->addInst(I_PUSH, FORMAT(format));
 					if (tokenInfo.first == COMMA) {
 						match(COMMA, FORMAT(format));
-					}
-					else if (tokenInfo.first != RPAREN) {
-						throw Error(lexer->getLine(), "bad function call!");
+						//避免func(a,)的情况
+						if (tokenInfo.first == RPAREN) throw Error(lexer->getLine(), "bad function call!");
 					}
 				}
 				match(RPAREN, FORMAT(format));
@@ -809,17 +853,17 @@ void kkli::Compiler::expression(int priority, std::string format) {
 			//+a，啥也不做
 			match(ADD, FORMAT(format));
 			expression(INC, FORMAT(format));
-			exprType = INT_TYPE;
 		}
 
 		else if (tokenInfo.first == SUB) {
 			DEBUG_COMPILER("[SUB]", FORMAT(format));
 			//-a
 			match(SUB, FORMAT(format));
-			if (tokenInfo.first == NUM) {
+			if (tokenInfo.first == NUM_INT || tokenInfo.first == NUM_CHAR) {
 				vm->addInst(I_IMM, FORMAT(format));
 				vm->addInstData(-tokenInfo.second, FORMAT(format));
-				match(NUM, FORMAT(format));
+				exprType = (tokenInfo.first == NUM_INT ? INT_TYPE : CHAR_TYPE);
+				matchAny(FORMAT(format));
 			}
 			else {
 				//-a 等价于 (-1)*a
@@ -829,8 +873,6 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				expression(INC, FORMAT(format));
 				vm->addInst(I_MUL, FORMAT(format));
 			}
-
-			exprType = INT_TYPE;
 		}
 
 		else if (tokenInfo.first == INC || tokenInfo.first == DEC) {
@@ -860,6 +902,21 @@ void kkli::Compiler::expression(int priority, std::string format) {
 			vm->addInstData(exprType > PTR_TYPE ? 4 : 1, FORMAT(format));
 			vm->addInst(tk == INC ? I_ADD : I_SUB, FORMAT(format));
 			vm->addInst(exprType == CHAR_TYPE ? I_SC : I_SI, FORMAT(format));
+		}
+
+		//int('a'), char***(0xffffffff)
+		else if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
+			matchAny(FORMAT(format));
+
+			int castType = tokenInfo.first == CHAR ? CHAR_TYPE : INT_TYPE;
+			while (tokenInfo.first == MUL) {
+				match(MUL, FORMAT(format));
+				castType += PTR_TYPE;
+			}
+			match(LPAREN, FORMAT(format));
+			expression(ASSIGN, FORMAT(format));
+			match(RPAREN, FORMAT(format));
+			exprType = castType;
 		}
 
 		else {
@@ -1264,7 +1321,7 @@ void kkli::Compiler::validFunctionCall(const Token& funcToken, const std::vector
 	for (int i = 0; i < size1; ++i) {
 		if (funcToken.argsDataType[i] != dataTypes[i]) {
 			WARNING->add(lexer->getLine(), "function '" + funcToken.name + "' need " +
-				Token::getDataTypeName(funcToken.argsDataType[i]) + " type argument at argument index " + std::to_string(i) + ", but get "+
+				Token::getDataTypeName(funcToken.argsDataType[i]) + " type argument at argument index " + std::to_string(i+1) + ", but get "+
 			Token::getDataTypeName(dataTypes[i])+ " type.");
 		}
 	}

@@ -54,7 +54,8 @@ std::string kkli::Token::getTokenTypeName(int type) {
 	case SEMICON: return "SEMICON";
 	case TILDE: return "TILDE";
 	case ID: return "ID";
-	case NUM: return "NUM";
+	case NUM_CHAR: return "NUM_CHAR";
+	case NUM_INT: return "NUM_INT";
 	case CHAR: return "CHAR";
 	case ELSE: return "ELSE";
 	case ENUM: return "ENUM";
@@ -110,12 +111,10 @@ std::string kkli::Token::getTokenKlassName(int klass) {
 
 //»ñÈ¡DataTypeÃû³Æ
 std::string kkli::Token::getDataTypeName(int type) {
-	std::string result;
+	std::string result = (type == CHAR_TYPE ? "char" : "int");
 	while (type >= PTR_TYPE) {
 		type -= 2;
-		result += "PTR ";
+		result += " ptr";
 	}
-	if (type == CHAR_TYPE) result += "CHAR_TYPE";
-	else result += "INT_TYPE";
 	return result;
 }

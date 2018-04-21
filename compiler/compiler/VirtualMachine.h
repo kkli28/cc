@@ -24,6 +24,7 @@ namespace kkli {
 			"I_ADD ", "I_SUB ", "I_MUL ", "I_DIV ", "I_MOD ", //五则运算
 			"I_PRTF", "I_MALC", "I_EXIT" //内置函数
 		};
+
 		//内存中各段的大小
 		const int SEGMENT_SIZE = 2560 * 1024;
 
@@ -45,17 +46,24 @@ namespace kkli {
 		int* pc;    //pc寄存器
 		int ax;     //ax寄存器（栈顶缓存）
 
+		static const int MAX_INT_ARRAY_SIZE = 60'0000;
+		static const int MAX_CHAR_ARRAY_SIZE = 250'0000;
+
 	public:
 
 		VirtualMachine();
 
 		//添加数据、指令、指令的操作数
 		void addDataChar(char elem, std::string format);
-		void addDataInt(int elem, std::string format);
-		void addDataCharArray(int count, const std::vector<char>& values, std::string format);
-		void addDataIntArray(int count, const std::vector<int>& values, std::string format);
+		void addDataDefaultChars(int count, std::string format);
+		void addDataInt(int count, std::string format);
+		void addDataDefaultInts(int count, std::string format);
 		void addInst(int elem, std::string format);
 		void addInstData(int elem, std::string format);
+
+		//向data域的某个位置写入数据
+		void setChars(char* addr, std::vector<char>&& chars, std::string format);
+		void setInts(char* addr, std::vector<int>&& chars, std::string format);
 		
 		//操作顶部的指令
 		int getTopInst(std::string format);

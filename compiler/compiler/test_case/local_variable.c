@@ -1,13 +1,20 @@
 int succeed = 1;
-void E(int var, int val){
+int count = 0;
+
+void EI(int var, int val){
+    ++count;
     if(var != val){
-        printf("\n[error!] %d != %d\n", var, val);
+        printf("\n%d [error!] %d != %d\n", count, var, val);
         succeed = 0;
     }
 }
 
-void func(){
-    return 1;
+void EC(char var, char val){
+    ++count;
+    if(var != val){
+        printf("\n%d [error!] %d != %d\n", count, var, val);
+        succeed = 0;
+    }
 }
 
 int main(){
@@ -15,20 +22,20 @@ int main(){
     int b = 2;
     int c = a + b;
     int d = a - b + c;
-    E(a, 1);
-    E(b, 2);
-    E(c, 3);
-    E(d, 2);
+    EI(a, 1);
+    EI(b, 2);
+    EI(c, 3);
+    EI(d, 2);
     char ca = 'A';
     char cb = 'B';
     char cc = cb - ca;
     char cd = ca + cc;
-    E(ca, 'A');
-    E(cb, 'B');
-    E(cc, 1);
-    E(cd, 'B');
-    int e = func();
-    E(e, 1);
+    EC(ca, 'A');
+    EC(cb, 'B');
+    EC(cc, (char)1);
+    EC(cd, 'B');
+    int e = 1;
+    EI(e, 1);
     if(succeed){
         printf("test [local variable] succeed!\n");
     }
