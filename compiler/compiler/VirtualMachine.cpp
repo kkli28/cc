@@ -205,27 +205,27 @@ int kkli::VirtualMachine::run() {
 		if (inst <= I_ADJ) instInfo += "  " + std::to_string(*pc);
 		DEBUG_VM(instInfo, format);
 
-		if (ENABLE_OUTPUT_EXECUTE_INSTRUCTION) {
-			std::cout << instInfo << std::endl;
+		if (DEBUG_INFO->ENABLE_OUTPUT_EXECUTE_INSTRUCTION) {
+			Debug::output(instInfo, "");
 		}
 		
 		//取立即数
 		if (inst == I_IMM) {
 			ax = *pc;
 			++pc;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//加载char值
 		else if (inst == I_LC) {
 			ax = *(reinterpret_cast<char*>(ax));
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//加载int值
 		else if (inst == I_LI) {
 			ax = *(reinterpret_cast<int*>(ax));
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//存储char值
@@ -233,7 +233,7 @@ int kkli::VirtualMachine::run() {
 			char* addr = reinterpret_cast<char*>(*sp);
 			++sp;
 			*addr = ax;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//存储int值
@@ -241,36 +241,40 @@ int kkli::VirtualMachine::run() {
 			int* addr = reinterpret_cast<int*>(*sp);
 			++sp;
 			*addr = ax;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//入栈
 		else if (inst == I_PUSH) {
 			*(--sp) = ax;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//无条件跳转
 		else if (inst == I_JMP) {
 			pc = reinterpret_cast<int*>(*pc);
+			DEBUG_REGISTER(format);
 		}
 
 		//零跳转
 		else if (inst == I_JZ) {
 			if (ax != 0) pc = pc + 1;
 			else pc = reinterpret_cast<int*>(*pc);
+			DEBUG_REGISTER(format);
 		}
 
 		//非零跳转
 		else if (inst == I_JNZ) {
 			if (ax == 0) pc = pc + 1;
 			else pc = reinterpret_cast<int*>(*pc);
+			DEBUG_REGISTER(format);
 		}
 
 		//函数调用
 		else if (inst == I_CALL) {
 			*(--sp) = reinterpret_cast<int>(pc + 1);
 			pc = reinterpret_cast<int*>(*pc);
+			DEBUG_REGISTER(format);
 		}
 
 		//进入函数后
@@ -279,12 +283,14 @@ int kkli::VirtualMachine::run() {
 			bp = sp;
 			sp = sp - *pc;
 			++pc;
+			DEBUG_REGISTER(format);
 		}
-
+		
 		//函数返回时的参数出栈
 		else if (inst == I_ADJ) {
 			sp = sp + *pc;
 			++pc;
+			DEBUG_REGISTER(format);
 		}
 
 		//函数返回
@@ -294,12 +300,14 @@ int kkli::VirtualMachine::run() {
 			++sp;
 			pc = reinterpret_cast<int*>(*sp);  //恢复pc
 			++sp;
+			DEBUG_REGISTER(format);
 		}
 
 		//获取基于bp寄存器的位置
 		else if (inst == I_LEA) {
 			ax = reinterpret_cast<int>(bp + *pc);
 			++pc;
+			DEBUG_REGISTER(format);
 		}
 
 		/*
@@ -310,112 +318,112 @@ int kkli::VirtualMachine::run() {
 		else if (inst == I_OR) {
 			ax = (*sp | ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//异或运算
 		else if (inst == I_XOR) {
 			ax = (*sp ^ ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//与运算
 		else if (inst == I_AND) {
 			ax = (*sp & ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//相等比较
 		else if (inst == I_EQ) {
 			ax = (*sp == ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//不等比较
 		else if (inst == I_NE) {
 			ax = (*sp != ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//小于比较
 		else if (inst == I_LT) {
 			ax = (*sp < ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//小于等于比较
 		else if (inst == I_LE) {
 			ax = (*sp <= ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//大于比较
 		else if (inst == I_GT) {
 			ax = (*sp > ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//大于等于比较
 		else if (inst == I_GE) {
 			ax = (*sp >= ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//左移运算
 		else if (inst == I_SHL) {
 			ax = (*sp << ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//右移运算
 		else if (inst == I_SHR) {
 			ax = (*sp >> ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//相加运算
 		else if (inst == I_ADD) {
 			ax = (*sp + ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//相减运算
 		else if (inst == I_SUB) {
 			ax = (*sp - ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//相乘运算
 		else if (inst == I_MUL) {
 			ax = (*sp * ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//相除运算
 		else if (inst == I_DIV) {
 			ax = (*sp / ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//相模运算
 		else if (inst == I_MOD) {
 			ax = (*sp % ax);
 			++sp;
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//输出
@@ -423,18 +431,19 @@ int kkli::VirtualMachine::run() {
 			int* temp = sp + pc[1];
 			ax = printf(reinterpret_cast<char*>(temp[-1]),
 				temp[-2], temp[-3], temp[-4], temp[-5], temp[-6]);
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//动态内存分配
 		else if (inst == I_MALC) {
 			ax = reinterpret_cast<int>(malloc(*sp));
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_REGISTER(format);
 		}
 
 		//退出程序
 		else if (inst == I_EXIT) {
 			printf("exit(%d)\n", ax);
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
 			return ax;
 		}
 

@@ -39,8 +39,28 @@ namespace kkli {
 		//进行数据对齐
 		void dataAlignment(std::string format);
 
-		//程序中经常要用到寄存器，因此将其设置为public
+		//DEBUG_VM
+		void DEBUG_VM(std::string arg1, std::string arg2) {
+			if (DEBUG_INFO->OUTPUT_VM_ACTIONS) {
+				Debug::output(arg1, arg2); 
+			}
+		}
+		//DEBUG_VM_EXECUTE
+		void DEBUG_VM_EXECUTE(std::string arg1, std::string arg2) {
+			if (DEBUG_INFO->OUTPUT_VM_EXECUTE_ACTIONS) { 
+				Debug::output(arg1, arg2); 
+			}
+		}
+		//DEBUG_REGISTER
+		void DEBUG_REGISTER(std::string format) {
+			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_VM_EXECUTE("bp: " + std::to_string(reinterpret_cast<int>(bp)), FORMAT(format));
+			DEBUG_VM_EXECUTE("sp: " + std::to_string(reinterpret_cast<int>(sp)), FORMAT(format));
+			DEBUG_VM_EXECUTE("pc: " + std::to_string(reinterpret_cast<int>(pc)), FORMAT(format));
+		}
+
 	public:
+		//程序中经常要用到寄存器，因此将其设置为public便于使用
 		int* sp;    //sp寄存器
 		int* bp;    //bp寄存器
 		int* pc;    //pc寄存器

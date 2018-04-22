@@ -89,6 +89,13 @@ namespace kkli {
 
 		Token();
 
+	private:
+		void DEBUG_TOKEN(std::string arg1, std::string arg2) {
+			if (DEBUG_INFO->OUTPUT_TOKEN_ACTIONS) {
+				Debug::output(arg1, arg2); 
+			}
+		}
+
 	public:
 		void saveInfo(std::string format);      //保存信息
 		void restoreInfo(std::string format);   //恢复信息

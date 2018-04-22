@@ -37,22 +37,21 @@ void kkli::Compiler::run() {
 	}
 
 	//输出警告
-	if (ENABLE_WARNING) {
+	if (DEBUG_INFO->ENABLE_WARNING) {
 		WARNING->output();
 	}
 
 	Token& tk = table->getMainToken("");
-	//vm->pc = reinterpret_cast<int*>(tk.value);
 
 	//初始化全局代码(调用main的代码）
-	int* textOrigin = vm->getNextTextPos();
+	int* origin = vm->getNextTextPos();
 	vm->addInst(I_CALL, "");
 	vm->addInstData(tk.value, "");
 	vm->addInst(I_ADJ, "");
 	vm->addInstData(0, "");   //main函数的两个参数argc, argc
 	vm->addInst(I_EXIT, "");  //main函数调用结束后，程序的最终退出点
 
-	vm->pc = textOrigin;
+	vm->pc = origin;
 	vm->run();
 }
 
@@ -64,14 +63,14 @@ void kkli::Compiler::global_decl(std::string format) {
 	*/
 	DEBUG_COMPILER("Compiler::global_decl()", format);
 
-	int type;  //全局定义的类型
-	baseType = INT_TYPE;
-
 	//enum定义
 	if (tokenInfo.first == ENUM) {
 		enum_decl(FORMAT(format));
 		return;
 	}
+
+	int type;  //全局定义的类型
+	baseType = INT_TYPE;
 
 	//全局变量或函数的定义
 	if (tokenInfo.first == INT) {
@@ -85,7 +84,8 @@ void kkli::Compiler::global_decl(std::string format) {
 		throw Error(lexer->getLine(), "bad type [" + Token::getTokenTypeName(tokenInfo.first) + "]");
 	}
 
-	while (tokenInfo.first != SEMICON && tokenInfo.first != RBRACE) {
+	//类型int或char后至少需要有变量或函数定义，int ; 是错误的，因此用do-while而非while
+	do{
 		type = baseType;
 
 		//多级指针，如 int *******x;
@@ -127,11 +127,18 @@ void kkli::Compiler::global_decl(std::string format) {
 				global_var_decl(type, FORMAT(format));
 			}
 
+			//避免 int a,; 或 int a} 的情况
 			if (tokenInfo.first == COMMA) {
 				match(COMMA, FORMAT(format));
+				if (tokenInfo.first == SEMICON) {
+					throw Error(lexer->getLine(), "wrong ',' before ';'");
+				}
+				else if (tokenInfo.first == RBRACE) {
+					throw Error(lexer->getLine(), "wrong ',' before '}'");
+				}
 			}
 		}
-	}
+	} while (tokenInfo.first != SEMICON && tokenInfo.first != RBRACE);
 
 	DEBUG_COMPILER(std::string("now tokenInfo.first = ") + (tokenInfo.first == SEMICON ? "SEMICON" : "RBRACE"), FORMAT(format));
 	tokenInfo = lexer->next(FORMAT(format));  //可能是SEMICON或RBRACE，不能用match

@@ -65,6 +65,18 @@ namespace kkli {
 		//验证函数调用参数的合法性
 		void validFunctionCall(const Token& funcToken, const std::vector<int>& dataTypes, std::string format) const;
 
+		//DEBUG
+		void DEBUG_COMPILER(std::string arg1, std::string arg2) const {
+			if (DEBUG_INFO->OUTPUT_COMPILER_ACTIONS) {
+				Debug::output(arg1, arg2); 
+			}
+		}
+		void DEBUG_COMPILER_SYMBOL(std::string arg1, std::string arg2) const {
+			if (DEBUG_INFO->OUTPUT_COMPILER_SYMBOL_INFO) {
+				Debug::output(arg1, arg2);
+			}
+		}
+
 	public:
 		Compiler(std::string sourceFile);
 		~Compiler() {

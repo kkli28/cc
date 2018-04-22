@@ -31,6 +31,28 @@ namespace kkli {
 		//¸üÐÂË÷Òý
 		void updateIndex(std::string format);
 
+		//DEBUG
+		void DEBUG_LEXER(std::string arg1, std::string arg2) {
+			if (DEBUG_INFO->OUTPUT_LEXER_ACTIONS) {
+				Debug::output(arg1, arg2);
+			}
+		}
+		void DEBUG_LEXER_SOURCE(std::string arg1, std::string arg2) {
+			if (DEBUG_INFO->OUTPUT_LEXER_SOURCE_INFO) {
+				Debug::output(arg1, arg2); 
+			}
+		}
+		void DEBUG_LEXER_SYMBOL_TABLE(std::string arg1, std::string arg2) {
+			if (DEBUG_INFO->OUTPUT_LEXER_SYMBOL_INFO) {
+				Debug::output(arg1, arg2);
+			}
+		}
+		void DEBUG_LEXER_NEXT(std::string arg1, std::string arg2) {
+			if (DEBUG_INFO->OUTPUT_LEXER_NEXT_INFO) {
+				Debug::output(arg1, arg2);
+			}
+		}
+
 	public:
 		Lexer(std::string sourceFile, SymbolTable* tb, VirtualMachine* v);
 

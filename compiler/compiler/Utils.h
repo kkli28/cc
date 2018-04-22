@@ -50,11 +50,11 @@ namespace kkli {
 		}
 
 		void output()const {
+			if (warnings.empty()) return;  //避免多余的std::endl
 			std::cout << std::endl;
 			for (auto str : warnings) {
 				std::cout << str << std::endl;
 			}
-			std::cout << std::endl;
 		}
 	};
 
@@ -62,16 +62,24 @@ namespace kkli {
 	// Debug: 调试类，主要用于输出调试信息
 	//========================================
 	class Debug {
-	public:
-		static void output(const std::string& desc, std::string format) {
-			std::cout << format << desc << std::endl;
-		}
+	private:
 		static void outputToFile(const std::string& desc, std::string format) {
-			static std::ofstream outFile("file/debug.txt", std::ios::app);
+			static std::ofstream outFile("debug.txt", std::ios::app);
 			outFile << format << desc << std::endl;
 		}
+	public:
+		static bool OUTPUT_TO_CONSOLE;  //是否输出到控制台
+		static void output(const std::string& desc, std::string format) {
+			if (OUTPUT_TO_CONSOLE) {
+				std::cout << format << desc << std::endl;
+			}
+			else {
+				outputToFile(desc, format);
+			}
+		}
+		
 		static void clear() {
-			static std::ofstream outFile("file/debug.txt", std::ios::ate);
+			static std::ofstream outFile("debug.txt", std::ios::ate);
 			outFile << std::endl;
 		}
 	};

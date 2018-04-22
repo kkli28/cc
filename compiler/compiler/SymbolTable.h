@@ -24,6 +24,14 @@ namespace kkli {
 		size_t current;
 		size_t mainIndex;  //mainº¯ÊýTokenµÄË÷Òý
 
+	private:
+		//DEBUG
+		void DEBUG_SYMBOL_TABLE(std::string arg1, std::string arg2) {
+			if (DEBUG_INFO->OUTPUT_SYMBOL_TABLE_ACTIONS) {
+				Debug::output(arg1, arg2); 
+			}
+		}
+
 	public:
 		SymbolTable() :current(-1), mainIndex(-1) {}
 

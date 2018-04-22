@@ -18,7 +18,7 @@ namespace kkli {
 			testFiles.push_back({ "test_case/enum.c", "enum" });
 			testFiles.push_back({ "test_case/func_param.c", "func_param" });
 			testFiles.push_back({ "test_case/global_variable.c", "global_variable" });
-			testFiles.push_back({ "test_case/hanoi.c", "hanoi" });
+			testFiles.push_back({ "test_case/hanoi.c", "hanoi(6)" });
 			testFiles.push_back({ "test_case/local_variable.c", "local_variable" });
 			testFiles.push_back({ "test_case/sort.c", "sort" });
 		}
@@ -34,10 +34,11 @@ namespace kkli {
 
 		void run() const {
 			for (auto file : testFiles) {
-				std::cout << "\n======== test: " << file.second << " ========\n" << std::endl;
+				std::cout << "\n======== test: " << file.second << " ========" << std::endl;
 				Compiler compiler(file.first);
 				compiler.run();
 			}
+			std::cout << std::endl;
 		}
 	};
 }
