@@ -696,7 +696,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 			match(RPAREN, FORMAT(format));
 			vm->addInst(I_IMM, FORMAT(format));
 			vm->addInstData(exprType == CHAR_TYPE ? 1 : 4, FORMAT(format));
-			exprType = INT;
+			exprType = INT_TYPE;
 		}
 
 		else if (tokenInfo.first == ID) {
@@ -709,8 +709,8 @@ void kkli::Compiler::expression(int priority, std::string format) {
 			//函数调用
 			if (tokenInfo.first == LPAREN) {
 				match(LPAREN, FORMAT(format));
-				std::vector<int> dataTypes;  //记录函数调用中的参数类型
 
+				std::vector<int> dataTypes;  //记录函数调用中的参数类型
 				while (tokenInfo.first != RPAREN) {
 					expression(ASSIGN, FORMAT(format));
 					dataTypes.push_back(exprType);
@@ -823,7 +823,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 		}
 
 		else if (tokenInfo.first == AND) {
-			//取地址
+			//&a，取地址
 			DEBUG_COMPILER("[AND]", FORMAT(format));
 			match(AND, FORMAT(format));
 			expression(INC, FORMAT(format));
@@ -876,7 +876,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == SUB) {
 			DEBUG_COMPILER("[SUB]", FORMAT(format));
-			//-a
+			//-1
 			match(SUB, FORMAT(format));
 			if (tokenInfo.first == NUM_INT || tokenInfo.first == NUM_CHAR) {
 				vm->addInst(I_IMM, FORMAT(format));
@@ -973,6 +973,8 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				int* addr = vm->getNextTextPos();
 				vm->addInstData(0, FORMAT(format));      //占据一个位置用于写入跳转地址
 				expression(ASSIGN, FORMAT(format));
+
+				int type = exprType;  //记录前一个表达式的类型
 				if (tokenInfo.first == COLON) {
 					match(COLON, FORMAT(format));
 				}
@@ -984,6 +986,8 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				addr = vm->getNextTextPos();
 				vm->addInstData(0, FORMAT(format));     //占据一个位置用于写入跳转地址
 				expression(COND, FORMAT(format));
+
+				exprType = std::max(type, exprType);    //表达式类型取大的那个
 				*addr = reinterpret_cast<int>(vm->getNextTextPos());
 			}
 
@@ -1186,12 +1190,22 @@ void kkli::Compiler::expression(int priority, std::string format) {
 					exprType = tempType;
 				}
 
-				//普通变量相减 a - b
+				//普通变量相减 a - b，char*被看做int变量
 				else {
 					DEBUG_COMPILER("[SUB var - var]", FORMAT(format));
 
 					vm->addInst(I_SUB, FORMAT(format));
 					exprType = tempType;
+
+					//指针作为右操作数
+					if (exprType >= PTR_TYPE) {
+						WARNING->add(lexer->getLine(), "use pointer in subtraction.");
+					}
+					//左右操作数不匹配
+					else if (tempType != exprType) {
+						WARNING->add(lexer->getLine(), "the left and right operand types do not match.");
+					}
+
 				}
 			}
 
@@ -1204,9 +1218,16 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				vm->addInst(I_PUSH, FORMAT(format));
 				expression(INC, FORMAT(format));
 				vm->addInst(I_MUL, FORMAT(format));
-
-				//TODO: 检查类型合法性！！！
 				exprType = std::max(tempType, exprType);
+
+				//对指针执行乘法操作
+				if (tempType >= PTR_TYPE || exprType >= PTR_TYPE) {
+					WARNING->add(lexer->getLine(), "use pointer in multiplication.");
+				}
+				//左右操作数不匹配
+				else if (tempType != exprType) {
+					WARNING->add(lexer->getLine(), "the left and right operand types do not match.");
+				}
 			}
 
 			else if (tokenInfo.first == DIV) {
@@ -1219,6 +1240,15 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				expression(INC, FORMAT(format));
 				vm->addInst(I_DIV, FORMAT(format));
 				exprType = std::max(tempType, exprType);
+
+				//对指针执行除法操作
+				if (tempType >= PTR_TYPE || exprType >= PTR_TYPE) {
+					WARNING->add(lexer->getLine(), "use pointer in multiplication.");
+				}
+				//左右操作数不匹配
+				else if (tempType != exprType) {
+					WARNING->add(lexer->getLine(), "the left and right operand types do not match.");
+				}
 			}
 
 			else if (tokenInfo.first == MOD) {
@@ -1231,6 +1261,15 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				expression(INC, FORMAT(format));
 				vm->addInst(I_MOD, FORMAT(format));
 				exprType = tempType;
+
+				//对指针执行模操作
+				if (tempType >= PTR_TYPE || exprType >= PTR_TYPE) {
+					WARNING->add(lexer->getLine(), "use pointer in delivery.");
+				}
+				//左右操作数不匹配
+				else if (tempType != exprType) {
+					WARNING->add(lexer->getLine(), "the left and right operand types do not match.");
+				}
 			}
 
 			else if (tokenInfo.first == INC || tokenInfo.first == DEC) {
