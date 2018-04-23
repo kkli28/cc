@@ -9,7 +9,7 @@
 
 namespace kkli {
 
-#define FORMAT(f) (f+"    ")
+#define FORMAT(f) (f+"|   ")
 #define WARNING kkli::Warning::getInstance()
 
 	//========================================

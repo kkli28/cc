@@ -46,17 +46,17 @@ namespace kkli {
 			}
 		}
 		//DEBUG_VM_EXECUTE
-		void DEBUG_VM_EXECUTE(std::string arg1, std::string arg2) {
-			if (DEBUG_INFO->OUTPUT_VM_EXECUTE_ACTIONS) { 
+		void DEBUG_VM_EXECUTE_DETAIL(std::string arg1, std::string arg2) {
+			if (DEBUG_INFO->OUTPUT_VM_EXECUTE_DETAIL_ACTIONS) { 
 				Debug::output(arg1, arg2); 
 			}
 		}
 		//DEBUG_REGISTER
 		void DEBUG_REGISTER(std::string format) {
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
-			DEBUG_VM_EXECUTE("bp: " + std::to_string(reinterpret_cast<int>(bp)), FORMAT(format));
-			DEBUG_VM_EXECUTE("sp: " + std::to_string(reinterpret_cast<int>(sp)), FORMAT(format));
-			DEBUG_VM_EXECUTE("pc: " + std::to_string(reinterpret_cast<int>(pc)), FORMAT(format));
+			DEBUG_VM_EXECUTE_DETAIL("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_VM_EXECUTE_DETAIL("bp: " + std::to_string(reinterpret_cast<int>(bp)), FORMAT(format));
+			DEBUG_VM_EXECUTE_DETAIL("sp: " + std::to_string(reinterpret_cast<int>(sp)), FORMAT(format));
+			DEBUG_VM_EXECUTE_DETAIL("pc: " + std::to_string(reinterpret_cast<int>(pc)), FORMAT(format));
 		}
 
 	public:

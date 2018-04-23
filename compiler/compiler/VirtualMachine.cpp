@@ -203,9 +203,7 @@ int kkli::VirtualMachine::run() {
 		//输出执行的指令
 		std::string instInfo = getInstructionName(inst);
 		if (inst <= I_ADJ) instInfo += "  " + std::to_string(*pc);
-		DEBUG_VM(instInfo, format);
-
-		if (DEBUG_INFO->ENABLE_OUTPUT_EXECUTE_INSTRUCTION) {
+		if (DEBUG_INFO->OUTPUT_VM_EXECUTE_ACTIONS) {
 			Debug::output(instInfo, "");
 		}
 		
@@ -443,7 +441,8 @@ int kkli::VirtualMachine::run() {
 		//退出程序
 		else if (inst == I_EXIT) {
 			printf("exit(%d)\n", ax);
-			DEBUG_VM_EXECUTE("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_VM_EXECUTE_DETAIL("ax: " + std::to_string(ax), FORMAT(format));
+			DEBUG_VM_EXECUTE_DETAIL("\nexit(" + std::to_string(ax) + ")", FORMAT(format));
 			return ax;
 		}
 

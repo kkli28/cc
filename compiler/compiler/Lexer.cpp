@@ -263,6 +263,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 				if (curr == '\\') {
 					curr = get();
 					if (curr == 'n') vm->addDataChar('\n', FORMAT(format));
+					else if (curr == 't') vm->addDataChar('\t', FORMAT(format));
 					else if (curr == END) {
 						throw Error("Line " + std::to_string(line) + ". Invalid string type, need escape charactor after \\.");
 					}
