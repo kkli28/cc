@@ -22,7 +22,7 @@ namespace kkli {
 			"I_LEV ", "I_LI  ", "I_LC  ", "I_SI  ", "I_SC  ", "I_PUSH",
 			"I_OR  ", "I_XOR ", "I_AND ", "I_EQ  ", "I_NE  ", "I_LT  ", "I_GT  ", "I_LE  ", "I_GE  ", "I_SHL ", "I_SHR ",
 			"I_ADD ", "I_SUB ", "I_MUL ", "I_DIV ", "I_MOD ", //五则运算
-			"I_PRTF", "I_MALC", "I_EXIT" //内置函数
+			"I_PRTF", "I_MALC", "I_EXIT", "I_SCANF", "I_GETC", "I_PUTC" //内置函数
 		};
 
 		//内存中各段的大小
@@ -110,7 +110,7 @@ namespace kkli {
 		//获取指令名称
 		std::string getInstructionName(int i) const { 
 			if (i < 0) return "WRONG_INSTRUCTION";
-			else if (i >= INSTRUCTION_SIZE) return "INSTRUCTION_DATA";
+			else if (i >= INSTRUCTION_SIZE) return "INSTRUCTION_WRONG";
 			return INSTRUCTION_NAME[i]; 
 		}
 	};

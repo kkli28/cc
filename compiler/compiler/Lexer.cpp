@@ -20,7 +20,7 @@ kkli::Lexer::Lexer(std::string sourceFile, SymbolTable* tb, VirtualMachine* v) {
 
 	//处理内建符号
 	DEBUG_LEXER("[add builtin] begin", FORMAT(format));
-	source = "char else enum if int return sizeof while printf malloc exit void main";
+	source = "char else enum if int return sizeof while printf malloc exit scanf getchar putchar void main";
 	source.push_back(END);
 	
 	int type = CHAR;

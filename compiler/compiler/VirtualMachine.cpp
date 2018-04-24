@@ -426,6 +426,14 @@ int kkli::VirtualMachine::run() {
 
 		//输出
 		else if (inst == I_PRTF) {
+			/*
+			为何是pc[1]？因为printf是内置函数，生成的代码结构为：
+			I_PRTF
+			I_ADJ <param_count>
+			在inst == I_PRTF时，*pc为I_ADJ，则pc[1]为<param_count>
+			因此可以通过参数个数来知道PRTF的参数个数，即temp为第一个参数的前一个位置
+			此时temp[-1]为第一个参数，temp[-2]为第二个参数，以此类推
+			*/
 			int* temp = sp + pc[1];
 			ax = printf(reinterpret_cast<char*>(temp[-1]),
 				temp[-2], temp[-3], temp[-4], temp[-5], temp[-6]);
@@ -444,6 +452,26 @@ int kkli::VirtualMachine::run() {
 			DEBUG_VM_EXECUTE_DETAIL("ax: " + std::to_string(ax), FORMAT(format));
 			DEBUG_VM_EXECUTE_DETAIL("\nexit(" + std::to_string(ax) + ")", FORMAT(format));
 			return ax;
+		}
+
+		//输入数据，只支持两个参数，第一个参数为格式化字符串，第二个参数为将要写入数据的位置
+		else if (inst == I_SCANF) {
+			int* temp = sp + pc[1];
+			ax = scanf(reinterpret_cast<char*>(temp[-1]), temp[-2]);
+			DEBUG_REGISTER(format);
+		}
+
+		//从输入流获取一个char
+		else if (inst == I_GETC) {
+			ax = getchar();
+			DEBUG_VM_EXECUTE_DETAIL("ax: " + std::to_string(ax), FORMAT(format));
+		}
+
+		//将一个char放到输出流
+		else if (inst == I_PUTC) {
+			int* temp = sp + pc[1];
+			ax = putchar(temp[-1]);
+			DEBUG_VM_EXECUTE_DETAIL("ax: " + std::to_string(ax), FORMAT(format));
 		}
 
 		//错误的指令

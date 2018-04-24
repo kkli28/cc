@@ -1345,6 +1345,7 @@ void kkli::Compiler::validFunctionCall(const Token& funcToken, const std::vector
 
 	//内置函数，需要单独处理
 	if (funcToken.klass == SYS_FUNC) {
+		//多个参数：printf
 		if (funcToken.name == "printf") {
 			if (dataTypes.size() < 1) {
 				throw Error(lexer->getLine(), "function '" + funcToken.name + "' need at least 1 argument.");
@@ -1356,12 +1357,28 @@ void kkli::Compiler::validFunctionCall(const Token& funcToken, const std::vector
 				throw Error(lexer->getLine(), "function '" + funcToken.name + "' need ptr type argument at first argument.");
 			}
 		}
-		else if (funcToken.name == "exit" || funcToken.name == "malloc") {
+		//两个参数：scanf
+		else if (funcToken.name == "scanf") {
+			if (dataTypes.size() != 2) {
+				throw Error(lexer->getLine(), "function '" + funcToken.name + "' expect 2 arguments.");
+			}
+			else if (dataTypes[0] != PTR_TYPE) {
+				WARNING->add(lexer->getLine(), "function '" + funcToken.name + "' expect char* type argument at index 1.");
+			}
+		}
+		//一个参数：exit / malloc / putchar
+		else if (funcToken.name == "exit" || funcToken.name == "malloc" || funcToken.name == "putchar") {
 			if (dataTypes.size() != 1) {
 				throw Error(lexer->getLine(), "function '" + funcToken.name + "' expect 1 argument.");
 			}
 			else if (dataTypes[0] != INT_TYPE) {
 				Warning::getInstance()->add(lexer->getLine(), "function exit expect int type argument.");
+			}
+		}
+		//没有参数：getchar
+		else if (funcToken.name == "getchar") {
+			if (dataTypes.size() != 0) {
+				throw Error(lexer->getLine(), "function getchar() expect 0 arguments.");
 			}
 		}
 		else {

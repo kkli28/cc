@@ -234,11 +234,27 @@ enum {
 	I_EXIT,
 
 	/*
+	作用：输入内容
+	调用C函数scanf实现输入功能
+	*/
+	I_SCANF,
+
+	/*
+	作用：从输入流中读取一个char
+	调用C函数getchar实现从输入流读取一个char
+	*/
+	I_GETC,
+
+	/*
+	作用：将一个char放到输出流中
+	调用C函数putchar实现将一个char放入输出流中
+	*/
+	I_PUTC,
+
+	/*
 	作用：非指令集的一部分，仅用于统计指令的条数
 	*/
 	INSTRUCTION_SIZE
-
-	//TODO: 尝试提供scanf
 };
 
 #endif
