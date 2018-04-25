@@ -31,7 +31,7 @@ kkli::Lexer::Lexer(std::string sourceFile, SymbolTable* tb, VirtualMachine* v) {
 	}
 
 	type = I_PRTF;
-	while (type <= I_EXIT) {
+	while (type <= I_PUTC) {
 		next(FORMAT(format));
 		Token& tk = table->getCurrentToken(FORMAT(format));
 		tk.klass = SYS_FUNC;
