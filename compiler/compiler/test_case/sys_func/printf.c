@@ -7,7 +7,7 @@ void func2(int a, int b, char ca, char cb, char* sa, char* sb){
     printf("%d %c %s\n", b, cb, sb);
 }
 
-void func3(int a, int b, int c, char ca, char cb, char cc, char* sa, char sb, char* sc){
+void func3(int a, int b, int c, char ca, char cb, char cc, char* sa, char* sb, char* sc){
     printf("func3: %d %c %s ", a, ca, sa);
     printf("%d %c %s ", b, cb, sb);
     printf("%d %c %s\n", c, cc, sc);
@@ -52,10 +52,10 @@ int main(){
 
     //char
     printf("%c\n", 'A');
-    printf("%c%c\n", 'A', 'B');
-    printf("%c%c%c\n", 'A', 'B', 'C');
-    printf("%c%c%c%c\n", 'A', 'B', 'C', 'D');
-    printf("%c%c%c%c%c\n", 'A', 'B', 'C', 'D', 'E');
+    printf("%c %c\n", 'A', 'B');
+    printf("%c %c %c\n", 'A', 'B', 'C');
+    printf("%c %c %c %c\n", 'A', 'B', 'C', 'D');
+    printf("%c %c %c %c %c\n", 'A', 'B', 'C', 'D', 'E');
     char ca = 'A';
     char cb = 'B';
     char cc = 'C';
