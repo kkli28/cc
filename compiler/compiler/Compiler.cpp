@@ -947,6 +947,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 	DEBUG_COMPILER("[binary expression]", FORMAT(format));
 	do {
 		while (tokenInfo.first >= priority) {
+
 			if (tokenInfo.first == ASSIGN) {
 				DEBUG_COMPILER("[ASSIGN]", FORMAT(format));
 
@@ -960,6 +961,11 @@ void kkli::Compiler::expression(int priority, std::string format) {
 					throw Error(lexer->getLine(), "bad lvalue in assignment.");
 				}
 				expression(ASSIGN, FORMAT(format));
+				if (exprType != tempType) {
+					WARNING->add(lexer->getLine(), "assign " + 
+						Token::getDataTypeName(exprType) + " type to " + 
+						Token::getDataTypeName(tempType) + " type.");
+				}
 				exprType = tempType;
 				vm->addInst(exprType == CHAR_TYPE ? I_SC : I_SI, FORMAT(format));
 			}
