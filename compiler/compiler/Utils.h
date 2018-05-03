@@ -83,6 +83,26 @@ namespace kkli {
 			outFile << std::endl;
 		}
 	};
+
+	//========================================
+	// Utils: 工具类，提供常用工具
+	//========================================
+	//去掉首尾的换行符
+	class Utils {
+	public:
+		static std::string trimNL(std::string str) {
+			int size = str.size();
+			int index = 0;
+			while (index < size && str[index] == '\n') {
+				++index;
+			}
+			int revIndex = size - 1;
+			while (revIndex >= 0 && str[revIndex] == '\n') {
+				--revIndex;
+			}
+			return std::move(std::string(str.begin() + index, str.begin() + revIndex + 1));
+		}
+	};
 }
 
 #endif

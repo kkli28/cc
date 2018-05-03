@@ -18,9 +18,9 @@ namespace kkli {
 			testFiles.push_back({ "test_case/enum.c", "enum" });
 			testFiles.push_back({ "test_case/func_param.c", "func_param" });
 			testFiles.push_back({ "test_case/global_variable.c", "global_variable" });
-			testFiles.push_back({ "test_case/hanoi.c", "hanoi(6)" });
+			testFiles.push_back({ "test_case/programs/hanoi.c", "hanoi(3)" });
 			testFiles.push_back({ "test_case/local_variable.c", "local_variable" });
-			testFiles.push_back({ "test_case/sort.c", "sort" });
+			testFiles.push_back({ "test_case/programs/sort.c", "sort" });
 		}
 
 	public:

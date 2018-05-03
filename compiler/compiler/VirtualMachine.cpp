@@ -113,6 +113,11 @@ void kkli::VirtualMachine::addInst(int elem, std::string format) {
 	if (nextText >= text + SEGMENT_SIZE) throw Error("VirtualMachine::addInst("+std::to_string(elem)+"): text overflow");
 	*nextText = elem;
 	++nextText;
+
+	//不允许添加无效指令
+	if (elem == I_NAI) {
+		throw Error("kkli::VirtualMachine::addInst(): inst is I_NAI.");
+	}
 }
 
 //添加指令的操作数
@@ -137,6 +142,58 @@ void kkli::VirtualMachine::deleteTopInst(std::string format) {
 
 	--nextText;
 	if (nextText < text) throw Error("VirtualMachine::deleteTopInst(): no instruction to delete!");
+}
+
+//设置全局定义生成代码的起始点
+void kkli::VirtualMachine::setGlobalDeclInstTag(bool isStart) {
+	if (isStart) {
+		instTag.push_back({ reinterpret_cast<int>(nextText), 0 });
+	}
+	else {
+		instTag.back().second = reinterpret_cast<int>(nextText);
+	}
+}
+
+//获取每个全局定义所有生成的指令
+std::string kkli::VirtualMachine::getGlobalDeclGenInst() {
+	std::string result;
+
+	int* begAddr = reinterpret_cast<int*>(instTag.back().first);
+	int* endAddr = reinterpret_cast<int*>(instTag.back().second);
+
+	//全局定义的 int i = 0; 不会生成代码
+	if (begAddr == endAddr) {
+		return "";
+	}
+
+	while (begAddr < endAddr) {
+		int inst = *begAddr;
+		++begAddr;
+		result += getInstructionName(inst);
+		if (inst <= I_ADJ) {
+			result += "  " + std::to_string(*begAddr);
+			++begAddr;
+		}
+		result.push_back('\n');
+	}
+	return std::move(result);
+}
+
+//获取生成的所有指令
+std::string kkli::VirtualMachine::getGenInst() {
+	std::string result;
+	int* addr = text;
+	while (addr < text + SEGMENT_SIZE && *addr != I_NAI) {
+		int inst = *addr;
+		++addr;
+		result += getInstructionName(inst);
+		if (inst <= I_ADJ) {
+			result += " " + std::to_string(*addr);
+			++addr;
+		}
+		result.push_back('\n');
+	}
+	return std::move(result);
 }
 
 //数据对齐
@@ -186,6 +243,7 @@ std::string kkli::VirtualMachine::getInfo() const {
 //执行指令
 int kkli::VirtualMachine::run() {
 	DEBUG_VM("VirtualMachine::run()", "");
+	std::cout << "==== result: ====" << std::endl;
 
 	std::string format = "";
 

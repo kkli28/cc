@@ -18,7 +18,11 @@ namespace kkli {
 
 		//指令名称
 		const std::vector<std::string> INSTRUCTION_NAME = {
-			"I_LEA ", "I_IMM ", "I_JMP ", "I_CALL", "I_JZ  ", "I_JNZ ", "I_ENT ", "I_ADJ ",  //带参数的指令
+			"I_NAI",
+			//带参数的指令
+			"I_LEA ", "I_IMM ", "I_JMP ", "I_CALL", "I_JZ  ", "I_JNZ ", "I_ENT ", "I_ADJ ",
+
+			//不带参数的指令
 			"I_LEV ", "I_LI  ", "I_LC  ", "I_SI  ", "I_SC  ", "I_PUSH",
 			"I_OR  ", "I_XOR ", "I_AND ", "I_EQ  ", "I_NE  ", "I_LT  ", "I_GT  ", "I_LE  ", "I_GE  ", "I_SHL ", "I_SHR ",
 			"I_ADD ", "I_SUB ", "I_MUL ", "I_DIV ", "I_MOD ", //五则运算
@@ -29,12 +33,19 @@ namespace kkli {
 		const int SEGMENT_SIZE = 2560 * 1024;
 
 	private:
+		int* sp;    //sp寄存器
+		int* bp;    //bp寄存器
+		int* pc;    //pc寄存器
+		int ax;     //ax寄存器（栈顶缓存）
+
 		char* data;       //数据段
 		int* text;        //代码段
 		int* stack;       //栈
+
 		char* nextData;    //下一个存放数据的位置
 		int* nextText;    //下一个存放指令的位置
-		bool needDataAlignment;  //是否需要数据对其
+		bool needDataAlignment;  //是否需要数据对齐
+		std::vector<std::pair<int, int>> instTag;  //每个全局定义生成的指令
 
 		//进行数据对齐
 		void dataAlignment(std::string format);
@@ -60,18 +71,13 @@ namespace kkli {
 		}
 
 	public:
-		//程序中经常要用到寄存器，因此将其设置为public便于使用
-		int* sp;    //sp寄存器
-		int* bp;    //bp寄存器
-		int* pc;    //pc寄存器
-		int ax;     //ax寄存器（栈顶缓存）
-
 		static const int MAX_INT_ARRAY_SIZE = 60'0000;
 		static const int MAX_CHAR_ARRAY_SIZE = 250'0000;
 
-	public:
-
 		VirtualMachine();
+
+		//设置pc寄存器的值
+		void setPC(int* addr) { pc = addr; }
 
 		//添加数据、指令、指令的操作数
 		void addDataChar(char elem, std::string format);
@@ -104,13 +110,17 @@ namespace kkli {
 		//获取虚拟机信息
 		std::string getInfo() const;
 
-		//获取指令信息
-		const std::vector<std::string>& getInstructionInfo() const { return INSTRUCTION_NAME; }
+		//获取所有生成的指令
+		std::string getGlobalDeclGenInst();
+		std::string getGenInst();
+
+		//标记全局定义的开始于结束
+		void setGlobalDeclInstTag(bool isStart);
 
 		//获取指令名称
-		std::string getInstructionName(int i) const { 
-			if (i < 0) return "WRONG_INSTRUCTION";
-			else if (i >= INSTRUCTION_SIZE) return "INSTRUCTION_WRONG";
+		std::string getInstructionName(int i) const {
+			if (i < 0) return "WRONG_INSTRUCTION: " + std::to_string(i);
+			else if (i >= INSTRUCTION_SIZE) return "INSTRUCTION_WRONG: " + std::to_string(i);
 			return INSTRUCTION_NAME[i]; 
 		}
 	};

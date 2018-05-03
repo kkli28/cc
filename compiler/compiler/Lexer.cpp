@@ -58,6 +58,9 @@ kkli::Lexer::Lexer(std::string sourceFile, SymbolTable* tb, VirtualMachine* v) {
 	source.push_back('\0');
 	source.push_back(END);
 
+	//备份一个
+	sourceBackUp = source;
+
 	DEBUG_LEXER_SOURCE("\n[source--begin]:\n" + source + "\n[source--end]\n", FORMAT(format));
 
 	prevPrevIndex = 0;
@@ -76,7 +79,8 @@ void kkli::Lexer::updateIndex(std::string format) {
 //回退，为了局部变量定义
 void kkli::Lexer::rollBack(std::string format) {
 	DEBUG_LEXER("Lexer::rollBack()", format);
-	index = prevPrevIndex - 1;
+	//index = prevPrevIndex - 1;
+	index = prevPrevIndex;
 	prevPrevIndex = index;
 	prevIndex = index;
 	source[index] = ';';

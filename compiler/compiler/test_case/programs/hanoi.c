@@ -1,4 +1,4 @@
-int i=0;
+int i = 0;
 void move(int n,char from,char to){
     printf("step %d: move %d from %c to %c\n", ++i, n, from, to);
 }

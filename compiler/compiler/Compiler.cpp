@@ -26,19 +26,47 @@ void kkli::Compiler::matchAny(std::string format) {
 	tokenInfo = lexer->next(FORMAT(format));
 }
 
+//Go Go Go!
 void kkli::Compiler::run() {
 	DEBUG_COMPILER("Compiler::run()", "");
 
 	WARNING->clear();
 
 	matchAny("");
+	Debug::output("", "");
 	while (tokenInfo.first != END) {
+		//设置全局定义开始标记
+		lexer->setGlobalDeclTag(true);
+		vm->setGlobalDeclInstTag(true);
+
+		//开始解析一个全局定义
 		global_decl("");
+
+		//设置全局定义结束标记
+		lexer->setGlobalDeclTag(false);
+		vm->setGlobalDeclInstTag(false);
+
+		//查看每个全局定义生成的代码
+		if (DEBUG_INFO->IS_SHOW_GLOBAL_DECL_INST_GEN_MODE) {
+			Debug::output("======== global declaration =========", "");
+			Debug::output(Utils::trimNL(lexer->getGlobalDecl()), "");
+			Debug::output("", "");
+			auto result = vm->getGlobalDeclGenInst();
+			if (result.size() > 3) {
+				Debug::output(vm->getGlobalDeclGenInst(), "");
+			}
+		}
 	}
 
 	//输出警告
 	if (DEBUG_INFO->ENABLE_WARNING) {
 		WARNING->output();
+	}
+
+	//查看最终生成的代码
+	if (DEBUG_INFO->IS_SHOW_INST_GEN_MODE) {
+		Debug::output(vm->getGenInst(), "");
+		return;
 	}
 
 	Token& tk = table->getMainToken("");
@@ -47,11 +75,12 @@ void kkli::Compiler::run() {
 	int* origin = vm->getNextTextPos();
 	vm->addInst(I_CALL, "");
 	vm->addInstData(tk.value, "");
-	vm->addInst(I_ADJ, "");
-	vm->addInstData(0, "");   //main函数的两个参数argc, argc
+	vm->addInst(I_ADJ, "");   //main函数不带参数，所以: I_ADJ 0
+	vm->addInstData(0, "");
 	vm->addInst(I_EXIT, "");  //main函数调用结束后，程序的最终退出点
 
-	vm->pc = origin;
+	vm->setPC(origin);
+	Debug::output("", "");
 	vm->run();
 }
 

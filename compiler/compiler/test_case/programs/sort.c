@@ -38,7 +38,6 @@ int main(){
     E(arr[7], 8);
     E(arr[8], 9);
     E(arr[9], 10);
-
     if(succeed){
         printf(">>>> succeed! <<<<\n");
     }

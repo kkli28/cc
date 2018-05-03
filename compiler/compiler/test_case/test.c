@@ -1,3 +1,11 @@
-int a = 1;
-int b = a + 1;
-int c = a + b + 1;
+void func(){
+    int i = 0;
+    printf("%d\n", i);
+    return;
+}
+
+int main(){
+    int i = 0;
+    printf("%d\n", i);
+    return 0;
+}

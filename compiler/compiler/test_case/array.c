@@ -19,7 +19,7 @@ void EC(char var, char val){
 int arr1[4] = {1, 2, 3, 4};
 char arr2[10] = {'a', 'b', 'c', 'd'};
 int arr3[4] = {-1, -2, 3, -4};
-char arr4[4] = {-'A', 'B', 'C', 4};
+char arr4[4] = {-'A', 'B' , 'C', 4};
 char* arr5[2] = {"abcd", "ABCD"};
 int arr6[2];
 char arr7[4];

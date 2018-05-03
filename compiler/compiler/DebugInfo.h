@@ -21,6 +21,12 @@ namespace kkli {
 		//是否是测试模式
 		bool IS_TEST_MODE;
 
+		//查看生成的代码
+		bool IS_SHOW_INST_GEN_MODE;
+
+		//查看每个全局定义生成指令的模式
+		bool IS_SHOW_GLOBAL_DECL_INST_GEN_MODE;
+
 		//是否启用Warning
 		bool ENABLE_WARNING;
 
@@ -58,28 +64,41 @@ namespace kkli {
 		}
 
 		void set(std::vector<bool> infos) {
-			IS_TEST_MODE = infos[0];
-			ENABLE_WARNING = infos[1];
-			OUTPUT_VM_ACTIONS = infos[2];
-			OUTPUT_VM_EXECUTE_ACTIONS = infos[3];
-			OUTPUT_VM_EXECUTE_DETAIL_ACTIONS = infos[4];
-			OUTPUT_TOKEN_ACTIONS = infos[5];
-			OUTPUT_SYMBOL_TABLE_ACTIONS = infos[6];
-			OUTPUT_LEXER_ACTIONS = infos[7];
-			OUTPUT_LEXER_SOURCE_INFO = infos[8];
-			OUTPUT_LEXER_SYMBOL_INFO = infos[9];
-			OUTPUT_LEXER_NEXT_INFO = infos[10];
-			OUTPUT_COMPILER_ACTIONS = infos[11];
-			OUTPUT_COMPILER_SYMBOL_INFO = infos[12];
+			int i = 0;
+			IS_TEST_MODE = infos[i];
+			ENABLE_WARNING = infos[++i];
+			IS_SHOW_INST_GEN_MODE = infos[++i];
+			IS_SHOW_GLOBAL_DECL_INST_GEN_MODE = infos[++i];
+			OUTPUT_VM_ACTIONS = infos[++i];
+			OUTPUT_VM_EXECUTE_ACTIONS = infos[++i];
+			OUTPUT_VM_EXECUTE_DETAIL_ACTIONS = infos[++i];
+			OUTPUT_TOKEN_ACTIONS = infos[++i];
+			OUTPUT_SYMBOL_TABLE_ACTIONS = infos[++i];
+			OUTPUT_LEXER_ACTIONS = infos[++i];
+			OUTPUT_LEXER_SOURCE_INFO = infos[++i];
+			OUTPUT_LEXER_SYMBOL_INFO = infos[++i];
+			OUTPUT_LEXER_NEXT_INFO = infos[++i];
+			OUTPUT_COMPILER_ACTIONS = infos[++i];
+			OUTPUT_COMPILER_SYMBOL_INFO = infos[++i];
 		}
 
 		void reset() {
-			set(std::vector<bool>{ false, true, false, false, false, false,
+			set(std::vector<bool>{ false, true, false, false, false, false, false, false,
 				false, false, false, false, false, false, false });
 		}
 		
 		void setTestMode() {
 			IS_TEST_MODE = true;
+		}
+
+		void setInstGenMode() {
+			reset();
+			IS_SHOW_INST_GEN_MODE = true;
+		}
+
+		void setGlobalDeclInstGenMode() {
+			reset();
+			IS_SHOW_GLOBAL_DECL_INST_GEN_MODE = true;
 		}
 
 		void setDetail1Mode() {
