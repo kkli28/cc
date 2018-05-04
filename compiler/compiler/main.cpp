@@ -8,9 +8,6 @@ bool kkli::Debug::OUTPUT_TO_CONSOLE = true;
 
 int main()
 {
-	//每次都清空Debug信息
-	kkli::Debug::clear();
-	DEBUG_INFO->reset();
 	auto showHelp = [] {
 		std::cout << "\n-test: test all test-files." << std::endl;
 		std::cout << "-e: show instruction execute." << std::endl;
@@ -22,12 +19,17 @@ int main()
 		std::cout << "-df: write debug info to debug.txt." << std::endl;
 	};
 	while (true) {
+
+		//清空Debug信息
+		kkli::Debug::clear();
+		DEBUG_INFO->reset();
+
 		std::cout << ">> ";
 		string str;
 		bool isHelpMode = false;
 		while (true) {
 			cin >> str;
-
+			
 			//查看支持的指令
 			if (str == "-help") {
 				showHelp();
@@ -35,7 +37,7 @@ int main()
 				break;
 			}
 			//测试模式
-			if (str == "-test") {
+			else if (str == "-test") {
 				DEBUG_INFO->setTestMode();
 				break;
 			}
@@ -88,6 +90,7 @@ int main()
 		try {
 			//查看帮助模式
 			if (isHelpMode) {}
+
 			//测试模式
 			else if (DEBUG_INFO->IS_TEST_MODE) {
 				kkli::Test::getInstance()->run();
