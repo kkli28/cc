@@ -88,6 +88,7 @@ namespace kkli {
 			delete vm;
 		}
 
+		//Go Go GO!
 		void run();
 	};
 }

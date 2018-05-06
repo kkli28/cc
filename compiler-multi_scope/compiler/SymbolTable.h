@@ -24,9 +24,8 @@ namespace kkli {
 		int current;
 		size_t mainIndex;  //main函数Token的索引
 
-		//作用域
-		int scopeIndex;
-		std::vector<int> scope;
+		int scopeIndex;          //当前作用域标记，如5
+		std::vector<int> scope;  //当前作用域路径，如0/1/4/5
 
 	private:
 		//DEBUG
@@ -74,13 +73,13 @@ namespace kkli {
 		//获取内部结构table
 		std::vector<Token>& getTable() { return table; }
 
-		//设置main函数位置
+		//设置main函数Token所在位置
 		void setMainToken(std::string format) {
-			DEBUG_SYMBOL_TABLE("SymbolTable::setMainToken(), mainIndex = " + std::to_string(int(current)), format);
+			DEBUG_SYMBOL_TABLE("SymbolTable::setMainToken(), mainIndex = " + std::to_string(current), format);
 			mainIndex = current;
 		}
-		Token& getMainToken(std::string format) { 
-			DEBUG_SYMBOL_TABLE("SymbolTable::getMainToken() " + std::to_string(int(mainIndex)), format);
+		Token& getMainToken(std::string format) {
+			DEBUG_SYMBOL_TABLE("SymbolTable::getMainToken(): mainIndex = " + std::to_string(mainIndex), format);
 			return table[mainIndex];
 		}
 	};

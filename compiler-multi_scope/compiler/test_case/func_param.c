@@ -122,51 +122,27 @@ void func53(char a, int b, char c, int d, char e, int f, char g, int h ,char i, 
 }
 
 int main(){
-    int a;
-    int b;
-    int c;
-    int d;
-    int e;
-    int f;
-    int g;
-    int h;
-    int i;
-    int j;
+    int a = -1;
+    int b = 2;
+    int c = -3;
+    int d = 4;
+    int e = -5;
+    int f = a;
+    int g = -b;
+    int h = c;
+    int i = -d;
+    int j;      // = 0
     
-    char ca;
-    char cb;
-    char cc;
-    char cd;
-    char ce;
-    char cf;
-    char cg;
-    char ch;
-    char ci;
-    char cj;
-
-    a = -1;
-    b = 2;
-    c = -3;
-    d = 4;
-    e = -5;
-    f = a;
-    g = -b;
-    h = c;
-    i = -d;
-    //j = 0;
-
-    ca = 'a';
-    cb = 'b';
-    cc = 'c';
-    cd = 'd';
-    ce = 'e';
-    cf = 'f';
-    cg = 'g';
-    ch = 'h';
-    ci = 'i';
-    cj = 'j';
-
-    succeed = 1;
+    char ca = 'a';
+    char cb = 'b';
+    char cc = 'c';
+    char cd = 'd';
+    char ce = 'e';
+    char cf = 'f';
+    char cg = 'g';
+    char ch = 'h';
+    char ci = 'i';
+    char cj = 'j';
 
     func11(1);
     func12('a');

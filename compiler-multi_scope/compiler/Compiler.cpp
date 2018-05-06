@@ -789,6 +789,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 			//enum变量
 			else if (current.klass == NUMBER) {
 				DEBUG_COMPILER("[enum variable]", FORMAT(format));
+
 				vm->addInst(I_IMM, FORMAT(format));
 				vm->addInstData(current.value, FORMAT(format));
 				exprType = INT_TYPE;
@@ -817,6 +818,8 @@ void kkli::Compiler::expression(int priority, std::string format) {
 		}
 
 		else if (tokenInfo.first == LPAREN) {
+			DEBUG_COMPILER("[(cast)]", FORMAT(format));
+
 			match(LPAREN, FORMAT(format));
 
 			//强制类型转换
@@ -839,6 +842,23 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				expression(ASSIGN, FORMAT(format));
 				match(RPAREN, FORMAT(format));
 			}
+		}
+
+		//int('a'), char***(0xffffffff)
+		else if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
+			DEBUG_COMPILER("[cast()]", FORMAT(format));
+
+			int castType = (tokenInfo.first == CHAR ? CHAR_TYPE : INT_TYPE);
+			matchAny(FORMAT(format));
+
+			while (tokenInfo.first == MUL) {
+				match(MUL, FORMAT(format));
+				castType += PTR_TYPE;
+			}
+			match(LPAREN, FORMAT(format));
+			expression(ASSIGN, FORMAT(format));
+			match(RPAREN, FORMAT(format));
+			exprType = castType;
 		}
 
 		else if (tokenInfo.first == MUL) {
@@ -904,6 +924,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == ADD) {
 			DEBUG_COMPILER("[ADD]", FORMAT(format));
+
 			//+a，啥也不做
 			match(ADD, FORMAT(format));
 			expression(INC, FORMAT(format));
@@ -958,19 +979,9 @@ void kkli::Compiler::expression(int priority, std::string format) {
 			vm->addInst(exprType == CHAR_TYPE ? I_SC : I_SI, FORMAT(format));
 		}
 
-		//int('a'), char***(0xffffffff)
-		else if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
-			matchAny(FORMAT(format));
-
-			int castType = tokenInfo.first == CHAR ? CHAR_TYPE : INT_TYPE;
-			while (tokenInfo.first == MUL) {
-				match(MUL, FORMAT(format));
-				castType += PTR_TYPE;
-			}
-			match(LPAREN, FORMAT(format));
-			expression(ASSIGN, FORMAT(format));
-			match(RPAREN, FORMAT(format));
-			exprType = castType;
+		//空语句
+		else if (tokenInfo.first == SEMICON) {
+			DEBUG_COMPILER("[EMPTY]", FORMAT(format));
 		}
 
 		else {
@@ -1341,7 +1352,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				vm->addInst(I_IMM, FORMAT(format));
 				vm->addInst(exprType > PTR_TYPE ? 4 : 1, FORMAT(format));
 				vm->addInst(tokenInfo.first == INC ? I_SUB : I_ADD, FORMAT(format));
-				match(INC, FORMAT(format));
+				matchAny(FORMAT(format));
 			}
 
 			else if (tokenInfo.first == LBRACK) {
@@ -1394,7 +1405,7 @@ void kkli::Compiler::validFunctionCall(const Token& funcToken, const std::vector
 			else if(dataTypes.size() > 6) {
 				throw Error(lexer->getLine(), "function '" + funcToken.name + "' support at most 6 arguments.");
 			}
-			else if (dataTypes[0] < PTR_TYPE) {
+			else if (dataTypes[0] != PTR_TYPE) {
 				throw Error(lexer->getLine(), "function '" + funcToken.name + "' need ptr type argument at first argument.");
 			}
 		}

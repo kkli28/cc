@@ -9,7 +9,7 @@ bool kkli::SymbolTable::has(bool isDef, int hash, std::string name, std::string 
 	current = 0;
 	auto size = table.size();
 
-	//定义符号，则只能查找当前作用域，如果没有，则添加符号，否则在外部应该报重定义错误
+	//定义符号，则只能查找当前作用域，无论外部作用域是否已定义该符号。如果没有定义，则添加符号，否则在外部应该报重定义错误
 	if (isDef) {
 		while (current < size) {
 			if (table[current].hash == hash && table[current].name == name) {
@@ -17,6 +17,7 @@ bool kkli::SymbolTable::has(bool isDef, int hash, std::string name, std::string 
 				if (table[current].scope[0] == KEY_WORD_SCOPE) {
 					return true;
 				}
+				//当前作用域内找到了该符号，则需要在外部判定符号重定义
 				if (table[current].scope == scope) {
 					return true;
 				}
@@ -30,8 +31,8 @@ bool kkli::SymbolTable::has(bool isDef, int hash, std::string name, std::string 
 		return false;
 	}
 
-	//使用符号，则可以从外部作用域里查找
-	//注意，逆向查找可实现内部作用域符号比外部作用域符号优先级高
+	//使用符号，则允许从外部作用域里查找
+	//注意，需要逆向查找才能实现内部作用域符号比外部作用域符号优先级高的特点
 	else {
 		current = size;
 		while (--current >= 0) {

@@ -19,13 +19,14 @@ namespace kkli {
 		//指令名称
 		const std::vector<std::string> INSTRUCTION_NAME = {
 			"I_NAI",
+
 			//带参数的指令
 			"I_LEA ", "I_IMM ", "I_JMP ", "I_CALL", "I_JZ  ", "I_JNZ ", "I_ENT ", "I_ADJ ",
 
 			//不带参数的指令
 			"I_LEV ", "I_LI  ", "I_LC  ", "I_SI  ", "I_SC  ", "I_PUSH",
 			"I_OR  ", "I_XOR ", "I_AND ", "I_EQ  ", "I_NE  ", "I_LT  ", "I_GT  ", "I_LE  ", "I_GE  ", "I_SHL ", "I_SHR ",
-			"I_ADD ", "I_SUB ", "I_MUL ", "I_DIV ", "I_MOD ", //五则运算
+			"I_ADD ", "I_SUB ", "I_MUL ", "I_DIV ", "I_MOD ",
 			"I_PRTF", "I_MALC", "I_EXIT", "I_SCANF", "I_GETC", "I_PUTC" //内置函数
 		};
 

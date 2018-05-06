@@ -132,6 +132,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 
 			//符号表中有该标识符
 			if (table->has(isDefinition, hash, name, FORMAT(format))) {
+				//定义模式下，在当前作用域下找到该符号，则表示符号重定义
 				if (table->getCurrentToken(FORMAT(format)).scope[0] != KEY_WORD_SCOPE && isDefinition) {
 					throw Error(line, "Lexer::next(): duplicate define symbol '" + name + "'");
 				}
