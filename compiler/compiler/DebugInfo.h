@@ -17,18 +17,19 @@ namespace kkli {
 
 	class DebugInfo {
 	public:
+		//共15个
 
 		//是否是测试模式
 		bool IS_TEST_MODE;
+
+		//是否启用Warning
+		bool ENABLE_WARNING;
 
 		//查看生成的代码
 		bool IS_SHOW_INST_GEN_MODE;
 
 		//查看每个全局定义生成指令的模式
 		bool IS_SHOW_GLOBAL_DECL_INST_GEN_MODE;
-
-		//是否启用Warning
-		bool ENABLE_WARNING;
 
 		//VM调试信息
 		bool OUTPUT_VM_ACTIONS;
@@ -63,28 +64,28 @@ namespace kkli {
 			return ptr;
 		}
 
-		void set(std::vector<bool> infos) {
+		void set(std::vector<int> infos) {
+			auto itb = [](int i) -> bool { return i; };
 			int i = 0;
-			IS_TEST_MODE = infos[i];
-			ENABLE_WARNING = infos[++i];
-			IS_SHOW_INST_GEN_MODE = infos[++i];
-			IS_SHOW_GLOBAL_DECL_INST_GEN_MODE = infos[++i];
-			OUTPUT_VM_ACTIONS = infos[++i];
-			OUTPUT_VM_EXECUTE_ACTIONS = infos[++i];
-			OUTPUT_VM_EXECUTE_DETAIL_ACTIONS = infos[++i];
-			OUTPUT_TOKEN_ACTIONS = infos[++i];
-			OUTPUT_SYMBOL_TABLE_ACTIONS = infos[++i];
-			OUTPUT_LEXER_ACTIONS = infos[++i];
-			OUTPUT_LEXER_SOURCE_INFO = infos[++i];
-			OUTPUT_LEXER_SYMBOL_INFO = infos[++i];
-			OUTPUT_LEXER_NEXT_INFO = infos[++i];
-			OUTPUT_COMPILER_ACTIONS = infos[++i];
-			OUTPUT_COMPILER_SYMBOL_INFO = infos[++i];
+			IS_TEST_MODE = itb(infos[i]);
+			ENABLE_WARNING = itb(infos[++i]);
+			IS_SHOW_INST_GEN_MODE = itb(infos[++i]);
+			IS_SHOW_GLOBAL_DECL_INST_GEN_MODE = itb(infos[++i]);
+			OUTPUT_VM_ACTIONS = itb(infos[++i]);
+			OUTPUT_VM_EXECUTE_ACTIONS = itb(infos[++i]);
+			OUTPUT_VM_EXECUTE_DETAIL_ACTIONS = itb(infos[++i]);
+			OUTPUT_TOKEN_ACTIONS = itb(infos[++i]);
+			OUTPUT_SYMBOL_TABLE_ACTIONS = itb(infos[++i]);
+			OUTPUT_LEXER_ACTIONS = itb(infos[++i]);
+			OUTPUT_LEXER_SOURCE_INFO = itb(infos[++i]);
+			OUTPUT_LEXER_SYMBOL_INFO = itb(infos[++i]);
+			OUTPUT_LEXER_NEXT_INFO = itb(infos[++i]);
+			OUTPUT_COMPILER_ACTIONS = itb(infos[++i]);
+			OUTPUT_COMPILER_SYMBOL_INFO = itb(infos[++i]);
 		}
 
 		void reset() {
-			set(std::vector<bool>{ false, true, false, false, false, false, false, false,
-				false, false, false, false, false, false, false });
+			set(std::vector<int>{ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
 		}
 		
 		void setTestMode() {
@@ -92,12 +93,12 @@ namespace kkli {
 		}
 
 		void setInstGenMode() {
-			reset();
+			//reset();
 			IS_SHOW_INST_GEN_MODE = true;
 		}
 
 		void setGlobalDeclInstGenMode() {
-			reset();
+			//reset();
 			IS_SHOW_GLOBAL_DECL_INST_GEN_MODE = true;
 		}
 
@@ -115,7 +116,7 @@ namespace kkli {
 		}
 
 		void setDetail3Mode() {
-			set(std::vector<bool>{IS_TEST_MODE, true, true, true, true, true, true, true, true, true, true, true, true});
+			set(std::vector<int>{IS_TEST_MODE, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
 		}
 
 		void seeCodeExecute() {

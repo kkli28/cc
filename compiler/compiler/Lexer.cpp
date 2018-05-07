@@ -7,6 +7,7 @@ kkli::Lexer::Lexer(std::string sourceFile, SymbolTable* tb, VirtualMachine* v) {
 	vm = v;
 
 	index = 0;
+	isDefinition = true;
 
 	DEBUG_LEXER("Lexer::lexer(" + sourceFile + ")", "");
 	std::string format = "";
@@ -23,13 +24,17 @@ kkli::Lexer::Lexer(std::string sourceFile, SymbolTable* tb, VirtualMachine* v) {
 	source = "char else enum if int return sizeof while printf malloc exit scanf getchar putchar void main";
 	source.push_back(END);
 	
+	//关键字
 	int type = CHAR;
 	while (type <= WHILE) {
 		next(FORMAT(format));
-		table->getCurrentToken(FORMAT(format)).type = type;
+		auto& tk = table->getCurrentToken(FORMAT(format));
+		tk.type = type;
+		tk.setScope({ KEY_WORD_SCOPE });
 		++type;
 	}
 
+	//内建函数
 	type = I_PRTF;
 	while (type <= I_PUTC) {
 		next(FORMAT(format));
@@ -37,12 +42,19 @@ kkli::Lexer::Lexer(std::string sourceFile, SymbolTable* tb, VirtualMachine* v) {
 		tk.klass = SYS_FUNC;
 		tk.dataType = INT_TYPE;
 		tk.value = type++;
+		tk.setScope({ KEY_WORD_SCOPE });
 	}
 
+	//void类型识别为char类型
 	next(FORMAT(format));
-	table->getCurrentToken(FORMAT(format)).type = CHAR;
+	Token& tk = table->getCurrentToken(FORMAT(format));
+	tk.type = CHAR;
+	tk.setScope({ KEY_WORD_SCOPE });
+
+	//main函数
 	next(FORMAT(format));
 	table->setMainToken(FORMAT(format));
+	table->getCurrentToken(FORMAT(format)).setScope({ KEY_WORD_SCOPE });  //main函数也是在关键字作用域中的
 
 	DEBUG_LEXER("[add builtin] end", FORMAT(format));
 	DEBUG_LEXER_SYMBOL_TABLE(table->getSymbolTableInfo(), FORMAT(format));
@@ -124,19 +136,30 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			std::string name(source, begIndex, index - begIndex);
 
 			//符号表中有该标识符
-			if (table->has(hash, name, FORMAT(format))) {
-				return { table->getCurrentToken(FORMAT(format)).type, 0 };
+			if (table->has(isDefinition, hash, name, FORMAT(format))) {
+				//定义模式下，在当前作用域下找到该符号，则表示符号重定义
+				if (table->getCurrentToken(FORMAT(format)).scope[0] != KEY_WORD_SCOPE && isDefinition) {
+					throw Error(line, "Lexer::next(): duplicate define symbol '" + name + "'");
+				}
+				else {
+					return { table->getCurrentToken(FORMAT(format)).type, 0 };
+				}
 			}
 
 			//符号表中没有该标识符，则向其中添加信息
 			else {
-				Token& tk = table->getCurrentToken(FORMAT(format));
-				tk.type = ID;
-				tk.name = name;
-				tk.hash = hash;
+				if (isDefinition) {
+					Token& tk = table->getCurrentToken(FORMAT(format));
+					tk.type = ID;
+					tk.name = name;
+					tk.hash = hash;
 
-				DEBUG_LEXER_NEXT("add [type] ID, [name] " + name + ", [hash] " + std::to_string(hash), FORMAT(format));
-				return { ID, 0 };
+					DEBUG_LEXER_NEXT("add [type] ID, [name] " + name + ", [hash] " + std::to_string(hash), FORMAT(format));
+					return { ID, 0 };
+				}
+				else {
+					throw Error(line, "Lexer::next(): don't have '" + name + "'.");
+				}
 			}
 		}
 

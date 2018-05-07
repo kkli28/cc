@@ -2,32 +2,7 @@
 #include "Token.h"
 
 //构造函数
-kkli::Token::Token() : type(0), klass(0), name(""), dataType(0), value(0), hash(0),
-Bklass(0), BdataType(0), Bvalue(0) {}
-
-//保存信息
-void kkli::Token::saveInfo(std::string format) {
-	DEBUG_TOKEN(std::string("Token::saveInfo: ")
-			+ "type = " + getTokenTypeName(type)
-			+ "  klass = " + getTokenKlassName(klass)
-			+ "  value = " + std::to_string(value), format);
-
-	Bklass = klass;
-	BdataType = dataType;
-	Bvalue = value;
-}
-
-//恢复信息
-void kkli::Token::restoreInfo(std::string format) {
-	DEBUG_TOKEN(std::string("Token::restoreInfo(): ")
-			+ "type = " + getTokenTypeName(type)
-			+ "  klass = " + getTokenKlassName(Bklass)
-			+ "  value = " + std::to_string(value), format);
-
-	klass = Bklass;
-	dataType = BdataType;
-	value = Bvalue;
-}
+kkli::Token::Token() : type(0), name(""), hash(0), klass(0), dataType(0), value(0) {}
 
 //添加函数参数类型
 void kkli::Token::addArgument(int dataType, std::string format) {
@@ -102,8 +77,8 @@ std::string kkli::Token::getTokenKlassName(int klass) {
 	case NUMBER: return "NUMBER";
 	case FUNC: return "FUNC";
 	case SYS_FUNC: return "SYS_FUNC";
-	case GLOBAL: return "GLOBAL";
-	case LOCAL: return "LOCAL";
+	case GLOBAL_VARIABLE: return "GLOBAL_VARIABLE";
+	case LOCAL_VARIABLE: return "LOCAL_VARIABLE";
 	default:
 		throw Error("Token::getTokenKlassName(" + std::to_string(klass) + ")");
 	}

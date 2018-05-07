@@ -28,6 +28,15 @@ namespace kkli {
 		int gdBegIndex;      //前一个全局定义的开始位置
 		int gdEndIndex;      //xxx结束位置
 
+		/*
+		若是定义语句如 int a = 1; 则识别 a 时若在当前scope中没有找到名字
+		a，则添加Token，否则返回该a。
+
+		若不是定义语句如 a = 1; 则识别 a 时，若当前scope中没有找到名字，则
+		从外部scope中找，不会添加Token。
+		*/
+		bool isDefinition;   //标记当前解析的语句是否是定义语句
+
 	private:
 		//获取下一个字符
 		inline char get() { return source[++index]; }
@@ -62,6 +71,12 @@ namespace kkli {
 
 		//获取下一个词法单元
 		std::pair<int, int> next(std::string format);
+
+		//设置当前分析的是定义语句
+		void setIsDefinition(bool isDef, std::string format) { 
+			DEBUG_LEXER(std::string("Lexer::setIsDefinition(") + (isDef ? "true" : "false") + ")", format);
+			isDefinition = isDef; 
+		}
 
 		//为局部变量设计的回退功能
 		//局部变量定义int a = b + c; 被识别为int a; a = b + c; 可方便地实现局部变量的声明时定义

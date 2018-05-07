@@ -161,7 +161,7 @@ std::string kkli::VirtualMachine::getGlobalDeclGenInst() {
 	int* begAddr = reinterpret_cast<int*>(instTag.back().first);
 	int* endAddr = reinterpret_cast<int*>(instTag.back().second);
 
-	//全局定义的 int i = 0; 不会生成代码
+	//全局定义如 int i = 0; 不会生成代码
 	if (begAddr == endAddr) {
 		return "";
 	}
@@ -243,7 +243,7 @@ std::string kkli::VirtualMachine::getInfo() const {
 //执行指令
 int kkli::VirtualMachine::run() {
 	DEBUG_VM("VirtualMachine::run()", "");
-	std::cout << "==== result: ====" << std::endl;
+	std::cout << "-- result --" << std::endl;
 
 	std::string format = "";
 

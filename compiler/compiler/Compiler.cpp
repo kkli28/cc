@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "Compiler.h"
 
+#define ENTER_SCOPE table->enterScope(FORMAT(format))
+#define LEAVE_SCOPE table->leaveScope(FORMAT(format))
+
 //构造函数
 kkli::Compiler::Compiler(std::string sourceFile){
 	table = new SymbolTable();
@@ -35,26 +38,32 @@ void kkli::Compiler::run() {
 	matchAny("");
 	Debug::output("", "");
 	while (tokenInfo.first != END) {
-		//设置全局定义开始标记
-		lexer->setGlobalDeclTag(true);
-		vm->setGlobalDeclInstTag(true);
-
-		//开始解析一个全局定义
-		global_decl("");
-
-		//设置全局定义结束标记
-		lexer->setGlobalDeclTag(false);
-		vm->setGlobalDeclInstTag(false);
 
 		//查看每个全局定义生成的代码
 		if (DEBUG_INFO->IS_SHOW_GLOBAL_DECL_INST_GEN_MODE) {
+
+			//设置全局定义开始标记
+			lexer->setGlobalDeclTag(true);
+			vm->setGlobalDeclInstTag(true);
+
+			global_decl("");
+
+			//设置全局定义结束标记
+			lexer->setGlobalDeclTag(false);
+			vm->setGlobalDeclInstTag(false);
+
 			Debug::output("======== global declaration =========", "");
 			Debug::output(Utils::trimNL(lexer->getGlobalDecl()), "");
 			Debug::output("", "");
 			auto result = vm->getGlobalDeclGenInst();
-			if (result.size() > 3) {
-				Debug::output(vm->getGlobalDeclGenInst(), "");
+			if (result.size() > 3) {  //该全局定义没有生成指令，则不输出其内容
+				Debug::output(result, "");
 			}
+		}
+
+		//否
+		else {
+			global_decl("");
 		}
 	}
 
@@ -70,6 +79,9 @@ void kkli::Compiler::run() {
 	}
 
 	Token& tk = table->getMainToken("");
+	if (tk.value == 0) {
+		throw Error("Can't find definition of main function.");
+	}
 
 	//初始化全局代码(调用main的代码）
 	int* origin = vm->getNextTextPos();
@@ -80,7 +92,6 @@ void kkli::Compiler::run() {
 	vm->addInst(I_EXIT, "");  //main函数调用结束后，程序的最终退出点
 
 	vm->setPC(origin);
-	Debug::output("", "");
 	vm->run();
 }
 
@@ -91,6 +102,7 @@ void kkli::Compiler::global_decl(std::string format) {
 	<global_decl> = <enum_decl> | <var_decl> | <func_decl>
 	*/
 	DEBUG_COMPILER("Compiler::global_decl()", format);
+	lexer->setIsDefinition(true, FORMAT(format));
 
 	//enum定义
 	if (tokenInfo.first == ENUM) {
@@ -115,6 +127,7 @@ void kkli::Compiler::global_decl(std::string format) {
 
 	//类型int或char后至少需要有变量或函数定义，int ; 是错误的，因此用do-while而非while
 	do{
+		lexer->setIsDefinition(true, FORMAT(format));
 		type = baseType;
 
 		//多级指针，如 int *******x;
@@ -125,15 +138,14 @@ void kkli::Compiler::global_decl(std::string format) {
 
 		DEBUG_COMPILER("type = " + Token::getDataTypeName(type), FORMAT(format));
 		if (tokenInfo.first != ID) {
-			std::cout << "tokenInfo.first: " << Token::getTokenTypeName(tokenInfo.first) << std::endl;
 			throw Error(lexer->getLine(), "expected token [ID]");
 		}
-
 		if (table->getCurrentToken(FORMAT(format)).klass != ERROR) {
 			throw Error(lexer->getLine(), "duplicate global declaration, [id] = " +
 				table->getCurrentToken(FORMAT(format)).name);
 		}
 
+		lexer->setIsDefinition(false, FORMAT(format));
 		match(ID, FORMAT(format));
 
 		//函数定义
@@ -158,6 +170,7 @@ void kkli::Compiler::global_decl(std::string format) {
 
 			//避免 int a,; 或 int a} 的情况
 			if (tokenInfo.first == COMMA) {
+				lexer->setIsDefinition(true, FORMAT(format));
 				match(COMMA, FORMAT(format));
 				if (tokenInfo.first == SEMICON) {
 					throw Error(lexer->getLine(), "wrong ',' before ';'");
@@ -178,14 +191,13 @@ void kkli::Compiler::global_var_decl(int type, std::string format) {
 	//<type> {'*'}+ <id> ['=' <num>] {',' {'*'}+ <id> ['=' <num>]}+ ';'
 	//                   ^         ^
 	//                   |---------|
-
 	//声明或定义后必须为分隔符
 	if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON && tokenInfo.first != ASSIGN) {
 		throw Error(lexer->getLine(), "wrong variables declaration.");
 	}
 
 	Token& tk = table->getCurrentToken(FORMAT(format));
-	tk.klass = GLOBAL;
+	tk.klass = GLOBAL_VARIABLE;
 	tk.dataType = type;
 	tk.value = reinterpret_cast<int>(vm->getNextDataPos(INT_TYPE, FORMAT(format)));
 	vm->addDataInt(0, FORMAT(format));
@@ -223,7 +235,7 @@ void kkli::Compiler::global_var_decl(int type, std::string format) {
 		//已定义全局变量，则可直接取其值
 		else if (tokenInfo.first == ID) {
 			Token& current = table->getCurrentToken(FORMAT(format));
-			if (current.klass == GLOBAL) {
+			if (current.klass == GLOBAL_VARIABLE) {
 				*reinterpret_cast<int*>(tk.value) = factor*current.value;
 			}
 			else {
@@ -243,8 +255,9 @@ void kkli::Compiler::global_arr_decl(int type, std::string format) {
 	//<type> { '*' }+ <id> '[' <num> ']' [ '=' '{' {<num>, [',' <num>]+'}' ] ';'
 	//                      ^                                           ^
 	//                      |-------------------------------------------|
+
 	Token& tk = table->getCurrentToken(FORMAT(format));
-	tk.klass = GLOBAL;
+	tk.klass = GLOBAL_VARIABLE;
 	tk.dataType = type + PTR_TYPE;
 
 	//注意，int arr[10]; 中arr本身需要一个4字节空间用于存储其值
@@ -358,6 +371,7 @@ void kkli::Compiler::enum_decl(std::string format) {
 	              {',' <id> [ '=' <num> ]}+ '}' ';'
 	*/
 	DEBUG_COMPILER("Compiler::enum_decl()", format);
+	lexer->setIsDefinition(true, FORMAT(format));
 
 	int varIndex = 0;  //enum常量的位置
 	int varValue = 0;  //enum常量的值
@@ -407,32 +421,23 @@ void kkli::Compiler::enum_decl(std::string format) {
 	}
 	match(RBRACE, FORMAT(format));
 	match(SEMICON, FORMAT(format));
+	lexer->setIsDefinition(false, FORMAT(format));
 }
 
 //函数定义
 void kkli::Compiler::func_decl(std::string format) {
+	ENTER_SCOPE;
 	DEBUG_COMPILER("Compiler::func_del()", format);
 
 	currFuncIndex = table->getCurrent(FORMAT(format));
 	func_param(FORMAT(format));
 	func_body(FORMAT(format));
-	
-	DEBUG_COMPILER_SYMBOL("\n[======== before restore ========]" + table->getSymbolTableInfo(), FORMAT(format));
-
-	//恢复全局变量
-	std::vector<Token>& tb = table->getTable();
-	for (auto& tk : tb) {
-		if (tk.klass == LOCAL) {
-			tk.restoreInfo(FORMAT(format));
-		}
-	}
-
-	DEBUG_COMPILER_SYMBOL("\n[======== after restore ========] " + table->getSymbolTableInfo(), FORMAT(format));
 }
 
 //函数参数定义
 void kkli::Compiler::func_param(std::string format) {
 	DEBUG_COMPILER("Compiler::func_param()", format);
+	lexer->setIsDefinition(true, FORMAT(format));
 
 	match(LPAREN, FORMAT(format));
 	int dataType;
@@ -446,6 +451,9 @@ void kkli::Compiler::func_param(std::string format) {
 			match(CHAR, FORMAT(format));
 			dataType = CHAR_TYPE;
 		}
+		else {
+			throw Error(lexer->getLine(), "bad parameter type.");
+		}
 
 		//指针类型
 		while (tokenInfo.first == MUL) {
@@ -457,10 +465,6 @@ void kkli::Compiler::func_param(std::string format) {
 		if (tokenInfo.first != ID) {
 			throw Error(lexer->getLine(), "bad parameter declaration.");
 		}
-		if (table->getCurrentToken(FORMAT(format)).klass == LOCAL) {
-			throw Error(lexer->getLine(), "duplicate parameter declaration.");
-		}
-
 		match(ID, FORMAT(format));
 
 		if (tokenInfo.first != COMMA && tokenInfo.first != RPAREN) {
@@ -470,17 +474,12 @@ void kkli::Compiler::func_param(std::string format) {
 		table->getToken(currFuncIndex).addArgument(dataType, FORMAT(format));  //记录函数参数的类型
 		DEBUG_COMPILER("add " + Token::getDataTypeName(dataType) + " argument", FORMAT(format));
 
-		DEBUG_COMPILER_SYMBOL("\n[======== before backup ========] " + table->getSymbolTableInfo(), "");
-
-		//备份全局变量信息，并填入局部变量信息
+		//填入局部变量信息
 		Token& tk = table->getCurrentToken(FORMAT(format));
-		tk.saveInfo(FORMAT(format));
-		tk.klass = LOCAL;
+		tk.klass = LOCAL_VARIABLE;
 		tk.dataType = dataType;
 		tk.value = params++;
-		
-		DEBUG_COMPILER_SYMBOL("\n[======== after backup ========] " + table->getSymbolTableInfo(), "");
-		
+
 		if (tokenInfo.first == COMMA) {
 			match(COMMA, FORMAT(format));
 		}
@@ -489,6 +488,7 @@ void kkli::Compiler::func_param(std::string format) {
 	indexOfBP = params + 1;  //pc寄存器的值在bp+1处
 
 	DEBUG_COMPILER("[index of bp]: " + std::to_string(indexOfBP), FORMAT(format));
+	lexer->setIsDefinition(false, FORMAT(format));
 }
 
 //函数体
@@ -496,93 +496,98 @@ void kkli::Compiler::func_body(std::string format) {
 	DEBUG_COMPILER("Compiler::func_body()", format);
 
 	match(LBRACE, FORMAT(format));
-	
 	vm->addInst(I_ENT, FORMAT(format));
 	int* variableCount = vm->getNextTextPos();  //记录存储变量个数的位置
 	vm->addInstData(0, FORMAT(format));
 
 	int variableIndex = indexOfBP;
 	while (tokenInfo.first != RBRACE) {
-
-		//局部变量
-		if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
-			baseType = (tokenInfo.first == INT) ? INT_TYPE : CHAR_TYPE;
-			match(tokenInfo.first, FORMAT(format));
-
-			do {
-				int dataType = baseType;
-
-				//多级指针
-				while (tokenInfo.first == MUL) {
-					match(MUL, FORMAT(format));
-					dataType += PTR_TYPE;
-				}
-
-				if (tokenInfo.first != ID) {
-					throw Error(lexer->getLine(), "bad local declaration.");
-				}
-
-				if (table->getCurrentToken(FORMAT(format)).klass == LOCAL) {
-					throw Error(lexer->getLine(), "duplicate local declaration.");
-				}
-
-				match(ID, FORMAT(format));
-
-				if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON && tokenInfo.first != ASSIGN) {
-					throw Error(lexer->getLine(), "bad local declaration.");
-				}
-
-				DEBUG_COMPILER_SYMBOL("\n[======== before backup ========] " + table->getSymbolTableInfo(), "");
-
-				//存储局部变量
-				Token& currToken = table->getCurrentToken(FORMAT(format));
-				currToken.saveInfo(FORMAT(format));
-				currToken.klass = LOCAL;
-				currToken.dataType = dataType;
-				currToken.value = ++variableIndex;
-
-				DEBUG_COMPILER_SYMBOL("\n[======== after backup ========] " + table->getSymbolTableInfo(), "");
-
-				//int a = b + c; 被视为 int a; a = b + c; 进行翻译，可避免复杂的局部变量初始化逻辑
-				//因局部变量存放在栈上，但是编译时栈不可知，因此这么写可避免实现复杂的局部变量初始化逻辑
-				//这么做有bug，就是 int a = a + b + c; 是合法的，其为 int a; a = a + b + c; 结果是 b + c，因a被初始化为0
-				//TODO: 处理数组的初始化
-				if (tokenInfo.first == ASSIGN) {
-					lexer->rollBack(FORMAT(format));
-					tokenInfo = lexer->next(FORMAT(format));
-					break;
-				}
-
-				if (tokenInfo.first == COMMA) {
-					match(COMMA, FORMAT(format));
-				}
-			} while (tokenInfo.first != SEMICON);
-
-			match(SEMICON, FORMAT(format));
-		}
-
-		//语句
-		else {
-			statement(FORMAT(format));
-		}
+		statement(variableIndex, FORMAT(format));
 	}
-	
+
+	DEBUG_COMPILER("Compiler::statement(): variable count = " + std::to_string(variableIndex - indexOfBP), format);
 	*variableCount = variableIndex - indexOfBP;  //回填变量个数
 	vm->addInst(I_LEV, FORMAT(format));
+	LEAVE_SCOPE;
+}
+
+//局部变量定义
+void kkli::Compiler::local_var_decl(int& variableIndex, std::string format) {
+	DEBUG_COMPILER("Compiler::local_var_decl", format);
+	lexer->setIsDefinition(true, FORMAT(format));
+
+	if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
+		baseType = (tokenInfo.first == INT) ? INT_TYPE : CHAR_TYPE;
+		match(tokenInfo.first, FORMAT(format));
+
+		do {
+			int dataType = baseType;
+
+			//多级指针
+			while (tokenInfo.first == MUL) {
+				match(MUL, FORMAT(format));
+				dataType += PTR_TYPE;
+			}
+
+			if (tokenInfo.first != ID) {
+				throw Error(lexer->getLine(), "bad local declaration.");
+			}
+			lexer->setIsDefinition(false, FORMAT(format));
+			match(ID, FORMAT(format));
+
+			if (tokenInfo.first != COMMA && tokenInfo.first != SEMICON && tokenInfo.first != ASSIGN) {
+				throw Error(lexer->getLine(), "bad local declaration.");
+			}
+
+			//存储局部变量
+			Token& currToken = table->getCurrentToken(FORMAT(format));
+			currToken.klass = LOCAL_VARIABLE;
+			currToken.dataType = dataType;
+			currToken.value = ++variableIndex;
+
+			//int a = b + c; 被视为 int a; a = b + c; 进行翻译，可避免复杂的局部变量初始化逻辑
+			//因局部变量存放在栈上，但是编译时栈不可知，因此这么写可避免实现复杂的局部变量初始化逻辑
+			//这么做有bug，就是 int a = a + b + c; 是合法的，其为 int a; a = a + b + c; 结果是 b + c，因a被初始化为0
+			//TODO: 处理数组的初始化
+			if (tokenInfo.first == ASSIGN) {
+				lexer->rollBack(FORMAT(format));
+				matchAny(FORMAT(format));
+				break;
+			}
+
+			if (tokenInfo.first == COMMA) {
+				lexer->setIsDefinition(true, FORMAT(format));
+				match(COMMA, FORMAT(format));
+				if (tokenInfo.first == SEMICON) {
+					throw Error(lexer->getLine(), "unexpected ';'.");
+				}
+			}
+		} while (tokenInfo.first != SEMICON);
+
+		match(SEMICON, FORMAT(format));
+	}
+	else {
+		throw Error(lexer->getLine(), "bad variable type.");
+	}
 }
 
 //语句
-void kkli::Compiler::statement(std::string format) {
-	//1. if(expr) statement [else statement]
-	//2. while(expr) statement
-	//3. { statement }
+void kkli::Compiler::statement(int& variableIndex, std::string format) {
+	//1. local variable definition
+	//2. if(expr) statement [else statement]
+	//3. while(expr) statement
 	//4. return expr;
 	//5. expr;  //expr可空
-
+	//6. { statement+ }
 	DEBUG_COMPILER("Compiler::statement()", format);
+
+	//局部变量定义
+	if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
+		local_var_decl(variableIndex, FORMAT(format));
+	}
 	
 	//if语句
-	if (tokenInfo.first == IF) {
+	else if (tokenInfo.first == IF) {
 		DEBUG_COMPILER("[if]", FORMAT(format));
 
 		match(IF, FORMAT(format));
@@ -595,7 +600,11 @@ void kkli::Compiler::statement(std::string format) {
 		vm->addInst(I_JZ, FORMAT(format));
 		branch = vm->getNextTextPos();
 		vm->addInstData(0, FORMAT(format));  //占据一个位置，用以写入 I_JZ 的跳转位置
-		statement(FORMAT(format));
+
+		ENTER_SCOPE;
+		statement(variableIndex, FORMAT(format));
+		LEAVE_SCOPE;
+
 		if (tokenInfo.first == ELSE) {
 			DEBUG_COMPILER("[else]", FORMAT(format));
 
@@ -604,7 +613,10 @@ void kkli::Compiler::statement(std::string format) {
 			vm->addInst(I_JMP, FORMAT(format));
 			branch = vm->getNextTextPos();
 			vm->addInstData(0, FORMAT(format));  //占据一个位置
-			statement(FORMAT(format));
+
+			ENTER_SCOPE;
+			statement(variableIndex, FORMAT(format));
+			LEAVE_SCOPE;
 		}
 		*branch = reinterpret_cast<int>(vm->getNextTextPos());
 	}
@@ -624,20 +636,22 @@ void kkli::Compiler::statement(std::string format) {
 		branchB = vm->getNextTextPos();
 		vm->addInstData(0, FORMAT(format));
 
-		statement(FORMAT(format));
+		ENTER_SCOPE;
+		statement(variableIndex, FORMAT(format));
+		LEAVE_SCOPE;
+
 		vm->addInst(I_JMP, FORMAT(format));
 		vm->addInstData(reinterpret_cast<int>(branchA), FORMAT(format));
 		*branchB = reinterpret_cast<int>(vm->getNextTextPos());
 	}
 
-	//{ statement }
 	else if (tokenInfo.first == LBRACE) {
-		DEBUG_COMPILER("[{statement}]", FORMAT(format));
-
+		ENTER_SCOPE;
 		match(LBRACE, FORMAT(format));
 		while (tokenInfo.first != RBRACE) {
-			statement(FORMAT(format));
+			statement(variableIndex, FORMAT(format));
 		}
+		LEAVE_SCOPE;
 		match(RBRACE, FORMAT(format));
 	}
 
@@ -783,6 +797,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 			//enum变量
 			else if (current.klass == NUMBER) {
 				DEBUG_COMPILER("[enum variable]", FORMAT(format));
+
 				vm->addInst(I_IMM, FORMAT(format));
 				vm->addInstData(current.value, FORMAT(format));
 				exprType = INT_TYPE;
@@ -790,12 +805,12 @@ void kkli::Compiler::expression(int priority, std::string format) {
 
 			//普通变量
 			else {
-				if (current.klass == LOCAL) {
+				if (current.klass == LOCAL_VARIABLE) {
 					DEBUG_COMPILER("[local variable]", FORMAT(format));
 					vm->addInst(I_LEA, FORMAT(format));
 					vm->addInstData(indexOfBP - current.value, FORMAT(format));
 				}
-				else if (current.klass == GLOBAL) {
+				else if (current.klass == GLOBAL_VARIABLE) {
 					DEBUG_COMPILER("[global variable]", FORMAT(format));
 					vm->addInst(I_IMM, FORMAT(format));
 					vm->addInstData(current.value, FORMAT(format));
@@ -811,6 +826,8 @@ void kkli::Compiler::expression(int priority, std::string format) {
 		}
 
 		else if (tokenInfo.first == LPAREN) {
+			DEBUG_COMPILER("[(cast)]", FORMAT(format));
+
 			match(LPAREN, FORMAT(format));
 
 			//强制类型转换
@@ -833,6 +850,23 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				expression(ASSIGN, FORMAT(format));
 				match(RPAREN, FORMAT(format));
 			}
+		}
+
+		//int('a'), char***(0xffffffff)
+		else if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
+			DEBUG_COMPILER("[cast()]", FORMAT(format));
+
+			int castType = (tokenInfo.first == CHAR ? CHAR_TYPE : INT_TYPE);
+			matchAny(FORMAT(format));
+
+			while (tokenInfo.first == MUL) {
+				match(MUL, FORMAT(format));
+				castType += PTR_TYPE;
+			}
+			match(LPAREN, FORMAT(format));
+			expression(ASSIGN, FORMAT(format));
+			match(RPAREN, FORMAT(format));
+			exprType = castType;
 		}
 
 		else if (tokenInfo.first == MUL) {
@@ -898,6 +932,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 
 		else if (tokenInfo.first == ADD) {
 			DEBUG_COMPILER("[ADD]", FORMAT(format));
+
 			//+a，啥也不做
 			match(ADD, FORMAT(format));
 			expression(INC, FORMAT(format));
@@ -952,19 +987,9 @@ void kkli::Compiler::expression(int priority, std::string format) {
 			vm->addInst(exprType == CHAR_TYPE ? I_SC : I_SI, FORMAT(format));
 		}
 
-		//int('a'), char***(0xffffffff)
-		else if (tokenInfo.first == INT || tokenInfo.first == CHAR) {
-			matchAny(FORMAT(format));
-
-			int castType = tokenInfo.first == CHAR ? CHAR_TYPE : INT_TYPE;
-			while (tokenInfo.first == MUL) {
-				match(MUL, FORMAT(format));
-				castType += PTR_TYPE;
-			}
-			match(LPAREN, FORMAT(format));
-			expression(ASSIGN, FORMAT(format));
-			match(RPAREN, FORMAT(format));
-			exprType = castType;
+		//空语句
+		else if (tokenInfo.first == SEMICON) {
+			DEBUG_COMPILER("[EMPTY]", FORMAT(format));
 		}
 
 		else {
@@ -1335,7 +1360,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				vm->addInst(I_IMM, FORMAT(format));
 				vm->addInst(exprType > PTR_TYPE ? 4 : 1, FORMAT(format));
 				vm->addInst(tokenInfo.first == INC ? I_SUB : I_ADD, FORMAT(format));
-				match(INC, FORMAT(format));
+				matchAny(FORMAT(format));
 			}
 
 			else if (tokenInfo.first == LBRACK) {
@@ -1388,7 +1413,7 @@ void kkli::Compiler::validFunctionCall(const Token& funcToken, const std::vector
 			else if(dataTypes.size() > 6) {
 				throw Error(lexer->getLine(), "function '" + funcToken.name + "' support at most 6 arguments.");
 			}
-			else if (dataTypes[0] < PTR_TYPE) {
+			else if (dataTypes[0] != PTR_TYPE) {
 				throw Error(lexer->getLine(), "function '" + funcToken.name + "' need ptr type argument at first argument.");
 			}
 		}

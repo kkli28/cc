@@ -19,13 +19,14 @@ namespace kkli {
 		//指令名称
 		const std::vector<std::string> INSTRUCTION_NAME = {
 			"I_NAI",
+
 			//带参数的指令
 			"I_LEA ", "I_IMM ", "I_JMP ", "I_CALL", "I_JZ  ", "I_JNZ ", "I_ENT ", "I_ADJ ",
 
 			//不带参数的指令
 			"I_LEV ", "I_LI  ", "I_LC  ", "I_SI  ", "I_SC  ", "I_PUSH",
 			"I_OR  ", "I_XOR ", "I_AND ", "I_EQ  ", "I_NE  ", "I_LT  ", "I_GT  ", "I_LE  ", "I_GE  ", "I_SHL ", "I_SHR ",
-			"I_ADD ", "I_SUB ", "I_MUL ", "I_DIV ", "I_MOD ", //五则运算
+			"I_ADD ", "I_SUB ", "I_MUL ", "I_DIV ", "I_MOD ",
 			"I_PRTF", "I_MALC", "I_EXIT", "I_SCANF", "I_GETC", "I_PUTC" //内置函数
 		};
 
@@ -50,19 +51,19 @@ namespace kkli {
 		//进行数据对齐
 		void dataAlignment(std::string format);
 
-		//DEBUG_VM
+		//展示VM的 [调用] 信息
 		void DEBUG_VM(std::string arg1, std::string arg2) {
 			if (DEBUG_INFO->OUTPUT_VM_ACTIONS) {
 				Debug::output(arg1, arg2); 
 			}
 		}
-		//DEBUG_VM_EXECUTE
+		//展示VM的详细 [执行] 信息
 		void DEBUG_VM_EXECUTE_DETAIL(std::string arg1, std::string arg2) {
 			if (DEBUG_INFO->OUTPUT_VM_EXECUTE_DETAIL_ACTIONS) { 
 				Debug::output(arg1, arg2); 
 			}
 		}
-		//DEBUG_REGISTER
+		//展示VM的详细 [执行] 信息，并且显示每个寄存器当前值
 		void DEBUG_REGISTER(std::string format) {
 			DEBUG_VM_EXECUTE_DETAIL("ax: " + std::to_string(ax), FORMAT(format));
 			DEBUG_VM_EXECUTE_DETAIL("bp: " + std::to_string(reinterpret_cast<int>(bp)), FORMAT(format));
@@ -110,12 +111,17 @@ namespace kkli {
 		//获取虚拟机信息
 		std::string getInfo() const;
 
+		/*
+		标记全局定义的开始与结束
+		每当全局定义开始时，设置该全局定义代码开始位置
+		每当全局定义结束时，设置该全局定义代码结束位置
+		若需要打印全局定义所生成的代码，则可通过输出两个标记间的代码来实现
+		*/
+		void setGlobalDeclInstTag(bool isStart);
+
 		//获取所有生成的指令
 		std::string getGlobalDeclGenInst();
 		std::string getGenInst();
-
-		//标记全局定义的开始于结束
-		void setGlobalDeclInstTag(bool isStart);
 
 		//获取指令名称
 		std::string getInstructionName(int i) const {

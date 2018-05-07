@@ -21,8 +21,11 @@ namespace kkli {
 	class SymbolTable {
 	private:
 		std::vector<Token> table;
-		size_t current;
+		int current;
 		size_t mainIndex;  //main函数Token的索引
+
+		int scopeIndex;          //当前作用域标记，如5
+		std::vector<int> scope;  //当前作用域路径，如0/1/4/5
 
 	private:
 		//DEBUG
@@ -33,13 +36,23 @@ namespace kkli {
 		}
 
 	public:
-		SymbolTable() :current(-1), mainIndex(-1) {}
+		SymbolTable() :current(-1), mainIndex(-1), scopeIndex(0) {
+			scope.push_back(scopeIndex);  //全局作用域为 0
+		}
+
+		static std::string getScopeStr(const std::vector<int> scope);
 
 		//判断是否存在符号
-		bool has(int hash, std::string name, std::string format);
+		bool has(bool isDef, int hash, std::string name, std::string format);
+
+		//作用域
+		void enterScope(std::string format);
+		void leaveScope(std::string format);
+		std::vector<int> getCurrScope() const { return scope; }
 
 		//获取当前符号（注意！若之后再有push_back，则token的引用将可能不再生效）
-		Token& getCurrentToken(std::string format) { 
+		Token& getCurrentToken(std::string format) {
+			DEBUG_SYMBOL_TABLE("SymbolTable::getCurrentToken(): [klass]: " + Token::getTokenKlassName(table[current].klass), FORMAT(format));
 			return table[current]; 
 		}
 		size_t getCurrent(std::string format) {  //只获取current应该是更好的选项
@@ -60,13 +73,13 @@ namespace kkli {
 		//获取内部结构table
 		std::vector<Token>& getTable() { return table; }
 
-		//设置main函数位置
+		//设置main函数Token所在位置
 		void setMainToken(std::string format) {
-			DEBUG_SYMBOL_TABLE("SymbolTable::setMainToken(), mainIndex = " + std::to_string(int(current)), format);
+			DEBUG_SYMBOL_TABLE("SymbolTable::setMainToken(), mainIndex = " + std::to_string(current), format);
 			mainIndex = current;
 		}
-		Token& getMainToken(std::string format) { 
-			DEBUG_SYMBOL_TABLE("SymbolTable::getMainToken() " + std::to_string(int(mainIndex)), format);
+		Token& getMainToken(std::string format) {
+			DEBUG_SYMBOL_TABLE("SymbolTable::getMainToken(): mainIndex = " + std::to_string(mainIndex), format);
 			return table[mainIndex];
 		}
 	};

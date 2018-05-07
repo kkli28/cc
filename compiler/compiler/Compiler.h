@@ -57,7 +57,10 @@ namespace kkli {
 		void func_body(std::string format);
 
 		//语句
-		void statement(std::string format);
+		void statement(int& variableIndex, std::string format);
+
+		//局部变量定义
+		void local_var_decl(int& variableIndex, std::string format);
 
 		//表达式
 		void expression(int priority, std::string format);
@@ -85,6 +88,7 @@ namespace kkli {
 			delete vm;
 		}
 
+		//Go Go GO!
 		void run();
 	};
 }
