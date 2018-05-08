@@ -67,15 +67,19 @@ void kkli::Compiler::run() {
 		}
 	}
 
-	//输出警告
-	if (DEBUG_INFO->ENABLE_WARNING) {
-		WARNING->output();
+	if (DEBUG_INFO->IS_SHOW_GLOBAL_DECL_INST_GEN_MODE) {
+		return;
 	}
 
 	//查看最终生成的代码
 	if (DEBUG_INFO->IS_SHOW_INST_GEN_MODE) {
 		Debug::output(vm->getGenInst(), "");
 		return;
+	}
+
+	//输出警告
+	if (DEBUG_INFO->ENABLE_WARNING) {
+		WARNING->output();
 	}
 
 	Token& tk = table->getMainToken("");

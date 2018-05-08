@@ -20,9 +20,10 @@ int main()
 		std::cout << "-dt3: show compile details level-3(everything?)." << std::endl;
 		std::cout << "-df: write debug info to debug.txt." << std::endl;
 	};
+
 	while (true) {
 
-		//初始化
+		//init
 		kkli::Debug::clear();
 		DEBUG_INFO->reset();
 		bool isHelpMode = false;
@@ -60,7 +61,7 @@ int main()
 				DEBUG_INFO->setGlobalDeclInstGenMode();
 			}
 			//查看代码执行过程
-			else if (str == "-e") { //TODO: ERROR
+			else if (str == "-e") {
 				DEBUG_INFO->seeCodeExecute();
 			}
 			//查看代码执行过程中的值 （ax=...）
@@ -87,7 +88,7 @@ int main()
 			else if (str == "-df") {
 				kkli::Debug::OUTPUT_TO_CONSOLE = false;
 			}
-			//乱来
+			//避免乱来
 			else if (cin.bad()) {
 				cin.clear();
 				cin.ignore(numeric_limits<std::streamsize>::max(), '\n');
@@ -98,7 +99,7 @@ int main()
 		}
 
 		try {
-			//命令行控制控制命令
+			//cmd命令
 			if (isCmd) {}
 
 			else {

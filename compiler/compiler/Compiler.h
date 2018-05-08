@@ -6,7 +6,6 @@
 */
 
 #include "stdafx.h"
-#include "Grammar.h"  //文法描述，没有任何代码
 #include "Lexer.h"
 
 namespace kkli {

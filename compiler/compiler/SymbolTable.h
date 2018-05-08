@@ -13,11 +13,6 @@ namespace kkli {
 	// 符号表
 	//========================================
 
-	/*
-	table为已添加完成的符号
-	currToken为正在完善的符号，其信息的填写跨越词法分析和语法分析，无法在
-	一趟内就填写完成，因此需要单独存储，当信息填写完整后，再放入符号表
-	*/
 	class SymbolTable {
 	private:
 		std::vector<Token> table;
