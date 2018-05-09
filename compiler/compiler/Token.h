@@ -88,7 +88,7 @@ namespace kkli {
 		int value;         //值
 
 		std::vector<int> argsDataType;    //函数参数及其类型
-		std::vector<int> scope;
+		std::vector<int> scope;           //所在作用域
 
 		Token();
 
