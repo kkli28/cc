@@ -436,6 +436,7 @@ void kkli::Compiler::func_decl(std::string format) {
 	currFuncIndex = table->getCurrent(FORMAT(format));
 	func_param(FORMAT(format));
 	func_body(FORMAT(format));
+	LEAVE_SCOPE;
 }
 
 //函数参数定义
@@ -512,7 +513,6 @@ void kkli::Compiler::func_body(std::string format) {
 	DEBUG_COMPILER("Compiler::statement(): variable count = " + std::to_string(variableIndex - indexOfBP), format);
 	*variableCount = variableIndex - indexOfBP;  //回填变量个数
 	vm->addInst(I_LEV, FORMAT(format));
-	LEAVE_SCOPE;
 }
 
 //局部变量定义
