@@ -220,7 +220,7 @@ void kkli::Compiler::global_var_decl(int type, std::string format) {
 		//数值型
 		if (tokenInfo.first == NUM_INT || tokenInfo.first == NUM_CHAR) {
 			if (tk.dataType >= PTR_TYPE) {
-				WARNING->add(lexer->getLine(), std::string("pointer type variable") + tk.name + " get " + (tokenInfo.first == NUM_INT ? "int" : "char") + " type value.");
+				WARNING->add(lexer->getLine(), std::string("pointer type variable '") + tk.name + "' get " + (tokenInfo.first == NUM_INT ? "int" : "char") + " type value.");
 			}
 			*reinterpret_cast<int*>(tk.value) = factor*tokenInfo.second;  //写入初始值
 		}
@@ -231,7 +231,7 @@ void kkli::Compiler::global_var_decl(int type, std::string format) {
 				throw Error(lexer->getLine(), "use '-' before string type value.");
 			}
 			if (tk.dataType != PTR_TYPE) {
-				WARNING->add(lexer->getLine(), Token::getDataTypeName(tk.dataType) + " type variable " + tk.name + " get string type value.");
+				WARNING->add(lexer->getLine(), Token::getDataTypeName(tk.dataType) + " type variable '" + tk.name + "' get string type value.");
 			}
 			*reinterpret_cast<int*>(tk.value) = tokenInfo.second;
 		}
@@ -477,7 +477,7 @@ void kkli::Compiler::func_param(std::string format) {
 		}
 
 		table->getToken(currFuncIndex).addArgument(dataType, FORMAT(format));  //记录函数参数的类型
-		DEBUG_COMPILER("add " + Token::getDataTypeName(dataType) + " argument", FORMAT(format));
+		DEBUG_COMPILER("add " + Token::getDataTypeName(dataType) + " param", FORMAT(format));
 
 		//填入局部变量信息
 		Token& tk = table->getCurrentToken(FORMAT(format));
@@ -1412,37 +1412,37 @@ void kkli::Compiler::validFunctionCall(const Token& funcToken, const std::vector
 		//多个参数：printf
 		if (funcToken.name == "printf") {
 			if (dataTypes.size() < 1) {
-				throw Error(lexer->getLine(), "function '" + funcToken.name + "' need at least 1 argument.");
+				throw Error(lexer->getLine(), "function '" + funcToken.name + "' need at least 1 param.");
 			}
 			else if(dataTypes.size() > 6) {
-				throw Error(lexer->getLine(), "function '" + funcToken.name + "' support at most 6 arguments.");
+				throw Error(lexer->getLine(), "function '" + funcToken.name + "' support at most 6 params.");
 			}
 			else if (dataTypes[0] != PTR_TYPE) {
-				throw Error(lexer->getLine(), "function '" + funcToken.name + "' need ptr type argument at first argument.");
+				throw Error(lexer->getLine(), "function '" + funcToken.name + "' need ptr type param at index 1.");
 			}
 		}
 		//两个参数：scanf
 		else if (funcToken.name == "scanf") {
 			if (dataTypes.size() != 2) {
-				throw Error(lexer->getLine(), "function '" + funcToken.name + "' expect 2 arguments.");
+				throw Error(lexer->getLine(), "function '" + funcToken.name + "' expect 2 params.");
 			}
 			else if (dataTypes[0] != PTR_TYPE) {
-				WARNING->add(lexer->getLine(), "function '" + funcToken.name + "' expect char* type argument at index 1.");
+				WARNING->add(lexer->getLine(), "function '" + funcToken.name + "' expect char* type param at index 1.");
 			}
 		}
 		//一个参数：exit / malloc / putchar
 		else if (funcToken.name == "exit" || funcToken.name == "malloc" || funcToken.name == "putchar") {
 			if (dataTypes.size() != 1) {
-				throw Error(lexer->getLine(), "function '" + funcToken.name + "' expect 1 argument.");
+				throw Error(lexer->getLine(), "function '" + funcToken.name + "' expect 1 param.");
 			}
 			else if (dataTypes[0] != INT_TYPE) {
-				Warning::getInstance()->add(lexer->getLine(), "function exit expect int type argument.");
+				Warning::getInstance()->add(lexer->getLine(), "function exit expect int type param.");
 			}
 		}
 		//没有参数：getchar
 		else if (funcToken.name == "getchar") {
 			if (dataTypes.size() != 0) {
-				throw Error(lexer->getLine(), "function getchar() expect 0 arguments.");
+				throw Error(lexer->getLine(), "function getchar() expect 0 params.");
 			}
 		}
 		else {
@@ -1455,13 +1455,13 @@ void kkli::Compiler::validFunctionCall(const Token& funcToken, const std::vector
 	int size1 = funcToken.argsDataType.size();
 	int size2 = dataTypes.size();
 	if (size1 != size2) {
-		throw Error(lexer->getLine(), "function '" + funcToken.name + "' expect " + std::to_string(size1) + " arguments.");
+		throw Error(lexer->getLine(), "function '" + funcToken.name + "' expect " + std::to_string(size1) + " params.");
 	}
 	for (int i = 0; i < size1; ++i) {
 		if (funcToken.argsDataType[i] != dataTypes[i]) {
-			WARNING->add(lexer->getLine(), "function '" + funcToken.name + "' need " +
-				Token::getDataTypeName(funcToken.argsDataType[i]) + " type argument at argument index " + std::to_string(i+1) + ", but get "+
-			Token::getDataTypeName(dataTypes[i])+ " type.");
+			WARNING->add(lexer->getLine(), "function '" + funcToken.name + "' expect " +
+				Token::getDataTypeName(funcToken.argsDataType[i]) + " type param at index " + std::to_string(i+1) + ", but get "+
+			Token::getDataTypeName(dataTypes[i])+ " type param.");
 		}
 	}
 }

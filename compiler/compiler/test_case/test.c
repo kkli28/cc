@@ -3,7 +3,8 @@ int add(int a, int b){
 }
 
 int main(){
-    int a = add(1, 2);
-    printf("%d\n", a);
+    int a = 1;
+    int b = 2;
+    printf("a + b = %d\n", add(a, b));
     return 0;
 }

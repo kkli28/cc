@@ -9,20 +9,16 @@ void E(int var, int val){
 
 int arr[10] = {1,9,2,8,3,7,4,6,10,5};
 void sort(int* arr, int len){
-    int index;
-    int i;
-    int temp;
-    index = 1;
-    i = 0;
-    while(index < len){
+    int index = 0;
+    int i = 0;
+    while(++index < len){
         i = index;
         while(i > 0 && arr[i] < arr[i-1]){
-            temp = arr[i];
+            int temp = arr[i];
             arr[i] = arr[i-1];
             arr[i-1] = temp;
             --i;
 		}
-		++index;
     }
 }
 

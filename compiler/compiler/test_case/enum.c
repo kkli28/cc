@@ -10,6 +10,8 @@ void E(int var, int val){
 
 enum {a, b=2, c, d=1, e, f, g=10000};
 enum {h = -1, i = -2, j, k};
+
+
 enum {};
 
 void func(){
