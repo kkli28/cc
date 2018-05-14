@@ -10,3 +10,9 @@ int main(){
     return 0;
 }
 
+void func(int arg1, int arg2, int arg3) {
+    int i = 0;
+    int j = 1;
+    //…
+}
+
