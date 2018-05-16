@@ -1,18 +1,15 @@
+enum { e1, e2, e3 = 100, e4, e5 = -1};
 
-int add(int a, int b){
-    return a + b;
+int succeed = 1;
+void E(int param1, int param2){
+    if(param1 != param2){
+        succeed = 0;
+    }
 }
+
+int arr[4] = {1, 4, 2, 3};
+char* str = "abcd";
 
 int main(){
-    int a = 1;
-    int b = 2;
-    printf("a + b = %d\n", add(a, b));
-    return 0;
+    
 }
-
-void func(int arg1, int arg2, int arg3) {
-    int i = 0;
-    int j = 1;
-    //…
-}
-
