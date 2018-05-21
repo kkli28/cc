@@ -155,7 +155,7 @@ void kkli::VirtualMachine::setGlobalDeclInstTag(bool isStart) {
 }
 
 //获取每个全局定义所有生成的指令
-std::string kkli::VirtualMachine::getGlobalDeclGenInst() {
+std::string kkli::VirtualMachine::getGlobalDeclGenInst(bool hasLineNumber) {
 	std::string result;
 
 	int* begAddr = reinterpret_cast<int*>(instTag.back().first);
@@ -165,11 +165,11 @@ std::string kkli::VirtualMachine::getGlobalDeclGenInst() {
 	if (begAddr == endAddr) {
 		return "";
 	}
-
+	int index = 0;
 	while (begAddr < endAddr) {
 		int inst = *begAddr;
 		++begAddr;
-		result += getInstructionName(inst);
+		result += (hasLineNumber ? std::to_string(++index) + "\t" : "") + getInstructionName(inst);
 		if (inst <= I_ADJ) {
 			result += "  " + std::to_string(*begAddr);
 			++begAddr;
@@ -180,13 +180,14 @@ std::string kkli::VirtualMachine::getGlobalDeclGenInst() {
 }
 
 //获取生成的所有指令
-std::string kkli::VirtualMachine::getGenInst() {
+std::string kkli::VirtualMachine::getGenInst(bool hasLineNumber) {
 	std::string result;
 	int* addr = text;
+	int index = 0;
 	while (addr < text + SEGMENT_SIZE && *addr != I_NAI) {
 		int inst = *addr;
 		++addr;
-		result += getInstructionName(inst);
+		result += (hasLineNumber ? std::to_string(++index) + "\t" : "") + getInstructionName(inst);
 		if (inst <= I_ADJ) {
 			result += " " + std::to_string(*addr);
 			++addr;

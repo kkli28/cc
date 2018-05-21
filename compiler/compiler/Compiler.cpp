@@ -698,6 +698,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 		}
 
 		else if (tokenInfo.first == NUM_CHAR) {
+			DEBUG_COMPILER("[NUM_CHAR]", FORMAT(format));
 			vm->addInst(I_IMM, FORMAT(format));
 			vm->addInstData(tokenInfo.second, FORMAT(format));
 			DEBUG_COMPILER("[NUM_CHAR] " + std::to_string(tokenInfo.second), FORMAT(format));
@@ -706,6 +707,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 			match(NUM_CHAR, FORMAT(format));
 		}
 		else if (tokenInfo.first == NUM_INT) {
+			DEBUG_COMPILER("[NUM_INT]", FORMAT(format));
 			vm->addInst(I_IMM, FORMAT(format));
 			vm->addInstData(tokenInfo.second, FORMAT(format));
 			DEBUG_COMPILER("[NUM_CHAR] " + std::to_string(tokenInfo.second), FORMAT(format));
@@ -1173,6 +1175,7 @@ void kkli::Compiler::expression(int priority, std::string format) {
 				// >=
 				DEBUG_COMPILER("[GE]", FORMAT(format));
 
+				match(GE, FORMAT(format));
 				vm->addInst(I_PUSH, FORMAT(format));
 				expression(SHL, FORMAT(format));
 				vm->addInst(I_GE, FORMAT(format));

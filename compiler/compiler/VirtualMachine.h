@@ -120,8 +120,8 @@ namespace kkli {
 		void setGlobalDeclInstTag(bool isStart);
 
 		//获取所有生成的指令
-		std::string getGlobalDeclGenInst();
-		std::string getGenInst();
+		std::string getGlobalDeclGenInst(bool hasLineNumber = true);
+		std::string getGenInst(bool hasLineNumber = true);
 
 		//获取指令名称
 		std::string getInstructionName(int i) const {
