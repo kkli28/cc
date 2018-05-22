@@ -168,8 +168,10 @@ std::string kkli::VirtualMachine::getGlobalDeclGenInst(bool hasLineNumber) {
 	int index = 0;
 	while (begAddr < endAddr) {
 		int inst = *begAddr;
+		result += (hasLineNumber ? std::to_string(++index) + "\t" : "");
+		result += std::to_string(int(begAddr)) + "\t";
 		++begAddr;
-		result += (hasLineNumber ? std::to_string(++index) + "\t" : "") + getInstructionName(inst);
+		result += getInstructionName(inst);
 		if (inst <= I_ADJ) {
 			result += "  " + std::to_string(*begAddr);
 			++begAddr;
@@ -186,8 +188,10 @@ std::string kkli::VirtualMachine::getGenInst(bool hasLineNumber) {
 	int index = 0;
 	while (addr < text + SEGMENT_SIZE && *addr != I_NAI) {
 		int inst = *addr;
+		result += (hasLineNumber ? std::to_string(++index) + "\t" : "");
+		result += std::to_string(int(addr)) + "\t";
 		++addr;
-		result += (hasLineNumber ? std::to_string(++index) + "\t" : "") + getInstructionName(inst);
+		result += getInstructionName(inst);
 		if (inst <= I_ADJ) {
 			result += " " + std::to_string(*addr);
 			++addr;
@@ -244,10 +248,8 @@ std::string kkli::VirtualMachine::getInfo() const {
 //执行指令
 int kkli::VirtualMachine::run() {
 	DEBUG_VM("VirtualMachine::run()", "");
-	std::cout << "-- result --" << std::endl;
 
 	std::string format = "";
-
 	int inst;        //指令
 	int cycle = 0;   //执行周期
 

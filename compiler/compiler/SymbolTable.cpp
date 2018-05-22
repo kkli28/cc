@@ -42,7 +42,6 @@ bool kkli::SymbolTable::has(bool isDef, int hash, std::string name, std::string 
 					return true;
 				}
 				std::vector<int> currScope = scope;
-				//TODO: 每pop_back一次，都查找所有名字相同的符号
 				while (currScope.size() >= table[current].scope.size()) {
 					if (table[current].scope == currScope) {
 						DEBUG_SYMBOL_TABLE("[has], scope: " + getScopeStr(currScope), FORMAT(format));

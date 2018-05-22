@@ -61,7 +61,6 @@ void kkli::Compiler::run() {
 			}
 		}
 
-		//·ñ
 		else {
 			global_decl("");
 		}
