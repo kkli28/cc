@@ -139,7 +139,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 			if (table->has(isDefinition, hash, name, FORMAT(format))) {
 				//定义模式下，在当前作用域下找到该符号，则表示符号重定义
 				if (table->getCurrentToken(FORMAT(format)).scope[0] != KEY_WORD_SCOPE && isDefinition) {
-					throw Error(line, "Lexer::next(): duplicate define symbol '" + name + "'");
+					throw Error(line, "duplicate define symbol '" + name + "'");
 				}
 				else {
 					return { table->getCurrentToken(FORMAT(format)).type, 0 };
@@ -158,7 +158,7 @@ std::pair<int, int> kkli::Lexer::next(std::string format) {
 					return { ID, 0 };
 				}
 				else {
-					throw Error(line, "Lexer::next(): don't have '" + name + "'.");
+					throw Error(line, "Undefined symbol '" + name + "'.");
 				}
 			}
 		}

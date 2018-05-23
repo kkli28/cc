@@ -687,6 +687,8 @@ void kkli::Compiler::expression(int priority, std::string format) {
 
 	//一元表达式
 	DEBUG_COMPILER("[unary expression]", FORMAT(format));
+
+	//这个do-while语句便于折叠查看一元表达式
 	do {
 		if (tokenInfo.first == ERROR) {
 			throw Error(lexer->getLine(), "bad identifier ERROR.");
@@ -1004,6 +1006,8 @@ void kkli::Compiler::expression(int priority, std::string format) {
 
 	//二元表达式
 	DEBUG_COMPILER("[binary expression]", FORMAT(format));
+
+	//这个do-while语句便于折叠查看二元表达式
 	do {
 		while (tokenInfo.first >= priority) {
 
