@@ -22,6 +22,12 @@ while (type <= I_PUTC) {
 
 source = "void";
 next(FORMAT(format));
-	Token& tk = table->getCurrentToken(FORMAT(format));
-	tk.type = CHAR;
-	tk.setScope({ KEY_WORD_SCOPE });
+Token& tk = table->getCurrentToken(FORMAT(format));
+tk.type = CHAR;
+tk.setScope({ KEY_WORD_SCOPE });
+
+source = "main";
+next();
+table->setMainToken();
+table->getCurrentToken().setScope({ KEY_WORD_SCOPE });
+

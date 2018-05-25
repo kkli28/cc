@@ -24,6 +24,7 @@ int main(){
     judgeEnum();
     judgeArray();
     printf("str = %s\n", str);
+    int a;
     return 0;
 }
 
