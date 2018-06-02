@@ -1,5 +1,5 @@
 int i = 0;
-void move(int n,char from,char to){
+void move(int n, char from, char to){
     printf("step %d: move %d from %c to %c\n", ++i, n, from, to);
 }
 
@@ -19,7 +19,7 @@ void main(){
     A= 'A';
     B= 'B';
     C= 'C';
-    hanoi(3, A, B, C);
+    hanoi(4, A, B, C);
     
     if(1){
         printf(">>>> succeed! <<<<\n");
