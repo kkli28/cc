@@ -509,7 +509,7 @@ int kkli::VirtualMachine::run() {
 
 		//ÍË³ö³ÌÐò
 		else if (inst == I_EXIT) {
-			printf("exit(%d)\n", ax);
+			//printf("exit(%d)\n", ax);
 			DEBUG_VM_EXECUTE_DETAIL("ax: " + std::to_string(ax), FORMAT(format));
 			DEBUG_VM_EXECUTE_DETAIL("\nexit(" + std::to_string(ax) + ")", FORMAT(format));
 			return ax;

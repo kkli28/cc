@@ -1,6 +1,8 @@
 #ifndef __STDAFX_H__
 #define __STDAFX_H__
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "targetver.h"
 
 #include <stdio.h>

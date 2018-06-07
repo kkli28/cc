@@ -61,13 +61,18 @@ kkli::Lexer::Lexer(std::string sourceFile, SymbolTable* tb, VirtualMachine* v) {
 	//内建符号处理完毕
 
 	char buff[1000000];
+	//不对buff进行初始化，release模式下会出错
+	//for (int i = 0; i < 1000000; ++i) {
+//		buff[i] = END;
+//	}
+
 	int i = 0;
 	while (!inFile.eof()) inFile >> buff[i++];
 
 	source = std::move(std::string(buff, i));
 
 	//添加末尾字符
-	source.push_back('\0');
+	//source.push_back('\0');
 	source.push_back(END);
 
 	//备份一个
@@ -79,6 +84,9 @@ kkli::Lexer::Lexer(std::string sourceFile, SymbolTable* tb, VirtualMachine* v) {
 	prevIndex = 0;
 	index = 0;
 	line = 1;
+	gdBegIndex = 0;
+	gdEndIndex = 0;
+	isDefinition = false;
 }
 
 //更新索引
